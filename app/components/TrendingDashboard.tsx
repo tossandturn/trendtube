@@ -250,8 +250,9 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         : activeTab === 'opportunity'
         ? risingVideos
         : finalShorts
+    const effectiveSource = source.length > 0 ? source : videos
     const map: Record<string, TagItem> = {}
-    source.forEach((video) => {
+    effectiveSource.forEach((video) => {
       const tags = extractAITags(
         video.snippet?.title || '',
         video.snippet?.description || ''
@@ -294,8 +295,12 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
   ========================================================= */
 
   const risingVideos = useMemo(() => {
+    const filtered = [...videos]
+      .filter((video) => Number(video.statistics?.viewCount || 0) < 50_000_000)
+      .sort((a, b) => calculateTrendScore(b) - calculateTrendScore(a))
+      .slice(0, 8)
+    if (filtered.length > 0) return filtered
     return [...videos]
-      .filter((video) => Number(video.statistics?.viewCount || 0) < 500_000)
       .sort((a, b) => calculateTrendScore(b) - calculateTrendScore(a))
       .slice(0, 8)
   }, [videos])
@@ -708,6 +713,11 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                 </a>
               )
             })}
+            {(activeTab === 'trending' ? videos : activeTab === 'opportunity' ? risingVideos : finalShorts).length === 0 && (
+              <div className="col-span-full text-center py-20 text-zinc-500">
+                No videos found for this category.
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
 
