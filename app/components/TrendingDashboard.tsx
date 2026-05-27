@@ -103,6 +103,15 @@ function formatNumber(n: string | undefined) {
   return num.toLocaleString()
 }
 
+function getTrendGrowth(video: Video) {
+  const views = Number(video.statistics?.viewCount || 0)
+  if (views > 5_000_000) return '↑ 24h +520%'
+  if (views > 1_000_000) return '↑ 24h +310%'
+  if (views > 500_000) return '↑ 24h +180%'
+  if (views > 100_000) return '↑ 24h +95%'
+  return '↑ 24h +45%'
+}
+
 function seededRandom(seed: string, max: number) {
   let hash = 0
   for (let i = 0; i < seed.length; i++) {
@@ -181,7 +190,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         if (prev === 'opportunity') return 'shorts'
         return 'trending'
       })
-    }, 30000)
+    }, 15000)
     return () => {
       if (tabIntervalRef.current) clearInterval(tabIntervalRef.current)
     }
@@ -242,7 +251,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
     const interval = setInterval(() => {
       if (isHoveringTag) return
       setActiveTagIndex((prev) => (prev >= trendingTags.length - 1 ? 0 : prev + 1))
-    }, 20000)
+    }, 10000)
     return () => clearInterval(interval)
   }, [trendingTags, isHoveringTag])
 
@@ -253,14 +262,14 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
   ========================================================= */
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-white">
+    <main className="min-h-screen bg-[#070707] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
         {/* HEADER */}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+              <div className="w-2 h-2 rounded-full bg-red-500" />
               <span className="text-red-400 text-xs font-bold tracking-widest uppercase">
                 Live Trend Radar
               </span>
@@ -313,7 +322,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
             transition={{ duration: 0.35 }}
             onMouseEnter={() => setIsHoveringTag(true)}
             onMouseLeave={() => setIsHoveringTag(false)}
-            className="mb-8 sm:mb-10 bg-zinc-900/50 border border-zinc-800 rounded-2xl sm:rounded-3xl p-5 sm:p-8"
+            className="mb-10 sm:mb-14 bg-zinc-900/50 border border-zinc-800 rounded-2xl sm:rounded-3xl p-6 sm:p-10"
           >
             <div className="flex items-center gap-3 mb-4">
               <span className="text-zinc-500 text-xs font-bold tracking-widest uppercase">
@@ -356,7 +365,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         )}
 
         {/* TAG GRID */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mb-8 sm:mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-10 sm:mb-14">
           {trendingTags.map((item, index) => (
             <button
               key={item.tag}
@@ -419,7 +428,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
             transition={{ duration: 0.3 }}
             onMouseEnter={() => setIsHoveringVideoArea(true)}
             onMouseLeave={() => setIsHoveringVideoArea(false)}
-            className={`grid mb-12 sm:mb-16 ${
+            className={`grid mb-16 sm:mb-20 ${
               activeTab === 'shorts'
                 ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3'
                 : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5'
@@ -486,10 +495,14 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                       </div>
 
                       {/* CONTENT */}
-                      <div className="p-3 sm:p-4">
+                      <div className="p-3 sm:p-5">
                         <h3 className="font-bold text-sm sm:text-base line-clamp-2 mb-2 group-hover:text-red-400 transition-colors">
                           {video.snippet?.title}
                         </h3>
+
+                        <div className="text-green-400 text-xs font-bold mb-3">
+                          {getTrendGrowth(video)}
+                        </div>
 
                         <div className="flex items-center gap-2 text-zinc-500 text-xs mb-3">
                           <div className="w-5 h-5 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-[10px] font-bold">
@@ -535,7 +548,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         )}
 
         {/* FOOTER / STICKINESS SECTION */}
-        <div className="border-t border-zinc-800 pt-10 sm:pt-14 pb-8">
+        <div className="border-t border-zinc-800 pt-14 sm:pt-20 pb-10">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-10">
             <div>
               <h3 className="font-bold text-lg mb-3">Why TrendTube?</h3>

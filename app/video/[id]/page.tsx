@@ -108,7 +108,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
   const comments = Number(video.statistics?.commentCount || 0)
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-white">
+    <main className="min-h-screen bg-[#070707] text-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         {/* Back */}
         <Link
