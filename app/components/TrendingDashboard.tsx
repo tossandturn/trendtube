@@ -244,8 +244,14 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
   ========================================================= */
 
   const trendingTags: TagItem[] = useMemo(() => {
+    const source =
+      activeTab === 'trending'
+        ? videos
+        : activeTab === 'opportunity'
+        ? risingVideos
+        : finalShorts
     const map: Record<string, TagItem> = {}
-    videos.forEach((video) => {
+    source.forEach((video) => {
       const tags = extractAITags(
         video.snippet?.title || '',
         video.snippet?.description || ''
@@ -262,11 +268,15 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
       })
     })
     return Object.values(map).sort((a, b) => b.growth - a.growth)
-  }, [videos])
+  }, [videos, activeTab])
 
   /* =========================================================
      AUTO TAG CAROUSEL (10s) with hover pause
   ========================================================= */
+
+  useEffect(() => {
+    setActiveTagIndex(0)
+  }, [activeTab])
 
   useEffect(() => {
     if (trendingTags.length === 0) return
