@@ -182,7 +182,12 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
   const [isHoveringVideoArea, setIsHoveringVideoArea] = useState(false)
 
   const tabIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const isHoveringVideoAreaRef = useRef(isHoveringVideoArea)
   const didInit = useRef(false)
+
+  useEffect(() => {
+    isHoveringVideoAreaRef.current = isHoveringVideoArea
+  }, [isHoveringVideoArea])
 
   /* =========================================================
      FETCH YOUTUBE DATA
@@ -226,7 +231,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
 
   useEffect(() => {
     tabIntervalRef.current = setInterval(() => {
-      if (isHoveringVideoArea) return
+      if (isHoveringVideoAreaRef.current) return
       setActiveTab((prev) => {
         if (prev === 'trending') return 'opportunity'
         if (prev === 'opportunity') return 'shorts'
@@ -237,7 +242,33 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
     return () => {
       if (tabIntervalRef.current) clearInterval(tabIntervalRef.current)
     }
-  }, [isHoveringVideoArea])
+  }, [])
+
+  /* =========================================================
+     OPPORTUNITY VIDEOS
+  ========================================================= */
+
+  const risingVideos = useMemo(() => {
+    const filtered = [...videos]
+      .filter((video) => Number(video.statistics?.viewCount || 0) < 50_000_000)
+      .sort((a, b) => calculateTrendScore(b) - calculateTrendScore(a))
+      .slice(0, 8)
+    if (filtered.length > 0) return filtered
+    return [...videos]
+      .sort((a, b) => calculateTrendScore(b) - calculateTrendScore(a))
+      .slice(0, 8)
+  }, [videos])
+
+  /* =========================================================
+     SHORTS
+  ========================================================= */
+
+  const shortsVideos = videos.filter((video) => {
+    const title = video.snippet?.title?.toLowerCase() || ''
+    return title.includes('shorts') || title.includes('#shorts') || title.includes('short')
+  })
+
+  const finalShorts = shortsVideos.length > 0 ? shortsVideos : videos.slice(0, 12)
 
   /* =========================================================
      TAG EXTRACTION & TRENDING TAGS
@@ -269,7 +300,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
       })
     })
     return Object.values(map).sort((a, b) => b.growth - a.growth)
-  }, [videos, activeTab])
+  }, [videos, activeTab, risingVideos, finalShorts])
 
   /* =========================================================
      AUTO TAG CAROUSEL (10s) with hover pause
@@ -289,32 +320,6 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
   }, [trendingTags, isHoveringTag])
 
   const activeTag = trendingTags[activeTagIndex]
-
-  /* =========================================================
-     OPPORTUNITY VIDEOS
-  ========================================================= */
-
-  const risingVideos = useMemo(() => {
-    const filtered = [...videos]
-      .filter((video) => Number(video.statistics?.viewCount || 0) < 50_000_000)
-      .sort((a, b) => calculateTrendScore(b) - calculateTrendScore(a))
-      .slice(0, 8)
-    if (filtered.length > 0) return filtered
-    return [...videos]
-      .sort((a, b) => calculateTrendScore(b) - calculateTrendScore(a))
-      .slice(0, 8)
-  }, [videos])
-
-  /* =========================================================
-     SHORTS
-  ========================================================= */
-
-  const shortsVideos = videos.filter((video) => {
-    const title = video.snippet?.title?.toLowerCase() || ''
-    return title.includes('shorts') || title.includes('#shorts') || title.includes('short')
-  })
-
-  const finalShorts = shortsVideos.length > 0 ? shortsVideos : videos.slice(0, 12)
 
   /* =========================================================
      UI
@@ -528,12 +533,13 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         {/* =========================================================
             VIDEO SECTION
         ========================================================= */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           <motion.div
             key={activeTab}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.35 }}
             onMouseEnter={() => setIsHoveringVideoArea(true)}
             onMouseLeave={() => setIsHoveringVideoArea(false)}
             className={`grid mb-24 ${activeTab === 'shorts' ? 'grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8'}`}
@@ -547,7 +553,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
 
               return activeTab === 'shorts' ? (
                 <a
-                  key={`${video.id}-short-${index}`}
+                  key={`${activeTab}-${video.id}-short-${index}`}
                   href={`https://www.youtube.com/watch?v=${video.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -580,7 +586,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                 </a>
               ) : (
                 <a
-                  key={`${video.id}-${index}`}
+                  key={`${activeTab}-${video.id}-${index}`}
                   href={`https://www.youtube.com/watch?v=${video.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
