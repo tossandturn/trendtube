@@ -54,6 +54,13 @@ interface TrendingDashboardProps {
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
 const REGIONS = ['US', 'JP', 'KR', 'GB']
 
+const REGION_LABELS: Record<string, string> = {
+  US: '🇺🇸 United States',
+  JP: '🇯🇵 Japan',
+  KR: '🇰🇷 Korea',
+  GB: '🇬🇧 United Kingdom',
+}
+
 const TAG_MAP: { tag: string; keywords: string[] }[] = [
   { tag: 'AI', keywords: ['ai', 'chatgpt', 'openai', 'gpt'] },
   { tag: 'Shorts', keywords: ['shorts', '#shorts', 'short'] },
@@ -127,6 +134,14 @@ function getTrendGrowth(video: Video) {
   if (views > 500_000) return '↑ 24h +180%'
   if (views > 100_000) return '↑ 24h +95%'
   return '↑ 24h +45%'
+}
+
+function seededRandom(seed: string, max: number) {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash) % max
 }
 
 function generateAdvancedAIAnalysis(video: Video) {
@@ -237,7 +252,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         if (prev === 'opportunity') return 'shorts'
         return 'trending'
       })
-    }, 15000)
+    }, 30000)
 
     return () => {
       if (tabIntervalRef.current) clearInterval(tabIntervalRef.current)
@@ -292,9 +307,9 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         if (!map[tag]) {
           map[tag] = {
             tag,
-            growth: Math.floor(Math.random() * 320 + 100),
-            rank: Math.floor(Math.random() * 5 + 1),
-            previousRank: Math.floor(Math.random() * 20 + 5),
+            growth: seededRandom(tag + (video.id || ''), 320) + 100,
+            rank: seededRandom(tag, 5) + 1,
+            previousRank: seededRandom(tag + 'prev', 20) + 5,
           }
         }
       })
@@ -303,7 +318,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
   }, [videos, activeTab, risingVideos, finalShorts])
 
   /* =========================================================
-     AUTO TAG CAROUSEL (10s) with hover pause
+     AUTO TAG CAROUSEL (20s) with hover pause
   ========================================================= */
 
   useEffect(() => {
@@ -315,7 +330,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
     const interval = setInterval(() => {
       if (isHoveringTag) return
       setActiveTagIndex((prev) => (prev >= trendingTags.length - 1 ? 0 : prev + 1))
-    }, 10000)
+    }, 20000)
     return () => clearInterval(interval)
   }, [trendingTags, isHoveringTag])
 
@@ -362,10 +377,10 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                 className={`px-5 py-3 rounded-2xl border transition-all duration-300 ${
                   region === country
                     ? 'bg-white text-black border-white scale-105'
-                    : 'bg-zinc-900 border-zinc-700 text-zinc-300'
+                    : 'bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-500'
                 }`}
               >
-                {country}
+                {REGION_LABELS[country] || country}
               </button>
             ))}
           </div>
@@ -665,7 +680,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                           ⚠️ Creator Copy Alert
                         </div>
                         <div className="text-sm text-zinc-300">
-                          {Math.floor(Math.random() * 50 + 10)} creators uploaded similar videos today.
+                          {seededRandom(video.id + '-creators', 50) + 10} creators uploaded similar videos today.
                         </div>
                       </div>
 
@@ -675,7 +690,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                           🚀 Exploding Right Now
                         </div>
                         <div className="text-zinc-500 text-sm mt-1">
-                          Peak expected in {Math.floor(Math.random() * 12 + 2)} hours
+                          Peak expected in {seededRandom(video.id + '-peak', 12) + 2} hours
                         </div>
                       </div>
 
