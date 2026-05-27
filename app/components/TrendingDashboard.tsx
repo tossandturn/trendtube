@@ -2,12 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  Tooltip,
-} from 'recharts'
+import Link from 'next/link'
 
 /* =========================================================
    TYPES
@@ -54,11 +49,11 @@ interface TrendingDashboardProps {
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
 const REGIONS = ['US', 'JP', 'KR', 'GB']
 
-const REGION_LABELS: Record<string, string> = {
-  US: '🇺🇸 United States',
-  JP: '🇯🇵 Japan',
-  KR: '🇰🇷 Korea',
-  GB: '🇬🇧 United Kingdom',
+const REGION_META: Record<string, { label: string; flag: string }> = {
+  US: { label: 'United States', flag: 'us' },
+  JP: { label: 'Japan', flag: 'jp' },
+  KR: { label: 'Korea', flag: 'kr' },
+  GB: { label: 'United Kingdom', flag: 'gb' },
 }
 
 const TAG_MAP: { tag: string; keywords: string[] }[] = [
@@ -74,16 +69,6 @@ const TAG_MAP: { tag: string; keywords: string[] }[] = [
   { tag: 'MrBeast Style', keywords: ['$10000', '$100000', 'challenge', 'last to leave'] },
 ]
 
-const CHART_DATA = [
-  { day: 'Mon', score: 12 },
-  { day: 'Tue', score: 22 },
-  { day: 'Wed', score: 39 },
-  { day: 'Thu', score: 52 },
-  { day: 'Fri', score: 71 },
-  { day: 'Sat', score: 88 },
-  { day: 'Sun', score: 100 },
-]
-
 /* =========================================================
    HELPERS
 ========================================================= */
@@ -93,7 +78,6 @@ function extractAITags(title: string, description: string = '') {
   const tags = TAG_MAP.filter((item) =>
     item.keywords.some((keyword) => text.includes(keyword))
   ).map((item) => item.tag)
-
   if (tags.length === 0) tags.push('Trending')
   return tags
 }
@@ -105,35 +89,18 @@ function calculateTrendScore(video: Video) {
   return Math.floor(((likes * 3 + comments * 5) / Math.max(views, 1)) * 100000)
 }
 
-function predictVirality(video: Video) {
-  const score = calculateTrendScore(video)
-  if (score > 400) return 96
-  if (score > 300) return 89
-  if (score > 200) return 76
-  return 61
-}
-
-function calculateOpportunity(video: Video) {
-  const views = Number(video.statistics?.viewCount || 0)
-  const score = calculateTrendScore(video)
-  if (views < 100000 && score > 250) return 98
-  if (views < 300000) return 87
-  return 68
-}
-
 function getTrendStage(score: number) {
-  if (score > 350) return { emoji: '🔥', label: 'VIRAL' }
-  if (score > 250) return { emoji: '📈', label: 'RISING' }
-  return { emoji: '🌱', label: 'EMERGING' }
+  if (score > 350) return { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30', label: 'VIRAL' }
+  if (score > 250) return { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30', label: 'RISING' }
+  return { color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30', label: 'EMERGING' }
 }
 
-function getTrendGrowth(video: Video) {
-  const views = Number(video.statistics?.viewCount || 0)
-  if (views > 5_000_000) return '↑ 24h +520%'
-  if (views > 1_000_000) return '↑ 24h +310%'
-  if (views > 500_000) return '↑ 24h +180%'
-  if (views > 100_000) return '↑ 24h +95%'
-  return '↑ 24h +45%'
+function formatNumber(n: string | undefined) {
+  const num = Number(n || 0)
+  if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + 'B'
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + 'M'
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + 'K'
+  return num.toLocaleString()
 }
 
 function seededRandom(seed: string, max: number) {
@@ -142,45 +109,6 @@ function seededRandom(seed: string, max: number) {
     hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0
   }
   return Math.abs(hash) % max
-}
-
-function generateAdvancedAIAnalysis(video: Video) {
-  const title = video.snippet?.title?.toLowerCase() || ''
-  const tags = extractAITags(
-    video.snippet?.title || '',
-    video.snippet?.description || ''
-  )
-  const views = Number(video.statistics?.viewCount || 0)
-  const likes = Number(video.statistics?.likeCount || 0)
-  const comments = Number(video.statistics?.commentCount || 0)
-  const engagement = ((likes + comments) / Math.max(views, 1)) * 100
-
-  const insights: string[] = []
-
-  if (tags.includes('Shorts')) {
-    insights.push('📱 Shorts content is receiving aggressive recommendation boosts from YouTube.')
-  }
-  if (tags.includes('AI')) {
-    insights.push('🤖 AI-related search demand is rapidly accelerating globally.')
-  }
-  if (tags.includes('Gaming')) {
-    insights.push('🎮 Gaming viewers generate extremely high repeat watch behavior.')
-  }
-  if (engagement > 8) {
-    insights.push('🔥 Engagement rate is significantly above platform average.')
-  }
-  if (views > 1_000_000) {
-    insights.push('🚀 High early velocity triggered YouTube algorithm expansion.')
-  }
-  if (title.includes('how') || title.includes('why') || title.includes('secret')) {
-    insights.push('🧠 Curiosity-driven title psychology increases CTR dramatically.')
-  }
-  if (title.includes('crazy') || title.includes('insane') || title.includes('impossible')) {
-    insights.push('⚡ Emotional trigger words improve audience retention.')
-  }
-
-  insights.push('📈 Creator competition is increasing rapidly inside this niche.')
-  return insights.slice(0, 4)
 }
 
 /* =========================================================
@@ -195,6 +123,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
   const [activeTagIndex, setActiveTagIndex] = useState(0)
   const [isHoveringTag, setIsHoveringTag] = useState(false)
   const [isHoveringVideoArea, setIsHoveringVideoArea] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
   const tabIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const isHoveringVideoAreaRef = useRef(isHoveringVideoArea)
@@ -214,7 +143,6 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
       setLoading(false)
       return
     }
-
     setLoading(true)
     try {
       const res = await fetch(
@@ -222,7 +150,10 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
       )
       if (!res.ok) throw new Error(`YouTube API error: ${res.status}`)
       const data = await res.json()
-      if (data.items) setVideos(data.items)
+      if (data.items) {
+        setVideos(data.items)
+        setLastUpdated(new Date())
+      }
     } catch (err) {
       console.error(err)
     }
@@ -232,16 +163,14 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
   useEffect(() => {
     if (!didInit.current) {
       didInit.current = true
-      if (initialVideos.length === 0) {
-        fetchVideos()
-      }
+      if (initialVideos.length === 0) fetchVideos()
       return
     }
     fetchVideos()
   }, [region])
 
   /* =========================================================
-     AUTO SWITCH VIDEO TABS (15s)
+     AUTO SWITCH VIDEO TABS (30s)
   ========================================================= */
 
   useEffect(() => {
@@ -253,14 +182,13 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         return 'trending'
       })
     }, 30000)
-
     return () => {
       if (tabIntervalRef.current) clearInterval(tabIntervalRef.current)
     }
   }, [])
 
   /* =========================================================
-     OPPORTUNITY VIDEOS
+     COMPUTED DATA
   ========================================================= */
 
   const risingVideos = useMemo(() => {
@@ -274,35 +202,19 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
       .slice(0, 8)
   }, [videos])
 
-  /* =========================================================
-     SHORTS
-  ========================================================= */
-
   const shortsVideos = videos.filter((video) => {
     const title = video.snippet?.title?.toLowerCase() || ''
     return title.includes('shorts') || title.includes('#shorts') || title.includes('short')
   })
-
   const finalShorts = shortsVideos.length > 0 ? shortsVideos : videos.slice(0, 12)
-
-  /* =========================================================
-     TAG EXTRACTION & TRENDING TAGS
-  ========================================================= */
 
   const trendingTags: TagItem[] = useMemo(() => {
     const source =
-      activeTab === 'trending'
-        ? videos
-        : activeTab === 'opportunity'
-        ? risingVideos
-        : finalShorts
+      activeTab === 'trending' ? videos : activeTab === 'opportunity' ? risingVideos : finalShorts
     const effectiveSource = source.length > 0 ? source : videos
     const map: Record<string, TagItem> = {}
     effectiveSource.forEach((video) => {
-      const tags = extractAITags(
-        video.snippet?.title || '',
-        video.snippet?.description || ''
-      )
+      const tags = extractAITags(video.snippet?.title || '', video.snippet?.description || '')
       tags.forEach((tag) => {
         if (!map[tag]) {
           map[tag] = {
@@ -318,7 +230,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
   }, [videos, activeTab, risingVideos, finalShorts])
 
   /* =========================================================
-     AUTO TAG CAROUSEL (20s) with hover pause
+     AUTO TAG CAROUSEL (20s)
   ========================================================= */
 
   useEffect(() => {
@@ -341,415 +253,323 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
   ========================================================= */
 
   return (
-    <main className="min-h-screen bg-[#070707] text-white overflow-hidden">
-      {/* Background Glow */}
-      <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-red-500/10 blur-[150px]" />
-      <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-green-500/10 blur-[150px]" />
+    <main className="min-h-screen bg-[#0a0a0a] text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
-      <div className="max-w-7xl mx-auto px-5 py-8 relative z-10">
-        {/* =========================================================
-            HEADER
-        ========================================================= */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-16">
+        {/* HEADER */}
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
           <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
-              <div className="text-red-400 font-bold tracking-wider">
-                LIVE YOUTUBE TREND RADAR
-              </div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+              <span className="text-red-400 text-xs font-bold tracking-widest uppercase">
+                Live Trend Radar
+              </span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-black leading-tight">
-              TrendTube 🚀
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight">
+              TrendTube
             </h1>
-            <p className="text-zinc-400 mt-5 text-xl max-w-3xl">
+            <p className="text-zinc-500 mt-1 text-sm sm:text-base">
               Discover viral YouTube trends before everyone else.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            {REGIONS.map((country) => (
-              <button
-                key={country}
-                onClick={() => {
-                  setVideos([])
-                  setRegion(country)
-                }}
-                className={`px-5 py-3 rounded-2xl border transition-all duration-300 ${
-                  region === country
-                    ? 'bg-white text-black border-white scale-105'
-                    : 'bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-500'
-                }`}
-              >
-                {REGION_LABELS[country] || country}
-              </button>
-            ))}
+          <div className="flex flex-col items-start sm:items-end gap-2">
+            <div className="flex gap-2">
+              {REGIONS.map((country) => (
+                <button
+                  key={country}
+                  onClick={() => {
+                    setVideos([])
+                    setRegion(country)
+                  }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all ${
+                    region === country
+                      ? 'bg-white text-black border-white'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
+                  }`}
+                >
+                  <img
+                    src={`https://flagcdn.com/w40/${REGION_META[country].flag}.png`}
+                    alt={country}
+                    className="w-5 h-4 rounded-sm object-cover"
+                  />
+                  <span className="hidden sm:inline">{REGION_META[country].label}</span>
+                  <span className="sm:hidden">{country}</span>
+                </button>
+              ))}
+            </div>
+            <span className="text-zinc-600 text-xs">
+              Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
           </div>
-        </div>
+        </header>
 
-        {/* =========================================================
-            TOP TREND TAG HERO
-        ========================================================= */}
+        {/* TAG HERO */}
         {activeTag && (
           <motion.div
             key={activeTag.tag}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
             onMouseEnter={() => setIsHoveringTag(true)}
             onMouseLeave={() => setIsHoveringTag(false)}
-            className="mb-20 bg-gradient-to-r from-zinc-900 to-zinc-800 border border-zinc-700 rounded-[32px] p-8 overflow-hidden relative"
+            className="mb-8 sm:mb-10 bg-zinc-900/50 border border-zinc-800 rounded-2xl sm:rounded-3xl p-5 sm:p-8"
           >
-            <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-green-400/10 blur-[120px]" />
-            <div className="relative z-10">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-                {/* LEFT */}
-                <div>
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className="text-6xl">🔥</div>
-                    <div>
-                      <div className="text-zinc-500 mb-1">NOW TRENDING</div>
-                      <div className="text-6xl font-black">#{activeTag.tag}</div>
-                    </div>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-zinc-500 text-xs font-bold tracking-widest uppercase">
+                Now Trending
+              </span>
+              <div className="flex-1 h-px bg-zinc-800" />
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <div className="text-4xl sm:text-6xl font-black mb-3">#{activeTag.tag}</div>
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="bg-black/40 border border-zinc-800 rounded-xl px-4 py-2">
+                    <div className="text-zinc-500 text-xs">Weekly Growth</div>
+                    <div className="text-green-400 text-xl font-black">+{activeTag.growth}%</div>
                   </div>
-                  <div className="flex items-center gap-5 flex-wrap">
-                    <div className="bg-black/40 border border-zinc-700 rounded-2xl px-5 py-3">
-                      <div className="text-zinc-500 text-sm">Weekly Growth</div>
-                      <div className="text-green-400 text-3xl font-black">
-                        +{activeTag.growth}%
-                      </div>
-                    </div>
-                    <div className="bg-black/40 border border-zinc-700 rounded-2xl px-5 py-3">
-                      <div className="text-zinc-500 text-sm">Rank Change</div>
-                      <div className="text-yellow-400 text-3xl font-black">
-                        ↑ {activeTag.previousRank - activeTag.rank}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* AI ANALYSIS */}
-                  <div className="mt-6 bg-black/50 border border-zinc-800 rounded-3xl p-5 max-w-2xl">
-                    <div className="text-green-400 text-xs mb-3 font-bold tracking-wider">
-                      AI TAG ANALYSIS
-                    </div>
-                    <div className="space-y-2 text-zinc-300">
-                      <div>🚀 Search demand for this topic is accelerating rapidly across YouTube.</div>
-                      <div>📈 Creator uploads increased significantly this week.</div>
-                      <div>🔥 YouTube recommendation momentum is expanding this niche aggressively.</div>
-                      <div>⚠️ Creators are rapidly entering this market right now.</div>
+                  <div className="bg-black/40 border border-zinc-800 rounded-xl px-4 py-2">
+                    <div className="text-zinc-500 text-xs">Rank Change</div>
+                    <div className="text-yellow-400 text-xl font-black">
+                      ↑ {activeTag.previousRank - activeTag.rank}
                     </div>
                   </div>
                 </div>
-
-                {/* RIGHT */}
-                <div className="w-full lg:w-[420px]">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="text-zinc-500">Growth Momentum</div>
-                    <div className="text-green-400 text-4xl font-black">+{activeTag.growth}%</div>
-                  </div>
-                  <div className="w-full bg-zinc-800 rounded-full h-5 overflow-hidden mb-6">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(activeTag.growth, 100)}%` }}
-                      transition={{ duration: 1 }}
-                      className="bg-green-400 h-full"
-                    />
-                  </div>
-                  <div className="h-[180px] bg-black/30 rounded-3xl p-4 border border-zinc-800">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={CHART_DATA}>
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#18181b',
-                            border: '1px solid #3f3f46',
-                            borderRadius: '12px',
-                          }}
-                          labelStyle={{ color: '#a1a1aa' }}
-                          itemStyle={{ color: '#4ade80' }}
-                        />
-                        <Line type="monotone" dataKey="score" stroke="#22c55e" strokeWidth={4} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
+              </div>
+              <div className="w-full sm:w-64">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-zinc-500 text-xs">Momentum</span>
+                  <span className="text-green-400 text-sm font-bold">+{activeTag.growth}%</span>
+                </div>
+                <div className="w-full bg-zinc-800 rounded-full h-2.5 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(activeTag.growth, 100)}%` }}
+                    transition={{ duration: 0.8 }}
+                    className="bg-green-400 h-full rounded-full"
+                  />
                 </div>
               </div>
             </div>
           </motion.div>
         )}
 
-        {/* =========================================================
-            TAG GRID
-        ========================================================= */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-24">
-          {trendingTags.map((item: TagItem, index) => (
-            <motion.div
+        {/* TAG GRID */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mb-8 sm:mb-10">
+          {trendingTags.map((item, index) => (
+            <button
               key={item.tag}
-              whileHover={{ y: -5, scale: 1.03 }}
               onClick={() => setActiveTagIndex(index)}
               onMouseEnter={() => setIsHoveringTag(true)}
               onMouseLeave={() => setIsHoveringTag(false)}
-              className={`cursor-pointer rounded-3xl p-5 border transition-all duration-300 ${
+              className={`text-left rounded-2xl p-3 sm:p-4 border transition-all ${
                 activeTagIndex === index
-                  ? 'bg-green-400/10 border-green-400'
-                  : 'bg-zinc-900 border-zinc-800'
+                  ? 'bg-green-400/10 border-green-400/50'
+                  : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-700'
               }`}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-3xl">🔥</div>
-                <div className="text-green-400 font-black">+{item.growth}%</div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-zinc-500 text-xs font-bold">#{index + 1}</span>
+                <span className="text-green-400 text-xs font-black">+{item.growth}%</span>
               </div>
-              <div className="text-2xl font-black mb-2">#{item.tag}</div>
-              <div className="text-zinc-500 text-sm">Rising rapidly now</div>
-              <div className="mt-4 w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+              <div className="font-bold text-sm sm:text-base mb-1">{item.tag}</div>
+              <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
                 <div
-                  className="bg-green-400 h-full"
+                  className="bg-green-400 h-full rounded-full"
                   style={{ width: `${Math.min(item.growth, 100)}%` }}
                 />
               </div>
-            </motion.div>
+            </button>
           ))}
         </div>
 
-        {/* =========================================================
-            VIDEO TAB SWITCH
-        ========================================================= */}
-        <div className="flex gap-3 mb-12">
-          <button
-            onClick={() => setActiveTab('trending')}
-            className={`px-6 py-3 rounded-2xl transition-all ${
-              activeTab === 'trending'
-                ? 'bg-white text-black'
-                : 'bg-zinc-900 border border-zinc-700'
-            }`}
-          >
-            🔥 Trending
-          </button>
-          <button
-            onClick={() => setActiveTab('opportunity')}
-            className={`px-6 py-3 rounded-2xl transition-all ${
-              activeTab === 'opportunity'
-                ? 'bg-yellow-400 text-black'
-                : 'bg-zinc-900 border border-zinc-700'
-            }`}
-          >
-            🚀 Opportunity
-          </button>
-          <button
-            onClick={() => setActiveTab('shorts')}
-            className={`px-6 py-3 rounded-2xl transition-all ${
-              activeTab === 'shorts'
-                ? 'bg-red-500 text-white'
-                : 'bg-zinc-900 border border-zinc-700'
-            }`}
-          >
-            📱 Shorts
-          </button>
+        {/* VIDEO TABS */}
+        <div className="flex items-center justify-between mb-5 sm:mb-6">
+          <div className="flex gap-2">
+            {(['trending', 'opportunity', 'shorts'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  activeTab === tab
+                    ? tab === 'trending'
+                      ? 'bg-white text-black'
+                      : tab === 'opportunity'
+                      ? 'bg-yellow-400 text-black'
+                      : 'bg-red-500 text-white'
+                    : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white'
+                }`}
+              >
+                {tab === 'trending' && '🔥 Trending'}
+                {tab === 'opportunity' && '🚀 Opportunity'}
+                {tab === 'shorts' && '📱 Shorts'}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* =========================================================
-            VIDEO SECTION
-        ========================================================= */}
+        {/* VIDEO SECTION */}
         <AnimatePresence>
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.35 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.3 }}
             onMouseEnter={() => setIsHoveringVideoArea(true)}
             onMouseLeave={() => setIsHoveringVideoArea(false)}
-            className={`grid mb-24 ${activeTab === 'shorts' ? 'grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8'}`}
+            className={`grid mb-12 sm:mb-16 ${
+              activeTab === 'shorts'
+                ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3'
+                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5'
+            }`}
           >
-            {(activeTab === 'trending' ? videos : activeTab === 'opportunity' ? risingVideos : finalShorts).map((video, index) => {
-              const trendScore = calculateTrendScore(video)
-              const stage = getTrendStage(trendScore)
-              const virality = predictVirality(video)
-              const opportunity = calculateOpportunity(video)
-              const growthLabel = getTrendGrowth(video)
+            {(activeTab === 'trending' ? videos : activeTab === 'opportunity' ? risingVideos : finalShorts).map(
+              (video) => {
+                const trendScore = calculateTrendScore(video)
+                const stage = getTrendStage(trendScore)
+                const tags = extractAITags(video.snippet?.title || '', video.snippet?.description || '')
 
-              return activeTab === 'shorts' ? (
-                <a
-                  key={`${activeTab}-${video.id}-short-${index}`}
-                  href={`https://www.youtube.com/watch?v=${video.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <motion.div
-                    whileHover={{ scale: 1.03 }}
-                    className="aspect-[9/16] rounded-3xl overflow-hidden relative group"
-                  >
-                    <img
-                      src={video.snippet?.thumbnails?.high?.url}
-                      alt={video.snippet?.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-                    <div className="absolute top-4 left-4 bg-red-500 px-3 py-1 rounded-full text-sm font-bold animate-pulse">
-                      SHORTS
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <div className="text-white font-bold line-clamp-3 mb-3">
-                        {video.snippet?.title}
-                      </div>
-                      <div className="text-zinc-300 text-sm mb-2">
-                        {video.snippet?.channelTitle}
-                      </div>
-                      <div className="text-red-400 font-bold">
-                        👀 {Number(video.statistics?.viewCount || 0).toLocaleString()}
-                      </div>
-                    </div>
-                  </motion.div>
-                </a>
-              ) : (
-                <a
-                  key={`${activeTab}-${video.id}-${index}`}
-                  href={`https://www.youtube.com/watch?v=${video.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <motion.div
-                    whileHover={{ y: -5, scale: 1.01 }}
-                    className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden h-full"
-                  >
-                    {/* THUMB */}
-                    <div className="relative overflow-hidden">
-                      <img
-                        src={video.snippet?.thumbnails?.high?.url}
-                        alt={video.snippet?.title}
-                        className="w-full aspect-video object-cover hover:scale-105 transition duration-500"
-                      />
-                      <div className="absolute top-4 left-4 bg-black/80 backdrop-blur px-4 py-2 rounded-full font-bold">
-                        {stage.emoji} {stage.label}
-                      </div>
-                      <div className="absolute top-4 right-4 bg-yellow-400 text-black px-4 py-2 rounded-full font-black">
-                        {virality}%
-                      </div>
-                      <div className="absolute bottom-4 left-4 bg-red-500 px-3 py-1 rounded-full text-sm font-bold animate-pulse">
-                        LIVE
-                      </div>
-                    </div>
-
-                    {/* CONTENT */}
-                    <div className="p-5 space-y-5">
-                      {/* TITLE */}
-                      <h3 className="font-bold text-xl line-clamp-2">
-                        {video.snippet?.title}
-                      </h3>
-
-                      {/* TREND GROWTH */}
-                      <div className="text-green-400 font-bold text-sm">
-                        {growthLabel}
-                      </div>
-
-                      {/* AI ANALYSIS */}
-                      <div className="bg-black border border-zinc-800 rounded-2xl p-4">
-                        <div className="text-yellow-400 text-xs mb-3 font-bold tracking-wider">
-                          WHY IT BLOWS UP
+                if (activeTab === 'shorts') {
+                  return (
+                    <Link
+                      key={`${activeTab}-${video.id}`}
+                      href={`/video/${video.id}`}
+                      className="group block"
+                    >
+                      <div className="aspect-[9/16] rounded-xl sm:rounded-2xl overflow-hidden relative bg-zinc-900">
+                        <img
+                          src={video.snippet?.thumbnails?.high?.url}
+                          alt={video.snippet?.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                        <div className="absolute top-2 left-2 bg-red-500 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                          SHORTS
                         </div>
-                        <div className="space-y-2">
-                          {generateAdvancedAIAnalysis(video).map((item, idx) => (
-                            <div key={idx} className="text-sm text-zinc-300 leading-relaxed">
-                              {item}
-                            </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                          <div className="text-white font-bold text-xs line-clamp-2 mb-1">
+                            {video.snippet?.title}
+                          </div>
+                          <div className="text-zinc-400 text-[10px]">
+                            {formatNumber(video.statistics?.viewCount)} views
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                }
+
+                return (
+                  <Link
+                    key={`${activeTab}-${video.id}`}
+                    href={`/video/${video.id}`}
+                    className="group block"
+                  >
+                    <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl sm:rounded-2xl overflow-hidden hover:border-zinc-700 transition-colors">
+                      {/* THUMB */}
+                      <div className="relative aspect-video overflow-hidden">
+                        <img
+                          src={video.snippet?.thumbnails?.high?.url}
+                          alt={video.snippet?.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                        />
+                        <div className="absolute top-2 left-2">
+                          <span className={`inline-block px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold border ${stage.bg} ${stage.color} ${stage.border}`}>
+                            {stage.label}
+                          </span>
+                        </div>
+                        <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded-lg text-[10px] sm:text-xs font-medium">
+                          {formatNumber(video.statistics?.viewCount)} views
+                        </div>
+                      </div>
+
+                      {/* CONTENT */}
+                      <div className="p-3 sm:p-4">
+                        <h3 className="font-bold text-sm sm:text-base line-clamp-2 mb-2 group-hover:text-red-400 transition-colors">
+                          {video.snippet?.title}
+                        </h3>
+
+                        <div className="flex items-center gap-2 text-zinc-500 text-xs mb-3">
+                          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-[10px] font-bold">
+                            {video.snippet?.channelTitle?.[0]}
+                          </div>
+                          <span className="truncate">{video.snippet?.channelTitle}</span>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-xs text-zinc-400 mb-3">
+                          <span>👍 {formatNumber(video.statistics?.likeCount)}</span>
+                          <span>💬 {formatNumber(video.statistics?.commentCount)}</span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5">
+                          {tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-0.5 rounded-full bg-black/50 border border-zinc-800 text-[10px] sm:text-xs text-zinc-400"
+                            >
+                              #{tag}
+                            </span>
                           ))}
                         </div>
                       </div>
-
-                      {/* CHANNEL */}
-                      <div className="text-zinc-400 text-sm">
-                        {video.snippet?.channelTitle}
-                      </div>
-
-                      {/* TAGS */}
-                      <div className="flex flex-wrap gap-2">
-                        {extractAITags(
-                          video.snippet?.title || '',
-                          video.snippet?.description || ''
-                        ).map((tag) => (
-                          <div
-                            key={tag}
-                            className="px-3 py-1 rounded-full bg-black border border-zinc-700 text-sm"
-                          >
-                            #{tag}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* FOMO */}
-                      <div className="bg-orange-500/10 border border-orange-500 rounded-2xl p-4">
-                        <div className="text-orange-400 font-bold mb-1">
-                          ⚠️ Creator Copy Alert
-                        </div>
-                        <div className="text-sm text-zinc-300">
-                          {seededRandom(video.id + '-creators', 50) + 10} creators uploaded similar videos today.
-                        </div>
-                      </div>
-
-                      {/* EXPLODING */}
-                      <div>
-                        <div className="text-red-400 font-bold animate-pulse">
-                          🚀 Exploding Right Now
-                        </div>
-                        <div className="text-zinc-500 text-sm mt-1">
-                          Peak expected in {seededRandom(video.id + '-peak', 12) + 2} hours
-                        </div>
-                      </div>
-
-                      {/* SCORE */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-zinc-500 text-sm">Opportunity Score</div>
-                          <div className="text-yellow-400 font-black">{opportunity}/100</div>
-                        </div>
-                        <div className="w-full bg-zinc-800 rounded-full h-3 overflow-hidden">
-                          <div
-                            className="bg-yellow-400 h-full"
-                            style={{ width: `${opportunity}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* STATS */}
-                      <div className="grid grid-cols-3 gap-3 text-center">
-                        <div className="bg-black rounded-2xl p-3">
-                          <div className="text-2xl mb-1">👀</div>
-                          <div className="font-bold">
-                            {Number(video.statistics?.viewCount || 0).toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="bg-black rounded-2xl p-3">
-                          <div className="text-2xl mb-1">❤️</div>
-                          <div className="font-bold">
-                            {Number(video.statistics?.likeCount || 0).toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="bg-black rounded-2xl p-3">
-                          <div className="text-2xl mb-1">💬</div>
-                          <div className="font-bold">
-                            {Number(video.statistics?.commentCount || 0).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
                     </div>
-                  </motion.div>
-                </a>
-              )
-            })}
+                  </Link>
+                )
+              }
+            )}
             {(activeTab === 'trending' ? videos : activeTab === 'opportunity' ? risingVideos : finalShorts).length === 0 && (
-              <div className="col-span-full text-center py-20 text-zinc-500">
+              <div className="col-span-full text-center py-16 text-zinc-500">
                 No videos found for this category.
               </div>
             )}
           </motion.div>
         </AnimatePresence>
 
-        {/* =========================================================
-            LOADING
-        ========================================================= */}
+        {/* LOADING */}
         {loading && (
-          <div className="text-center py-10 text-zinc-500">
-            Loading YouTube trend intelligence...
+          <div className="text-center py-10 text-zinc-500 text-sm">
+            Loading trends...
           </div>
         )}
+
+        {/* FOOTER / STICKINESS SECTION */}
+        <div className="border-t border-zinc-800 pt-10 sm:pt-14 pb-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-10">
+            <div>
+              <h3 className="font-bold text-lg mb-3">Why TrendTube?</h3>
+              <p className="text-zinc-500 text-sm leading-relaxed">
+                We analyze YouTube's most popular videos in real-time, extracting hidden patterns
+                and viral signals that creators need to stay ahead of the curve.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg mb-3">How It Works</h3>
+              <p className="text-zinc-500 text-sm leading-relaxed">
+                Our AI scans trending content across 4 major regions, calculating engagement
+                velocity, opportunity scores, and niche growth potential every hour.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg mb-3">For Creators</h3>
+              <p className="text-zinc-500 text-sm leading-relaxed">
+                Discover what's blowing up right now. Find underserved niches. Copy what works
+                — before everyone else does.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-zinc-600 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <span>Data refreshed hourly from YouTube API</span>
+            </div>
+            <div>
+              © {new Date().getFullYear()} TrendTube. Not affiliated with YouTube.
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   )
