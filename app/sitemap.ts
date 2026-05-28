@@ -43,6 +43,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/low-competition-keywords`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE_URL}/youtube-growth-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/youtube-ai-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    // Dynamic Trend Pages
+    { url: `${BASE_URL}/trends/ai-shorts`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: `${BASE_URL}/trends/gaming-youtube`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: `${BASE_URL}/trends/mrbeast-style`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: `${BASE_URL}/trends/youtube-automation`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    // Creator Guides
+    { url: `${BASE_URL}/guides/how-to-find-viral-youtube-topics`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE_URL}/guides/how-youtube-shorts-go-viral`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE_URL}/guides/best-youtube-niches`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE_URL}/guides/youtube-trend-analysis`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    // Comparison Pages
+    { url: `${BASE_URL}/compare/vidiq`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE_URL}/compare/tubebuddy`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE_URL}/compare/google-trends`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
   ]
 
   TAGS.forEach((tag) => {
