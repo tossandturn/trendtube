@@ -624,7 +624,7 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
                 </Link>
                 <Link
                   href="/trending"
-                  className="inline-flex items-center gap-2 px-6 py-3 glass-panel text-white rounded-xl font-bold text-sm hover:bg-zinc-800/80 transition glow-hover"
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 bg-white/50 text-gray-900 rounded-xl font-bold text-sm hover:bg-white hover:border-gray-400 transition"
                 >
                   See Trending Now
                 </Link>
