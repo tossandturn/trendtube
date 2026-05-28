@@ -119,16 +119,30 @@ export default async function VideoPage({ params }: VideoPageProps) {
           <span className="text-sm font-medium">Back to Trends</span>
         </Link>
 
-        {/* Video Embed */}
-        <div className="aspect-video w-full rounded-2xl overflow-hidden bg-zinc-900 mb-6 sm:mb-8">
-          <iframe
-            className="w-full h-full"
-            src={`https://www.youtube.com/embed/${id}`}
-            title={video.snippet?.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
+        {/* Video Thumbnail with Play Button */}
+        <a
+          href={`https://www.youtube.com/watch?v=${id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block aspect-video w-full rounded-2xl overflow-hidden bg-zinc-900 mb-6 sm:mb-8 relative group"
+        >
+          <img
+            src={video.snippet?.thumbnails?.maxres?.url || video.snippet?.thumbnails?.high?.url}
+            alt={video.snippet?.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
           />
-        </div>
+          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition" />
+          <div className="absolute inset-0 flex items-center justify-center"
+          >
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-red-500 transition shadow-lg"
+            >
+              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </div>
+        </a>
 
         {/* Title & Channel */}
         <div className="mb-8 sm:mb-10">
