@@ -607,26 +607,47 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
                 <span className="uppercase tracking-wider">{REGION_META[region]?.label || 'United States'}</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight mb-4 leading-[1.05] text-glow">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight mb-4 leading-[1.05] text-glow text-gray-900">
                 Find Viral YouTube Topics<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 text-glow-red">Before They Peak</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 text-glow-red">Before They Explode</span>
               </h1>
-              <p className="text-gray-500 text-base sm:text-lg max-w-2xl leading-relaxed mb-6">
-                Predict viral niches early, see low-competition opportunities, and create videos while competition is still low.
+              <p className="text-gray-600 text-base sm:text-lg max-w-2xl leading-relaxed mb-6">
+                Your unfair advantage on YouTube. Predict breakout videos, discover low-competition niches, and publish before everyone else.
               </p>
+
+              {/* Social Proof */}
+              <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-gray-500">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg">👥</span>
+                  <span className="font-bold text-gray-900">12,000+</span>
+                  <span>creators</span>
+                </div>
+                <div className="w-1 h-4 bg-gray-300 rounded-full hidden sm:block" />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg">📊</span>
+                  <span className="font-bold text-gray-900">2.1M</span>
+                  <span>trends analyzed</span>
+                </div>
+                <div className="w-1 h-4 bg-gray-300 rounded-full hidden sm:block" />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg">🚀</span>
+                  <span className="font-bold text-gray-900">350K</span>
+                  <span>opportunities discovered</span>
+                </div>
+              </div>
 
               <div className="flex flex-wrap gap-3 mb-6">
                 <Link
                   href={`/tag/${slugifyTag(topOpportunityTag.tag)}`}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-xl font-bold text-sm hover:bg-zinc-200 transition shadow-[0_0_20px_rgba(255,255,255,0.15)]"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition shadow-[0_0_20px_rgba(220,38,38,0.25)]"
                 >
-                  Start Exploring →
+                  Start Free →
                 </Link>
                 <Link
                   href="/trending"
-                  className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 bg-white/50 text-gray-900 rounded-xl font-bold text-sm hover:bg-white hover:border-gray-400 transition"
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 bg-white text-gray-900 rounded-xl font-bold text-sm hover:bg-gray-50 hover:border-gray-400 transition"
                 >
-                  See Trending Now
+                  Explore Live Trends
                 </Link>
               </div>
 
@@ -637,13 +658,36 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
                   { icon: '⚡', text: 'Generate winning video ideas instantly' },
                   { icon: '📱', text: 'Built for Shorts & AI creators' },
                 ].map((item) => (
-                  <div key={item.text} className="flex items-start gap-2 glass-panel rounded-xl p-3">
+                  <div key={item.text} className="flex items-start gap-2 bg-gray-50 border border-gray-200 rounded-xl p-3">
                     <span className="text-lg shrink-0">{item.icon}</span>
                     <span className="text-gray-600 text-xs font-medium leading-snug">{item.text}</span>
                   </div>
                 ))}
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* ===== SECTION: HOW IT WORKS ===== */}
+        <section className="mb-16 sm:mb-20">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3 text-gray-900">How It Works</h2>
+            <p className="text-gray-500 max-w-2xl mx-auto">AI-powered trend detection in 4 simple steps</p>
+          </div>
+          <div className="grid sm:grid-cols-4 gap-4">
+            {[
+              { step: '1', title: 'AI Scans', desc: 'Our AI monitors millions of YouTube videos across 6 regions 24/7', icon: '🤖' },
+              { step: '2', title: 'Detects Momentum', desc: 'Algorithms identify early growth signals before trends go mainstream', icon: '📈' },
+              { step: '3', title: 'Predicts Trends', desc: 'Machine learning forecasts which niches will explode next', icon: '🔮' },
+              { step: '4', title: 'Suggests Uploads', desc: 'Get AI-generated titles, hooks, and timing recommendations', icon: '🎬' },
+            ].map((item) => (
+              <div key={item.step} className="glass-panel neon-border rounded-2xl p-6 text-center glow-hover">
+                <div className="text-3xl mb-3">{item.icon}</div>
+                <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 font-bold text-sm flex items-center justify-center mx-auto mb-3">{item.step}</div>
+                <div className="font-bold text-gray-900 mb-2">{item.title}</div>
+                <div className="text-gray-500 text-sm leading-relaxed">{item.desc}</div>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -732,6 +776,30 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
         </section>
 
         <AdBanner slot="1234567890" className="my-8" />
+
+        {/* ===== SECTION: USE CASES ===== */}
+        <section className="mb-16 sm:mb-20">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3 text-gray-900">Built For Every Creator Type</h2>
+            <p className="text-gray-500 max-w-2xl mx-auto">From Shorts to faceless channels, we help you find your edge</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { icon: '📱', title: 'Shorts Creators', desc: 'Find viral Shorts formats and hooks before they saturate. Get ahead of the algorithm.', color: 'from-red-500 to-pink-500' },
+              { icon: '🎭', title: 'Faceless Channels', desc: 'Discover high-performing faceless content ideas with low competition and high CPM potential.', color: 'from-purple-500 to-indigo-500' },
+              { icon: '🤖', title: 'AI-Assisted Channels', desc: 'Leverage AI tools for scriptwriting, thumbnails, and trend prediction to scale faster.', color: 'from-blue-500 to-cyan-500' },
+              { icon: '🎮', title: 'Gaming & Music', desc: 'Track game updates, music trends, and viral moments in real-time across genres.', color: 'from-green-500 to-emerald-500' },
+            ].map((item) => (
+              <div key={item.title} className="glass-panel neon-border rounded-2xl p-6 glow-hover group">
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-2xl mb-4 shadow-lg`}>
+                  {item.icon}
+                </div>
+                <div className="font-bold text-gray-900 mb-2">{item.title}</div>
+                <div className="text-gray-500 text-sm leading-relaxed">{item.desc}</div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* ===== SECTION 2: TRENDING TAGS BUBBLE CLUSTER ===== */}
         <section className="mb-16 sm:mb-20">
@@ -1029,14 +1097,14 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
           <div className="grid sm:grid-cols-3 gap-4">
             {missedOpportunities.map(({ video, tag, missedGrowth }) => (
               <div key={`missed-${video.id}`} className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent">
-                <div className="text-red-400 font-black text-3xl sm:text-4xl mb-2 text-glow-red data-mono">⚡ {missedGrowth}/day</div>
-                <div className="text-white font-bold text-lg mb-1">💔 {tag}</div>
-                <div className="text-zinc-500 text-sm line-clamp-1 mb-4">{video.snippet?.title}</div>
-                <div className="flex items-center gap-3 text-xs text-zinc-400 data-mono">
+                <div className="text-red-600 font-black text-3xl sm:text-4xl mb-2 text-glow-red data-mono">⚡ {missedGrowth}/day</div>
+                <div className="text-gray-900 font-bold text-lg mb-1">💔 {tag}</div>
+                <div className="text-gray-500 text-sm line-clamp-1 mb-4">{video.snippet?.title}</div>
+                <div className="flex items-center gap-3 text-xs text-gray-500 data-mono">
                   <span>👁️ {formatNumber(video.statistics?.viewCount)} views</span>
                 </div>
-                <div className="mt-4 pt-4 border-t border-zinc-800/60">
-                  <Link href={`/tag/${slugifyTag(tag)}`} className="text-xs font-bold text-red-400 hover:text-red-300 transition">
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <Link href={`/tag/${slugifyTag(tag)}`} className="text-xs font-bold text-red-600 hover:text-red-500 transition">
                     Don&apos;t miss next {tag} trend →
                   </Link>
                 </div>
@@ -1082,6 +1150,55 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
                 </Link>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ===== FINAL CTA SECTION ===== */}
+        <section className="mb-16 sm:mb-20">
+          <div className="glass-panel neon-border rounded-3xl p-8 sm:p-12 text-center glow-hover relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-red-500/[0.08] rounded-full blur-[100px]" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-500/[0.06] rounded-full blur-[100px]" />
+
+            <div className="relative">
+              <h2 className="text-2xl sm:text-4xl font-black mb-4 text-gray-900">
+                Ready to Get The<br />
+                <span className="text-red-600">Unfair Advantage?</span>
+              </h2>
+              <p className="text-gray-500 max-w-xl mx-auto mb-6">
+                Join 12,000+ creators who use TubeFission to discover viral trends before they explode.
+                Start free today.
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
+                <Link
+                  href="/trending"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-red-600 text-white rounded-xl font-bold text-base hover:bg-red-700 transition shadow-[0_0_30px_rgba(220,38,38,0.3)]"
+                >
+                  Start Free →
+                </Link>
+                <Link
+                  href="/trending"
+                  className="inline-flex items-center gap-2 px-8 py-4 border-2 border-gray-300 text-gray-900 rounded-xl font-bold text-base hover:bg-gray-50 transition"
+                >
+                  Explore Live Trends
+                </Link>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-green-500">✓</span>
+                  <span>No credit card required</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-green-500">✓</span>
+                  <span>Free forever plan</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-green-500">✓</span>
+                  <span>Cancel anytime</span>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

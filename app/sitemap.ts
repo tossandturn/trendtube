@@ -36,6 +36,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/gaming-youtube-trends`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE_URL}/mrbeast-style-videos`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE_URL}/viral-music-trends`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    // SEO Landing Pages
+    { url: `${BASE_URL}/youtube-trends`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${BASE_URL}/youtube-shorts-trends`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${BASE_URL}/viral-video-ideas`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: `${BASE_URL}/low-competition-keywords`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: `${BASE_URL}/youtube-growth-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE_URL}/youtube-ai-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
   ]
 
   TAGS.forEach((tag) => {
