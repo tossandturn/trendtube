@@ -4,6 +4,7 @@ import { getViewVelocity, getEngagementRate, getTagEmoji } from '@/lib/analytics
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getRegionLabels } from '@/lib/region'
+import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
 
 export const metadata: Metadata = {
   title: 'Trending YouTube Videos Today | Real-Time Viral Tracker',
@@ -47,6 +48,10 @@ export default async function TrendingPage() {
   const sorted = [...videos].sort((a: any, b: any) =>
     Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0)
   )
+
+  // Generate daily recommendations based on trending data
+  const dailyRecommendations = generateDailyRecommendations(sorted.slice(0, 30), region, 5)
+  const regionalPrefs = REGIONAL_PREFERENCES[region] || REGIONAL_PREFERENCES.US
 
   // Calculate analytics
   const totalViews = sorted.reduce((sum: number, v: any) => sum + Number(v.statistics?.viewCount || 0), 0)
@@ -293,6 +298,145 @@ export default async function TrendingPage() {
                 <span>🔗</span> Share Dashboard
               </button>
             </div>
+          </div>
+        </section>
+
+        {/* Daily Topic Recommendations */}
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-6 rounded-full bg-gradient-to-b from-purple-400 to-purple-600" />
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+                <span className="text-purple-600">💡</span> {getTimeBasedGreeting()}, Creator
+              </h2>
+            </div>
+            <span className="text-xs text-gray-500 data-mono bg-gray-100 px-3 py-1 rounded-full">
+              {getTodayString()}
+            </span>
+          </div>
+
+          {/* Regional Insights */}
+          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl">{regionalPrefs.flag || '🌍'}</span>
+              <div>
+                <h3 className="font-bold text-gray-900">{labels.full} Creator Intelligence</h3>
+                <p className="text-sm text-gray-500">Based on today's trending data from {sorted.length} videos</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+                <div className="text-purple-600 text-xs font-bold mb-1">🎬 TOP FORMATS</div>
+                <div className="text-sm text-gray-700">{regionalPrefs.popularFormats.slice(0, 3).join(', ')}</div>
+              </div>
+              <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                <div className="text-blue-600 text-xs font-bold mb-1">🔥 HOT TOPICS</div>
+                <div className="text-sm text-gray-700">{regionalPrefs.trendingTopics.slice(0, 2).join(', ')}</div>
+              </div>
+              <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+                <div className="text-green-600 text-xs font-bold mb-1">⏱️ OPTIMAL LENGTH</div>
+                <div className="text-sm text-gray-700">{regionalPrefs.optimalLength}</div>
+              </div>
+              <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
+                <div className="text-orange-600 text-xs font-bold mb-1">🚀 BEST TIME</div>
+                <div className="text-sm text-gray-700">{regionalPrefs.bestPostTime}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recommendations Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {dailyRecommendations.map((rec, idx) => (
+              <div key={rec.id} className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`text-xs font-bold px-2 py-1 rounded ${
+                    rec.potentialViews === 'viral' ? 'bg-red-100 text-red-600' :
+                    rec.potentialViews === 'high' ? 'bg-orange-100 text-orange-600' :
+                    rec.potentialViews === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+                    'bg-green-100 text-green-600'
+                  }`}>
+                    {rec.potentialViews === 'viral' ? '🔥 VIRAL' :
+                     rec.potentialViews === 'high' ? '⚡ HIGH' :
+                     rec.potentialViews === 'medium' ? '💡 MEDIUM' : '📈 STEADY'}
+                  </span>
+                  <span className="text-xs text-gray-400 data-mono">#{idx + 1}</span>
+                </div>
+
+                {/* Title */}
+                <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
+                  {rec.title}
+                </h3>
+
+                {/* Category */}
+                <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
+                  <span>🏷️</span> {rec.category}
+                </div>
+
+                {/* Metrics */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Confidence</span>
+                    <span className="font-bold data-mono">{rec.confidence}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full" style={{ width: `${rec.confidence}%` }} />
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Difficulty</span>
+                    <span className={`font-bold ${
+                      rec.difficulty === 'easy' ? 'text-green-600' :
+                      rec.difficulty === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {rec.difficulty === 'easy' ? '🟢 Easy' :
+                       rec.difficulty === 'medium' ? '🟡 Medium' : '🔴 Hard'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Why Trending */}
+                <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                  <div className="text-xs font-bold text-gray-700 mb-1">🧠 Why This Works</div>
+                  <p className="text-xs text-gray-500 leading-relaxed">{rec.whyTrending}</p>
+                </div>
+
+                {/* Similar Videos */}
+                {rec.similarVideos.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-xs font-bold text-gray-700 mb-2">📺 Similar Performing Videos</div>
+                    <div className="space-y-1">
+                      {rec.similarVideos.slice(0, 2).map((v, i) => (
+                        <Link key={i} href={`/video/${v.id}`} className="block text-xs text-gray-500 hover:text-purple-600 transition truncate">
+                          • {v.title.slice(0, 40)}{v.title.length > 40 ? '...' : ''}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-1">
+                  {rec.suggestedTags.slice(0, 4).map((tag, i) => (
+                    <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500 mb-3">
+              💡 These recommendations are generated from real trending data in {labels.full}
+            </p>
+            <Link
+              href="/youtube-ai-trends"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-medium hover:from-purple-600 hover:to-purple-700 transition shadow-lg shadow-purple-200"
+            >
+              <span>🚀</span> Get More AI-Powered Ideas
+            </Link>
           </div>
         </section>
 

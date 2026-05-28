@@ -5,6 +5,7 @@ import AdBanner from '@/app/components/AdBanner'
 import { getEngagementRate, getViewVelocity, getTagColor, getTagEmoji } from '@/lib/analytics'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
+import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
 
 const TAG_KEYWORDS: Record<string, string[]> = {
   ai: ['ai', 'chatgpt', 'openai', 'gpt'],
@@ -121,6 +122,11 @@ export default async function TagPage({ params }: TagPageProps) {
   const categoryShare = totalViews / (allVideosTotal || 1)
   const categorySupply = filtered.length / (videos.length || 1)
   const opportunityScore = categorySupply > 0 ? (categoryShare / categorySupply) * 100 : 50
+
+  // Generate daily recommendations for this tag
+  const region = await getRegion()
+  const dailyRecommendations = generateDailyRecommendations(filtered.slice(0, 20), region, 4)
+  const regionalPrefs = REGIONAL_PREFERENCES[region] || REGIONAL_PREFERENCES.US
 
   return (
     <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">
@@ -488,6 +494,118 @@ export default async function TagPage({ params }: TagPageProps) {
           </div>
           <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{analysis}</p>
         </div>
+
+        {/* Daily Topic Recommendations */}
+        <section className="mb-10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-6 rounded-full bg-gradient-to-b from-purple-400 to-purple-600" />
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+                <span className="text-purple-600">💡</span> {getTimeBasedGreeting()} — {tagName} Ideas for {regionalPrefs.flag} {region}
+              </h2>
+            </div>
+            <span className="text-xs text-gray-500 data-mono bg-gray-100 px-3 py-1 rounded-full">
+              {getTodayString()}
+            </span>
+          </div>
+
+          {/* Regional Insights for Tag */}
+          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+                <div className="text-purple-600 text-xs font-bold mb-1">🎬 WORKS IN {region}</div>
+                <div className="text-sm text-gray-700">{regionalPrefs.popularFormats.slice(0, 2).join(', ')}</div>
+              </div>
+              <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                <div className="text-blue-600 text-xs font-bold mb-1">🔥 HOT IN {region}</div>
+                <div className="text-sm text-gray-700">{regionalPrefs.trendingTopics.slice(0, 2).join(', ')}</div>
+              </div>
+              <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+                <div className="text-green-600 text-xs font-bold mb-1">⏱️ OPTIMAL LENGTH</div>
+                <div className="text-sm text-gray-700">{regionalPrefs.optimalLength}</div>
+              </div>
+              <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
+                <div className="text-orange-600 text-xs font-bold mb-1">🚀 BEST POST TIME</div>
+                <div className="text-sm text-gray-700">{regionalPrefs.bestPostTime}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* AI-Powered Recommendations */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {dailyRecommendations.map((rec, idx) => (
+              <div key={rec.id} className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`text-xs font-bold px-2 py-1 rounded ${
+                    rec.potentialViews === 'viral' ? 'bg-red-100 text-red-600' :
+                    rec.potentialViews === 'high' ? 'bg-orange-100 text-orange-600' :
+                    rec.potentialViews === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+                    'bg-green-100 text-green-600'
+                  }`}>
+                    {rec.potentialViews === 'viral' ? '🔥 VIRAL' :
+                     rec.potentialViews === 'high' ? '⚡ HIGH' :
+                     rec.potentialViews === 'medium' ? '💡 MEDIUM' : '📈 STEADY'}
+                  </span>
+                  <span className="text-xs text-gray-400 data-mono">#{idx + 1}</span>
+                </div>
+
+                {/* Title */}
+                <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
+                  {rec.title}
+                </h3>
+
+                {/* Category */}
+                <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
+                  <span>🏷️</span> {rec.category}
+                </div>
+
+                {/* Metrics */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Confidence</span>
+                    <span className="font-bold data-mono">{rec.confidence}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full" style={{ width: `${rec.confidence}%` }} />
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Difficulty</span>
+                    <span className={`font-bold ${
+                      rec.difficulty === 'easy' ? 'text-green-600' :
+                      rec.difficulty === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {rec.difficulty === 'easy' ? '🟢 Easy' :
+                       rec.difficulty === 'medium' ? '🟡 Medium' : '🔴 Hard'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Why Trending */}
+                <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                  <div className="text-xs font-bold text-gray-700 mb-1">🧠 Why This Works</div>
+                  <p className="text-xs text-gray-500 leading-relaxed">{rec.whyTrending}</p>
+                </div>
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-1">
+                  {rec.suggestedTags.slice(0, 3).map((tag, i) => (
+                    <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500 mb-3">
+              💡 These {tagName} recommendations are based on real trending data from {region}
+            </p>
+          </div>
+        </section>
 
         {/* Video Ideas */}
         <div className="mb-10">
