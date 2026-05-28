@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import AdBanner from '@/app/components/AdBanner'
 
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
 
@@ -146,6 +147,8 @@ export default async function TagPage({ params }: TagPageProps) {
             <div className="text-xl sm:text-2xl font-black text-green-400">+{420 + hashRandom(slug, 200)}%</div>
           </div>
         </div>
+
+        <AdBanner slot="4567890123" className="my-8" />
 
         {/* 7-Day Growth Chart */}
         <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 sm:p-6 mb-10">

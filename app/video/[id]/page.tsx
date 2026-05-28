@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import VideoPlayer from '@/app/components/VideoPlayer'
+import AdBanner from '@/app/components/AdBanner'
 
 interface VideoPageProps {
   params: Promise<{ id: string }>
@@ -155,6 +156,8 @@ export default async function VideoPage({ params }: VideoPageProps) {
             <div className="text-xl sm:text-2xl font-black text-green-400">{engagement}%</div>
           </div>
         </div>
+
+        <AdBanner slot="3456789012" className="my-8" />
 
         {/* AI Insights */}
         <div className="mb-8 sm:mb-10">

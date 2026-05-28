@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react'
 import Link from 'next/link'
+import AdBanner from './AdBanner'
 
 /* =========================================================
    TYPES
@@ -443,6 +444,8 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
           </div>
         </section>
 
+        <AdBanner slot="1234567890" className="my-8" />
+
         {/* ===== SECTION 2: TRENDING TAGS ===== */}
         <section className="mb-16 sm:mb-20">
           <div className="mb-6 sm:mb-8">
@@ -626,6 +629,8 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
             })}
           </div>
         </section>
+
+        <AdBanner slot="2345678901" className="my-8" />
 
         {/* ===== SECTION 5: SHORTS PREVIEW ===== */}
         <section className="mb-16 sm:mb-20">
