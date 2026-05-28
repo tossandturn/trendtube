@@ -136,15 +136,88 @@ function seededRandom(seed: string, max: number) {
 }
 
 function getViralScore(video: Video): number {
-  const score = calculateTrendScore(video)
-  return Math.min(100, Math.max(1, Math.floor(score / 4)))
+  const views = Number(video.statistics?.viewCount || 0)
+  const likes = Number(video.statistics?.likeCount || 0)
+  const comments = Number(video.statistics?.commentCount || 0)
+  const title = video.snippet?.title?.toLowerCase() || ''
+
+  // View tier (0-25) — logarithmic scale so differences are visible
+  let viewTier = 0
+  if (views > 80_000_000) viewTier = 25
+  else if (views > 50_000_000) viewTier = 23
+  else if (views > 30_000_000) viewTier = 21
+  else if (views > 20_000_000) viewTier = 19
+  else if (views > 10_000_000) viewTier = 17
+  else if (views > 7_000_000) viewTier = 15
+  else if (views > 5_000_000) viewTier = 13
+  else if (views > 3_000_000) viewTier = 11
+  else if (views > 2_000_000) viewTier = 9
+  else if (views > 1_000_000) viewTier = 7
+  else if (views > 500_000) viewTier = 5
+  else viewTier = 2
+
+  // Engagement quality (0-40) — likes per 1000 views
+  const likeRate = views > 0 ? (likes / views) * 1000 : 0
+  const commentRate = views > 0 ? (comments / views) * 1000 : 0
+  const engagementScore = Math.min(40, likeRate * 2.5 + commentRate * 7)
+
+  // Discussion richness (0-20) — comments relative to likes
+  const commentRichness = likes > 0 ? (comments / likes) * 100 : 0
+  const discussionScore = Math.min(20, commentRichness * 2.5)
+
+  // Title optimization (0-15)
+  let titleScore = 0
+  if (/\d/.test(title)) titleScore += 3
+  if (title.includes('?')) titleScore += 3
+  if (title.includes('!')) titleScore += 1
+  if (title.includes('how to') || title.includes('tutorial')) titleScore += 4
+  if (title.includes('secret') || title.includes('revealed') || title.includes('truth')) titleScore += 4
+  if (title.includes('challenge')) titleScore += 3
+  if (title.includes('vs') || title.includes('comparison')) titleScore += 2
+  if (title.includes('i tried') || title.includes('i built')) titleScore += 3
+
+  return Math.min(100, Math.max(1, Math.round(viewTier + engagementScore + discussionScore + titleScore)))
 }
 
 function getOpportunityScore(video: Video): number {
-  const score = calculateTrendScore(video)
   const views = Number(video.statistics?.viewCount || 0)
-  const saturationPenalty = views > 10_000_000 ? 25 : views > 1_000_000 ? 12 : 0
-  return Math.min(100, Math.max(1, Math.floor(score / 4) + 35 - saturationPenalty))
+  const likes = Number(video.statistics?.likeCount || 0)
+  const comments = Number(video.statistics?.commentCount || 0)
+  const title = video.snippet?.title?.toLowerCase() || ''
+
+  // Saturation window (0-45) — lower views = higher opportunity
+  let saturationScore = 0
+  if (views < 300_000) saturationScore = 45
+  else if (views < 600_000) saturationScore = 40
+  else if (views < 1_000_000) saturationScore = 35
+  else if (views < 2_000_000) saturationScore = 30
+  else if (views < 4_000_000) saturationScore = 24
+  else if (views < 7_000_000) saturationScore = 18
+  else if (views < 12_000_000) saturationScore = 12
+  else if (views < 25_000_000) saturationScore = 6
+  else saturationScore = 2
+
+  // Engagement momentum (0-30)
+  const likeRate = views > 0 ? (likes / views) * 1000 : 0
+  const commentRate = views > 0 ? (comments / views) * 1000 : 0
+  const momentumScore = Math.min(30, likeRate * 2 + commentRate * 5)
+
+  // Niche freshness (0-15) — trending topics get bonus
+  let nicheScore = 5
+  if (title.includes('ai') || title.includes('chatgpt') || title.includes('openai')) nicheScore = 15
+  else if (title.includes('shorts') || title.includes('#shorts')) nicheScore = 14
+  else if (title.includes('tutorial') || title.includes('how to')) nicheScore = 13
+  else if (title.includes('challenge') || title.includes('last to')) nicheScore = 12
+  else if (title.includes('reaction') || title.includes('reacts')) nicheScore = 11
+  else if (title.includes('gaming') || title.includes('minecraft') || title.includes('fortnite')) nicheScore = 10
+  else if (title.includes('crypto') || title.includes('bitcoin')) nicheScore = 10
+  else if (title.includes('story') || title.includes('i was')) nicheScore = 9
+
+  // Comment depth (0-10)
+  const commentDepth = likes > 0 ? (comments / likes) * 40 : 0
+  const depthScore = Math.min(10, commentDepth)
+
+  return Math.min(100, Math.max(1, Math.round(saturationScore + momentumScore + nicheScore + depthScore)))
 }
 
 function getPeakExpected(seed: string): string {
@@ -177,16 +250,166 @@ function generateWhyBlowingUp(video: Video): string {
   const title = video.snippet?.title?.toLowerCase() || ''
   const views = Number(video.statistics?.viewCount || 0)
   const likes = Number(video.statistics?.likeCount || 0)
+  const comments = Number(video.statistics?.commentCount || 0)
   const likeRatio = views > 0 ? likes / views : 0
+  const commentRatio = views > 0 ? comments / views : 0
+  const commentToLikeRatio = likes > 0 ? comments / likes : 0
 
-  if (likeRatio > 0.05 && title.includes('shorts')) return 'Strong like ratio + Shorts format = maximum algorithmic push'
-  if (likeRatio > 0.05) return 'Strong like-to-view ratio signals premium content to the algorithm'
-  if (title.includes('shorts') || title.includes('#shorts')) return 'Shorts format receives 2-3x more impressions per upload vs long-form'
-  if (views > 5_000_000) return 'Massive view velocity indicates strong algorithmic recommendation performance'
-  if (title.includes('how to') || title.includes('tutorial')) return 'Evergreen tutorial content maintains steady search traffic over time'
-  if (title.includes('ai') || title.includes('chatgpt')) return 'AI topics are experiencing surging search demand globally'
-  if (title.includes('minecraft') || title.includes('gaming')) return 'Gaming content drives consistently high session duration'
-  return 'Strong engagement velocity and audience retention pattern detected'
+  // Detect content type from title
+  const isShort = title.includes('shorts') || title.includes('#shorts')
+  const isTutorial = title.includes('how to') || title.includes('tutorial') || title.includes('guide')
+  const isList = /\d+/.test(title) && (title.includes('best') || title.includes('top') || title.includes('ways') || title.includes('things'))
+  const isReaction = title.includes('reaction') || title.includes('reacts to') || title.includes('responds')
+  const isChallenge = title.includes('challenge') || title.includes('try ') || title.includes('i tried')
+  const isNews = title.includes('news') || title.includes('update') || title.includes('breaking')
+  const isReview = title.includes('review') || title.includes('vs ') || title.includes('comparison')
+  const isStory = title.includes('story') || title.includes('i was') || title.includes('my ') || title.includes('i got')
+  const isAI = title.includes('ai') || title.includes('chatgpt') || title.includes('openai') || title.includes('gpt')
+  const isGaming = title.includes('game') || title.includes('minecraft') || title.includes('fortnite') || title.includes('gta') || title.includes('play')
+  const isMusic = title.includes('song') || title.includes('music') || title.includes('cover') || title.includes('official')
+  const isPrank = title.includes('prank') || title.includes('trolling')
+  const isTransformation = title.includes('before') || title.includes('makeover') || title.includes('remodel')
+
+  const highLikeRatio = likeRatio > 0.03
+  const highCommentRatio = commentRatio > 0.0008
+  const highDiscussion = commentToLikeRatio > 0.04
+  const megaViral = views > 20_000_000
+  const rising = views > 1_000_000 && views < 10_000_000
+
+  // Shorts
+  if (isShort && highLikeRatio) {
+    return 'Shorts format amplified by exceptional like velocity — the algorithm heavily weights viewer approval on vertical content, creating a rapid distribution loop.'
+  }
+  if (isShort && highDiscussion) {
+    return 'Vertical format triggering unusually high comment debate — Shorts with discussion density receive extended impressions as the algorithm tests broader audiences.'
+  }
+  if (isShort) {
+    return 'Riding YouTube\'s Shorts algorithmic push — vertical content currently receives 2-3x more impressions per upload compared to traditional long-form.'
+  }
+
+  // Tutorial
+  if (isTutorial && megaViral) {
+    return 'Mass-market tutorial hitting global search demand — evergreen "how-to" content with broad appeal sustains discovery through both search and recommended feeds.'
+  }
+  if (isTutorial && highLikeRatio) {
+    return 'Tutorial content with exceptional viewer satisfaction — high like ratio indicates the method actually works, driving repeat watches and saves.'
+  }
+  if (isTutorial) {
+    return 'Educational content capturing high-intent search traffic — viewers actively seeking solutions drive above-average watch time and lower skip rates.'
+  }
+
+  // List
+  if (isList && megaViral) {
+    return 'List format exploiting cognitive completion bias at scale — numbered promises create irresistible click-through and sustained retention across millions of viewers.'
+  }
+  if (isList) {
+    return 'Structured list triggering curiosity-driven retention — viewers feel compelled to watch through all entries to avoid missing the "best" item.'
+  }
+
+  // Reaction
+  if (isReaction && highDiscussion) {
+    return 'Reaction format igniting polarized comment debate — opinion-driven responses create controversy loops that the algorithm interprets as high engagement.'
+  }
+  if (isReaction && megaViral) {
+    return 'Reaction video piggybacking on a mainstream cultural moment — leveraging existing audience interest dramatically reduces discovery friction.'
+  }
+  if (isReaction) {
+    return 'Reaction content feeding parasocial connection — viewers return to see the creator\'s personality and opinions, building habitual watch patterns.'
+  }
+
+  // Challenge
+  if (isChallenge && megaViral) {
+    return 'Challenge format achieving mass participation velocity — repeatable concept encourages response videos, duets, and community submissions that compound reach.'
+  }
+  if (isChallenge) {
+    return 'Challenge structure creating a powerful curiosity gap — viewers must watch to the conclusion to see if the creator succeeds or fails.'
+  }
+
+  // News
+  if (isNews && highDiscussion) {
+    return 'Breaking news surfacing in real-time search with active debate — recency bonus combined with comment controversy accelerates recommendation velocity.'
+  }
+  if (isNews) {
+    return 'News content benefiting from temporal relevance priority — current events receive algorithmic preference in trending and explore surfaces.'
+  }
+
+  // Review
+  if (isReview && highLikeRatio) {
+    return 'Review content validated by strong approval metrics — high like ratio signals trustworthy information, critical for purchase-intent search traffic.'
+  }
+  if (isReview) {
+    return 'Comparison content capturing mid-funnel research traffic — viewers actively evaluating options watch longer and engage deeper than passive entertainment.'
+  }
+
+  // Story
+  if (isStory && highDiscussion) {
+    return 'Personal narrative driving emotional comment engagement — relatability triggers sharing behavior as viewers tag friends who had similar experiences.'
+  }
+  if (isStory) {
+    return 'Storytelling format leveraging emotional hooks — personal experiences create stronger parasocial bonds than generic or informational content.'
+  }
+
+  // AI
+  if (isAI && megaViral) {
+    return 'AI topic riding a global curiosity wave — mainstream interest in artificial intelligence creates sustained cross-demographic discovery traffic.'
+  }
+  if (isAI && isTutorial) {
+    return 'AI tutorial capturing the early-adopter education market — teaching new tools before saturation builds authority and subscriber loyalty.'
+  }
+  if (isAI) {
+    return 'AI content attracting high-value tech-savvy audiences — niche expertise draws viewers with above-average engagement and sharing behavior.'
+  }
+
+  // Gaming
+  if (isGaming && megaViral) {
+    return 'Gaming content boosted by a major update, event, or release — community mobilization around new content drives simultaneous coordinated view spikes.'
+  }
+  if (isGaming && highDiscussion) {
+    return 'Gaming content sparking community debate — patch notes, tier lists, and controversial takes drive above-average comment density.'
+  }
+  if (isGaming) {
+    return 'Gaming content maintaining consistent session duration — dedicated player communities provide reliable return viewership and playlist continuity.'
+  }
+
+  // Music
+  if (isMusic && megaViral) {
+    return 'Music content achieving playlist and algorithmic crossover — tracks that bridge niches receive distribution across multiple recommendation clusters.'
+  }
+  if (isMusic) {
+    return 'Music content benefiting from repeatability — songs get rewatched and re-listened, inflating view counts and signaling strong retention to the algorithm.'
+  }
+
+  // Prank
+  if (isPrank) {
+    return 'Prank format leveraging suspense and surprise — unpredictable outcomes create strong retention curves as viewers anticipate the reaction.'
+  }
+
+  // Transformation
+  if (isTransformation) {
+    return 'Transformation content satisfying the completion bias — viewers are emotionally invested in seeing the before-and-after payoff.'
+  }
+
+  // Engagement patterns
+  if (highLikeRatio && highDiscussion) {
+    return 'Rare combination of mass approval and active discussion — both high likes and comment threads signal exceptional content that resonates and provokes thought.'
+  }
+  if (highLikeRatio && rising) {
+    return 'Strong approval signals on a mid-size video — the algorithm is likely testing this content to broader audiences based on exceptional early engagement.'
+  }
+  if (highLikeRatio) {
+    return 'Above-average like-to-view ratio indicates content exceeds expectations — positive surprise drives organic sharing and saves.'
+  }
+  if (highDiscussion) {
+    return 'Elevated comment density suggests controversy or debate — discussion-driven content receives extended algorithmic promotion as comments indicate depth.'
+  }
+  if (megaViral) {
+    return 'Massive cross-platform virality — this content has broken out of its niche into mainstream recommendation feeds across demographics.'
+  }
+  if (rising) {
+    return 'Rising momentum detected — engagement velocity suggests the algorithm is actively expanding distribution beyond the core audience.'
+  }
+
+  return 'Steady engagement pattern with consistent audience retention — reliable performance within its content category with room for broader discovery.'
 }
 
 function generateCompetitionLevel(video: Video): string {
