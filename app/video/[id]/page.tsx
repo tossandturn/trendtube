@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import VideoPlayer from '@/app/components/VideoPlayer'
 
 interface VideoPageProps {
   params: Promise<{ id: string }>
@@ -62,7 +63,6 @@ function generateInsights(video: any) {
   const engagement = views > 0 ? ((likes + comments) / views) * 100 : 0
 
   const insights = []
-
   if (engagement > 5) {
     insights.push({ icon: '🔥', title: 'High Engagement', desc: `Engagement rate of ${engagement.toFixed(2)}% is well above the YouTube average of 1-3%.` })
   }
@@ -81,7 +81,6 @@ function generateInsights(video: any) {
   if (insights.length === 0) {
     insights.push({ icon: '📈', title: 'Steady Growth', desc: 'This video is performing within expected parameters for its niche.' })
   }
-
   return insights
 }
 
@@ -90,8 +89,8 @@ export async function generateMetadata({ params }: VideoPageProps): Promise<Meta
   const video = await fetchVideoById(id)
   const title = video?.snippet?.title || 'Video Analysis'
   return {
-    title: `${title} - TrendTube Analysis`,
-    description: `AI-powered trend analysis for "${title}". View statistics, engagement metrics, and viral predictions.`,
+    title: `Why "${title}" Went Viral on YouTube — TrendTube`,
+    description: `Analyze why "${title}" is trending, view retention stats, viral growth trajectory, and AI-powered creator insights. Discover actionable opportunity.`,
   }
 }
 
@@ -103,9 +102,6 @@ export default async function VideoPage({ params }: VideoPageProps) {
   const related = await fetchRelatedVideos()
   const insights = generateInsights(video)
   const engagement = calculateEngagement(video)
-  const views = Number(video.statistics?.viewCount || 0)
-  const likes = Number(video.statistics?.likeCount || 0)
-  const comments = Number(video.statistics?.commentCount || 0)
 
   return (
     <main className="min-h-screen bg-[#070707] text-white">
@@ -119,30 +115,13 @@ export default async function VideoPage({ params }: VideoPageProps) {
           <span className="text-sm font-medium">Back to Trends</span>
         </Link>
 
-        {/* Video Thumbnail with Play Button */}
-        <a
-          href={`https://www.youtube.com/watch?v=${id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block aspect-video w-full rounded-2xl overflow-hidden bg-zinc-900 mb-6 sm:mb-8 relative group"
-        >
-          <img
-            src={video.snippet?.thumbnails?.maxres?.url || video.snippet?.thumbnails?.high?.url}
-            alt={video.snippet?.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+        {/* Video Player */}
+        <div className="mb-6 sm:mb-8">
+          <VideoPlayer
+            videoId={id}
+            thumbnail={video.snippet?.thumbnails?.high?.url}
           />
-          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition" />
-          <div className="absolute inset-0 flex items-center justify-center"
-          >
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-red-500 transition shadow-lg"
-            >
-              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"
-              >
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-          </div>
-        </a>
+        </div>
 
         {/* Title & Channel */}
         <div className="mb-8 sm:mb-10">
