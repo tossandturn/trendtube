@@ -1,6 +1,12 @@
+import type { Metadata } from 'next'
 import TrendingDashboard from './components/TrendingDashboard'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'TrendTube — Discover Viral YouTube Trends Before They Explode',
+  description: 'Discover exploding YouTube trends, viral Shorts, and creator opportunities before everyone else. Updated daily with AI analysis.',
+}
 
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
 

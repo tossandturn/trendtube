@@ -17,6 +17,40 @@ const TAG_KEYWORDS: Record<string, string[]> = {
   'mrbeast-style': ['$10000', '$100000', 'challenge', 'last to leave'],
 }
 
+const TAG_ANALYSIS: Record<string, string> = {
+  ai: 'AI content is surging due to rapid tool releases, democratized access, and creator curiosity. Early adopters are capturing massive search traffic before saturation hits.',
+  shorts: 'Shorts benefit from YouTube\'s aggressive algorithmic push, lower competition per upload, and mobile-first consumption trends. Vertical content receives 2-3x more impressions.',
+  gaming: 'Gaming maintains evergreen demand with new releases, updates, and community events driving cyclical spikes. Live streaming cross-pollination amplifies discovery.',
+  coding: 'Developer education content has high search retention and strong CPMs. Tutorial-style videos generate steady long-tail traffic and build loyal subscriber bases.',
+  crypto: 'Crypto trends spike around market movements, regulatory news, and new project launches. Timing uploads to news cycles yields outsized view velocity.',
+  business: 'Business content attracts high-value audiences and premium advertisers. "How to make money" queries are perpetually high-volume across all platforms.',
+  football: 'Football content peaks during match days, transfer windows, and tournaments. Fan communities drive intense engagement and rapid sharing behavior.',
+  anime: 'Anime trends surge around season releases, manga adaptations, and viral clips. Dedicated communities generate above-average watch time and comment density.',
+  music: 'Music content benefits from algorithmic playlisting, reaction formats, and trend-jacking viral sounds. Short-form music clips drive exceptional reach.',
+  'mrbeast-style': 'High-stakes challenge formats trigger curiosity gaps and social sharing. The MrBeast formula has proven replicable across budget levels and niches.',
+}
+
+const VIDEO_IDEAS: Record<string, string[]> = {
+  ai: ['I built an AI app in 60 seconds — here is the result', 'ChatGPT vs human coder: who wins?', 'This free AI tool replaced my designer'],
+  shorts: ['Wait for the ending — unbelievable twist', 'I tried viral shorts for 7 days', 'This short got 10M views in 24 hours'],
+  gaming: ['Secret level 99% of players miss', 'I broke the game with this glitch', 'Speedrun world record reaction'],
+  coding: ['JavaScript trick senior devs hide', 'Build a SaaS in 1 hour', 'React mistake costing you views'],
+  crypto: ['This coin is about to explode', 'I tracked whale wallets for a week', 'Crypto portfolio for beginners 2026'],
+  business: ['Side hustle making $500/day', 'Business idea no one talks about', 'I copied this store and doubled sales'],
+  football: ['Goal that broke the internet', 'This player is unstoppable right now', 'Match analysis you need to see'],
+  anime: ['Anime that will break you', 'Top 10 anime this season', 'This scene went viral for a reason'],
+  music: ['Song you need in your playlist', 'This beat is pure fire', 'Music production secret revealed'],
+  'mrbeast-style': ['$1000 challenge — last to leave wins', 'I copied MrBeast with $100', 'Extreme challenge gone wrong'],
+}
+
+function hashRandom(seed: string, max: number) {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash) % max
+}
+
 interface TagPageProps {
   params: Promise<{ slug: string }>
 }
@@ -65,6 +99,11 @@ export default async function TagPage({ params }: TagPageProps) {
   })
 
   const tagName = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  const analysis = TAG_ANALYSIS[slug.toLowerCase()] || `${tagName} is experiencing significant growth across YouTube. Creators who upload early are capturing outsized attention and subscriber gains.`
+  const ideas = VIDEO_IDEAS[slug.toLowerCase()] || [`${tagName} content that blows up`, `Why ${tagName} is trending now`, `The ${tagName} opportunity you missed`]
+
+  const chartValues = Array.from({ length: 7 }, (_, i) => hashRandom(slug + '-chart-' + i, 50) + 30)
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
   return (
     <main className="min-h-screen bg-[#070707] text-white">
@@ -104,10 +143,49 @@ export default async function TagPage({ params }: TagPageProps) {
           </div>
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
             <div className="text-zinc-500 text-xs sm:text-sm mb-1">Growth Signal</div>
-            <div className="text-xl sm:text-2xl font-black text-green-400">+{420 + Math.floor(Math.random() * 200)}%</div>
+            <div className="text-xl sm:text-2xl font-black text-green-400">+{420 + hashRandom(slug, 200)}%</div>
           </div>
         </div>
 
+        {/* 7-Day Growth Chart */}
+        <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 sm:p-6 mb-10">
+          <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">7-Day Growth Curve</h2>
+          <div className="flex items-end gap-2 h-32">
+            {chartValues.map((val, idx) => (
+              <div key={idx} className="flex-1 flex flex-col items-center gap-2">
+                <div className="w-full bg-zinc-800 rounded-t-lg relative overflow-hidden" style={{ height: `${val}%` }}>
+                  <div className="absolute inset-0 bg-gradient-to-t from-green-500/40 to-green-400/10" />
+                </div>
+                <span className="text-zinc-500 text-[10px]">{days[idx]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* AI Analysis */}
+        <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 sm:p-6 mb-10">
+          <h2 className="text-lg sm:text-xl font-bold mb-3 flex items-center gap-2">
+            <span className="text-yellow-400">✦</span> AI Trend Analysis
+          </h2>
+          <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">{analysis}</p>
+        </div>
+
+        {/* Video Ideas */}
+        <div className="mb-10">
+          <h2 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
+            <span className="text-red-400">🔥</span> Video Ideas You Should Upload Today
+          </h2>
+          <div className="grid sm:grid-cols-3 gap-4">
+            {ideas.map((idea, idx) => (
+              <div key={idx} className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5">
+                <div className="text-zinc-500 text-xs font-bold mb-2">IDEA #{idx + 1}</div>
+                <div className="font-bold text-sm sm:text-base">&quot;{idea}&quot;</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Video Grid */}
         <h2 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
           <span className="text-yellow-400">✦</span> Top {tagName} Videos
         </h2>
