@@ -367,11 +367,23 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
       {/* ===== STICKY TOP CTA (Desktop) ===== */}
       <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-200 hidden sm:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <span className="text-lg font-bold text-red-600">TubeFission</span>
             <span className="text-xs text-gray-500">AI Trend Intelligence</span>
           </div>
           <div className="flex items-center gap-3">
+            {/* Region Selector */}
+            <select
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+            >
+              {Object.entries(REGION_META).map(([code, meta]) => (
+                <option key={code} value={code}>
+                  {meta.label}
+                </option>
+              ))}
+            </select>
             <Link
               href="/trending"
               className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition"
@@ -780,6 +792,21 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
 
         {/* ===== STICKY BOTTOM CTA (Mobile) ===== */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 sm:hidden z-50">
+          {/* Mobile Region Selector */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs text-gray-500">Region:</span>
+            <select
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+            >
+              {Object.entries(REGION_META).map(([code, meta]) => (
+                <option key={code} value={code}>
+                  {meta.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <Link
             href="/trending"
             className="block w-full py-3 bg-red-600 text-white text-center rounded-xl font-bold"
