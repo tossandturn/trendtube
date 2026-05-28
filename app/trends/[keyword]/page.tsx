@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
-import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
+import { getViewVelocity, getEngagementRate, getTagColor, getTagEmoji } from '@/lib/analytics'
 
 interface TrendPageProps {
   params: Promise<{
@@ -334,6 +334,32 @@ export default async function TrendPage({ params }: TrendPageProps) {
   // Use top videos if no direct matches
   const displayVideos = relevantVideos.length > 0 ? relevantVideos : videos.slice(0, 6)
 
+  // Calculate analytics
+  const totalViews = displayVideos.reduce((sum: number, v: any) => sum + Number(v.statistics?.viewCount || 0), 0)
+  const avgEngagement = displayVideos.length > 0
+    ? displayVideos.reduce((sum: number, v: any) => sum + getEngagementRate(v), 0) / displayVideos.length
+    : 0
+  const avgVelocity = displayVideos.length > 0
+    ? displayVideos.reduce((sum: number, v: any) => sum + getViewVelocity(v), 0) / displayVideos.length
+    : 0
+
+  // Calculate velocity trend (simulated)
+  const velocityData = displayVideos
+    .map((v: any, i: number) => ({
+      day: `Day ${i + 1}`,
+      velocity: getViewVelocity(v),
+      views: Number(v.statistics?.viewCount || 0),
+    }))
+    .sort((a: any, b: any) => b.velocity - a.velocity)
+    .slice(0, 7)
+
+  // Engagement vs Views data
+  const engagementData = displayVideos.map((v: any) => ({
+    views: Number(v.statistics?.viewCount || 0),
+    engagement: getEngagementRate(v),
+    title: v.snippet?.title || '',
+  })).filter((d: any) => d.views > 0)
+
   return (
     <main className="min-h-screen bg-white text-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
@@ -352,29 +378,203 @@ export default async function TrendPage({ params }: TrendPageProps) {
           <p className="text-gray-600 text-lg max-w-3xl">{trendData.description}</p>
         </div>
 
-        {/* Key Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <div className="text-sm text-gray-500 mb-1">Growth Rate</div>
-            <div className="text-2xl font-bold text-green-600">+147%</div>
-            <div className="text-xs text-gray-400">Last 30 days</div>
+        {/* Professional Analytics Dashboard */}
+        <section className="mb-12">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-blue-400 to-blue-600" />
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+              <span className="text-blue-600">📊</span> Trend Analytics Dashboard
+            </h2>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <div className="text-sm text-gray-500 mb-1">Competition</div>
-            <div className="text-2xl font-bold text-yellow-600">Medium</div>
-            <div className="text-xs text-gray-400">Saturation level</div>
+
+          {/* Key Metrics Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="text-sm text-gray-500 mb-1">Total Views</div>
+              <div className="text-2xl font-bold text-gray-900">{formatNumber(totalViews.toString())}</div>
+              <div className="text-xs text-green-600">↗ Across analyzed videos</div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="text-sm text-gray-500 mb-1">Avg Engagement</div>
+              <div className="text-2xl font-bold text-yellow-600">{avgEngagement.toFixed(2)}%</div>
+              <div className="text-xs text-gray-400">likes + comments</div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="text-sm text-gray-500 mb-1">Avg Velocity</div>
+              <div className="text-2xl font-bold text-green-600">
+                {avgVelocity >= 1e6 ? (avgVelocity / 1e6).toFixed(1) + 'M' : avgVelocity >= 1e3 ? (avgVelocity / 1e3).toFixed(1) + 'K' : Math.round(avgVelocity)}
+              </div>
+              <div className="text-xs text-gray-400">views/day</div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div className="text-sm text-gray-500 mb-1">Videos Tracked</div>
+              <div className="text-2xl font-bold text-blue-600">{displayVideos.length}</div>
+              <div className="text-xs text-gray-400">in this trend</div>
+            </div>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <div className="text-sm text-gray-500 mb-1">Peak Window</div>
-            <div className="text-2xl font-bold text-red-600">24h</div>
-            <div className="text-xs text-gray-400">Until saturation</div>
+
+          {/* Analytics Charts */}
+          <div className="grid lg:grid-cols-2 gap-6 mb-8">
+            {/* Velocity Trend Chart */}
+            <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">⚡ VELOCITY ANALYSIS</h3>
+                <span className="text-[10px] text-gray-500 data-mono">views/day</span>
+              </div>
+              <svg viewBox="0 0 520 200" className="w-full" preserveAspectRatio="xMidYMid meet">
+                {(() => {
+                  const width = 520
+                  const height = 200
+                  const margin = { top: 20, right: 60, bottom: 40, left: 80 }
+                  const chartW = width - margin.left - margin.right
+                  const chartH = height - margin.top - margin.bottom
+
+                  const data = velocityData
+                  if (data.length === 0) return <text x={width / 2} y={height / 2} fill="#9ca3af" fontSize="14" textAnchor="middle">No data</text>
+
+                  const maxVelocity = Math.max(...data.map((d: any) => d.velocity), 1)
+                  const barSlot = chartW / data.length
+                  const barWidth = barSlot * 0.7
+                  const barGap = barSlot * 0.3
+
+                  return (
+                    <>
+                      <rect x={margin.left} y={margin.top} width={chartW} height={chartH} fill="#f3f4f6" opacity="0.5" rx="8" />
+                      {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
+                        const y = margin.top + (1 - t) * chartH
+                        const val = t * maxVelocity
+                        return (
+                          <g key={`grid-${i}`}>
+                            <line x1={margin.left} y1={y} x2={margin.left + chartW} y2={y} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="2,2" />
+                            <text x={margin.left - 8} y={y + 4} fill="#9ca3af" fontSize="10" textAnchor="end" fontFamily="monospace">
+                              {val >= 1e6 ? (val / 1e6).toFixed(0) + 'M' : val >= 1e3 ? (val / 1e3).toFixed(0) + 'K' : Math.round(val)}
+                            </text>
+                          </g>
+                        )
+                      })}
+                      {data.map((d: any, i: number) => {
+                        const x = margin.left + i * barSlot + barGap / 2
+                        const h = (d.velocity / maxVelocity) * chartH
+                        const y = margin.top + chartH - h
+                        return (
+                          <g key={i}>
+                            <rect x={x} y={y} width={barWidth} height={h} rx="4" fill="#dc2626" opacity="0.85" />
+                            <text x={x + barWidth / 2} y={margin.top + chartH + 16} fill="#9ca3af" fontSize="10" textAnchor="middle" fontFamily="monospace">{d.day}</text>
+                          </g>
+                        )
+                      })}
+                    </>
+                  )
+                })()}
+              </svg>
+            </div>
+
+            {/* Engagement Scatter Plot */}
+            <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">📈 ENGAGEMENT VS VIEWS</h3>
+                <span className="text-[10px] text-gray-500 data-mono">correlation analysis</span>
+              </div>
+              <svg viewBox="0 0 520 200" className="w-full" preserveAspectRatio="xMidYMid meet">
+                {(() => {
+                  const width = 520
+                  const height = 200
+                  const margin = { top: 20, right: 20, bottom: 50, left: 55 }
+                  const chartW = width - margin.left - margin.right
+                  const chartH = height - margin.top - margin.bottom
+
+                  const data = engagementData
+                  if (data.length === 0) return <text x={width / 2} y={height / 2} fill="#9ca3af" fontSize="14" textAnchor="middle">No data</text>
+
+                  const maxViews = Math.max(...data.map((d: any) => d.views), 1)
+                  const maxEngagement = Math.max(...data.map((d: any) => d.engagement), 0.1)
+
+                  const getX = (views: number) => margin.left + (Math.log10(views + 1) / Math.log10(maxViews + 1)) * chartW
+                  const getY = (engagement: number) => margin.top + chartH - (engagement / Math.max(maxEngagement, 5)) * chartH
+
+                  return (
+                    <>
+                      <rect x={margin.left} y={margin.top} width={chartW} height={chartH} fill="#f3f4f6" opacity="0.5" rx="8" />
+                      {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
+                        const x = margin.left + t * chartW
+                        const viewVal = Math.round(Math.pow(10, t * Math.log10(maxViews + 1)) - 1)
+                        return (
+                          <g key={`x-${i}`}>
+                            <line x1={x} y1={margin.top} x2={x} y2={margin.top + chartH} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="2,2" />
+                            <text x={x} y={margin.top + chartH + 18} fill="#9ca3af" fontSize="10" textAnchor="middle" fontFamily="monospace">
+                              {viewVal >= 1e6 ? (viewVal / 1e6).toFixed(0) + 'M' : viewVal >= 1e3 ? (viewVal / 1e3).toFixed(0) + 'K' : viewVal}
+                            </text>
+                          </g>
+                        )
+                      })}
+                      {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
+                        const y = margin.top + (1 - t) * chartH
+                        const val = t * Math.max(maxEngagement, 5)
+                        return (
+                          <g key={`y-${i}`}>
+                            <line x1={margin.left} y1={y} x2={margin.left + chartW} y2={y} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="2,2" />
+                            <text x={margin.left - 8} y={y + 4} fill="#9ca3af" fontSize="10" textAnchor="end" fontFamily="monospace">{val.toFixed(1)}%</text>
+                          </g>
+                        )
+                      })}
+                      <text x={margin.left + chartW / 2} y={height - 5} fill="#6b7280" fontSize="11" textAnchor="middle" fontWeight="bold" fontFamily="monospace">Views (log scale)</text>
+                      <text x={14} y={margin.top + chartH / 2} fill="#6b7280" fontSize="11" textAnchor="middle" fontWeight="bold" transform={`rotate(-90, 14, ${margin.top + chartH / 2})`} fontFamily="monospace">Engagement %</text>
+                      {data.map((d: any, i: number) => (
+                        <circle
+                          key={i}
+                          cx={getX(d.views)}
+                          cy={getY(d.engagement)}
+                          r="6"
+                          fill="#dc2626"
+                          opacity="0.7"
+                          stroke="#f3f4f6"
+                          strokeWidth="2"
+                        >
+                          <title>{d.title.slice(0, 50)}... — {formatNumber(d.views.toString())} views, {d.engagement.toFixed(2)}% engagement</title>
+                        </circle>
+                      ))}
+                    </>
+                  )
+                })()}
+              </svg>
+            </div>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <div className="text-sm text-gray-500 mb-1">Opportunity</div>
-            <div className="text-2xl font-bold text-green-600">85/100</div>
-            <div className="text-xs text-gray-400">Score</div>
+
+          {/* Competition Analysis */}
+          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">🎯 COMPETITION ANALYSIS</h3>
+              <span className="text-[10px] text-gray-500 data-mono">supply vs demand</span>
+            </div>
+            <div className="grid sm:grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-black text-gray-900 mb-2">{displayVideos.length}</div>
+                <div className="text-sm text-gray-500">Videos in Trend</div>
+                <div className="text-xs text-gray-400 mt-1">Supply</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-black text-green-600 mb-2">{formatNumber(totalViews.toString())}</div>
+                <div className="text-sm text-gray-500">Total Views</div>
+                <div className="text-xs text-gray-400 mt-1">Demand</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-black text-blue-600 mb-2">
+                  {displayVideos.length > 0 ? Math.round(totalViews / displayVideos.length / 1000) : 0}K
+                </div>
+                <div className="text-sm text-gray-500">Views per Video</div>
+                <div className="text-xs text-gray-400 mt-1">Opportunity</div>
+              </div>
+            </div>
+            <div className="mt-6 h-4 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 rounded-full" style={{ width: '65%' }} />
+            </div>
+            <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <span>Low Competition</span>
+              <span className="font-medium text-yellow-600">Medium Saturation</span>
+              <span>High Competition</span>
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-8 mb-12">
@@ -516,7 +716,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
               href="/trending"
               className="px-8 py-4 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition"
             >
-              Start Finding Trends →
+              Start Finding Potential →
             </Link>
             <Link
               href="/"
