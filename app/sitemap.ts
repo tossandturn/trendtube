@@ -57,6 +57,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/compare/vidiq`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/compare/tubebuddy`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/compare/google-trends`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    // Product Features
+    { url: `${BASE_URL}/watchlist`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
+    { url: `${BASE_URL}/alerts`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
+    { url: `${BASE_URL}/ai-assistant`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
   ]
 
   TAGS.forEach((tag) => {
