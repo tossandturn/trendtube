@@ -574,7 +574,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
               </span>
               <span className="text-red-400 text-xs font-bold tracking-widest uppercase">Live Trend Radar</span>
             </div>
-            <div className="text-3xl sm:text-5xl font-black tracking-tight">TrendTube</div>
+            <div className="text-3xl sm:text-5xl font-black tracking-tight">TubeFission</div>
             <p className="text-zinc-500 mt-1 text-sm sm:text-base">Discover viral YouTube trends before everyone else.</p>
           </div>
 
@@ -965,7 +965,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         <footer className="border-t border-zinc-800 pt-14 sm:pt-20 pb-10">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-10">
             <div>
-              <h3 className="font-bold text-lg mb-3">Why TrendTube?</h3>
+              <h3 className="font-bold text-lg mb-3">Why TubeFission?</h3>
               <p className="text-zinc-500 text-sm leading-relaxed">
                 We analyze YouTube&apos;s most popular videos in real-time, extracting hidden patterns
                 and viral signals that creators need to stay ahead of the curve.
@@ -991,7 +991,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
               <div className="w-2 h-2 rounded-full bg-green-500" />
               <span>Data refreshed hourly from YouTube API</span>
             </div>
-            <div>© {new Date().getFullYear()} TrendTube. Not affiliated with YouTube.</div>
+            <div>© {new Date().getFullYear()} TubeFission. Not affiliated with YouTube.</div>
           </div>
         </footer>
 

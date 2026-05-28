@@ -90,7 +90,7 @@ export async function generateMetadata({ params }: VideoPageProps): Promise<Meta
   const video = await fetchVideoById(id)
   const title = video?.snippet?.title || 'Video Analysis'
   return {
-    title: `Why "${title}" Went Viral on YouTube — TrendTube`,
+    title: `Why "${title}" Went Viral on YouTube — TubeFission`,
     description: `Analyze why "${title}" is trending, view retention stats, viral growth trajectory, and AI-powered creator insights. Discover actionable opportunity.`,
   }
 }

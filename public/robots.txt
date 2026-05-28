@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://trendtube-omega.vercel.app/sitemap.xml
+Sitemap: https://tubefission.com/sitemap.xml

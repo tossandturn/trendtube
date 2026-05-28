@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YouTube Trends Platform - Daily Viral Videos & AI Analysis",
+  title: "TubeFission — Discover Viral YouTube Trends Before They Explode",
   description:
-    "Discover trending YouTube videos, viral Shorts, creator growth, and AI-powered trend analysis.",
+    "Discover exploding YouTube trends, viral Shorts, and creator opportunities before everyone else. Updated daily with AI analysis.",
 };
 
 export default function RootLayout({

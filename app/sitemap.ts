@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
-const BASE_URL = 'https://trendtube-omega.vercel.app'
+const BASE_URL = 'https://tubefission.com'
 
 const TAGS = [
   'ai', 'shorts', 'gaming', 'coding', 'crypto',
