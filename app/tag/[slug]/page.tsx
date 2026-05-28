@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import AdBanner from '@/app/components/AdBanner'
-
-const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
+import { getEngagementRate, getViewVelocity, getTagColor, getTagEmoji } from '@/lib/analytics'
+import { fetchTrendingVideos } from '@/lib/api-client'
+import { getRegion } from '@/lib/region-server'
 
 const TAG_KEYWORDS: Record<string, string[]> = {
   ai: ['ai', 'chatgpt', 'openai', 'gpt'],
@@ -16,6 +17,19 @@ const TAG_KEYWORDS: Record<string, string[]> = {
   anime: ['anime'],
   music: ['music', 'song'],
   'mrbeast-style': ['$10000', '$100000', 'challenge', 'last to leave'],
+}
+
+const TAG_DISPLAY: Record<string, string> = {
+  ai: 'AI',
+  shorts: 'Shorts',
+  gaming: 'Gaming',
+  coding: 'Coding',
+  crypto: 'Crypto',
+  business: 'Business',
+  football: 'Football',
+  anime: 'Anime',
+  music: 'Music',
+  'mrbeast-style': 'MrBeast Style',
 }
 
 const TAG_ANALYSIS: Record<string, string> = {
@@ -44,31 +58,13 @@ const VIDEO_IDEAS: Record<string, string[]> = {
   'mrbeast-style': ['$1000 challenge — last to leave wins', 'I copied MrBeast with $100', 'Extreme challenge gone wrong'],
 }
 
-function hashRandom(seed: string, max: number) {
-  let hash = 0
-  for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0
-  }
-  return Math.abs(hash) % max
-}
-
 interface TagPageProps {
   params: Promise<{ slug: string }>
 }
 
 async function fetchVideos() {
-  if (!API_KEY) return []
-  try {
-    const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=50&regionCode=US&key=${API_KEY}`,
-      { next: { revalidate: 3600 } }
-    )
-    if (!res.ok) return []
-    const data = await res.json()
-    return data.items || []
-  } catch {
-    return []
-  }
+  const region = await getRegion()
+  return fetchTrendingVideos(region, 50)
 }
 
 function formatNumber(n: string | undefined) {
@@ -99,138 +95,251 @@ export default async function TagPage({ params }: TagPageProps) {
     return keywords.some((k) => text.includes(k))
   })
 
-  const tagName = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  const tagName = TAG_DISPLAY[slug.toLowerCase()] || slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  const tagEmoji = getTagEmoji(tagName)
   const analysis = TAG_ANALYSIS[slug.toLowerCase()] || `${tagName} is experiencing significant growth across YouTube. Creators who upload early are capturing outsized attention and subscriber gains.`
   const ideas = VIDEO_IDEAS[slug.toLowerCase()] || [`${tagName} content that blows up`, `Why ${tagName} is trending now`, `The ${tagName} opportunity you missed`]
 
-  // Generate realistic 7-day growth curve — today is the peak since content is trending now
-  const baseGrowth = 120 + hashRandom(slug + '-base', 180)
-  const chartValues = Array.from({ length: 7 }, (_, i) => {
-    const dayFactor = Math.pow((i + 1) / 7, 1.5) // exponential rise toward today
-    const noise = hashRandom(slug + '-chart-' + i, 20) - 10
-    return Math.max(15, Math.min(98, Math.round(baseGrowth * dayFactor + noise)))
-  })
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Today']
+  const tagVideos = filtered.map((v: any) => ({
+    id: v.id,
+    title: v.snippet?.title || '',
+    views: Number(v.statistics?.viewCount || 0),
+    likes: Number(v.statistics?.likeCount || 0),
+    comments: Number(v.statistics?.commentCount || 0),
+    engagement: getEngagementRate(v),
+    velocity: getViewVelocity(v),
+  }))
+
+  const avgViews = tagVideos.length > 0 ? tagVideos.reduce((s: number, v: any) => s + v.views, 0) / tagVideos.length : 0
+  const avgEngagement = tagVideos.length > 0 ? tagVideos.reduce((s: number, v: any) => s + v.engagement, 0) / tagVideos.length : 0
+  const avgVelocity = tagVideos.length > 0 ? tagVideos.reduce((s: number, v: any) => s + v.velocity, 0) / tagVideos.length : 0
 
   return (
-    <main className="min-h-screen bg-[#070707] text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+    <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">
+      <div className="ambient-glow-tl" />
+      <div className="ambient-glow-tr" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-6 sm:mb-8"
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-6 sm:mb-8"
         >
           <span className="text-lg">←</span>
           <span className="text-sm font-medium">Back to Trends</span>
         </Link>
 
         <div className="mb-8 sm:mb-10">
-          <div className="text-zinc-500 text-xs font-bold tracking-widest uppercase mb-2">🏷️ TAG INTELLIGENCE</div>
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4">{tagName} YouTube Trends Today</h1>
-          <p className="text-zinc-400 text-sm sm:text-base max-w-2xl leading-relaxed">
+          <div className="text-gray-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">🏷️ TAG INTELLIGENCE</div>
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">{tagEmoji} {tagName} YouTube Trends Today</h1>
+          <p className="text-gray-500 text-sm sm:text-base max-w-2xl leading-relaxed">
             Track the fastest-growing {tagName} YouTube trends, viral videos, and Shorts opportunities
             with real-time creator intelligence.
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-4 mb-10">
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">📊 Trending Videos</div>
-            <div className="text-xl sm:text-2xl font-black">{filtered.length}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">📊 VIDEOS</div>
+            <div className="text-xl sm:text-2xl font-black data-mono text-glow text-gray-900">{filtered.length}</div>
           </div>
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">👁️ Avg Views</div>
-            <div className="text-xl sm:text-2xl font-black text-red-400">
-              {formatNumber(
-                Math.floor(
-                  filtered.reduce((s: number, v: any) => s + Number(v.statistics?.viewCount || 0), 0) /
-                    Math.max(filtered.length, 1)
-                ).toString()
-              )}
+          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">👁️ AVG VIEWS</div>
+            <div className="text-xl sm:text-2xl font-black text-red-600 data-mono text-glow-red">{formatNumber(Math.floor(avgViews).toString())}</div>
+          </div>
+          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">📈 ENGAGEMENT</div>
+            <div className="text-xl sm:text-2xl font-black text-green-600 data-mono text-glow-green">{avgEngagement.toFixed(2)}%</div>
+          </div>
+          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">⚡ VELOCITY</div>
+            <div className="text-xl sm:text-2xl font-black text-blue-600 data-mono">
+              {avgVelocity >= 1e6 ? (avgVelocity / 1e6).toFixed(1) + 'M/d' : avgVelocity >= 1e3 ? (avgVelocity / 1e3).toFixed(1) + 'K/d' : Math.round(avgVelocity) + '/d'}
             </div>
-          </div>
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">📈 Growth Signal</div>
-            <div className="text-xl sm:text-2xl font-black text-green-400">+{420 + hashRandom(slug, 200)}%</div>
           </div>
         </div>
 
         <AdBanner slot="4567890123" className="my-8" />
 
-        {/* 7-Day Growth Chart */}
-        <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 sm:p-6 mb-10">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">📈 7-Day Growth Curve</h2>
-            <span className="text-green-400 text-xs font-bold">🔥 +{chartValues[6] - chartValues[0]}% this week</span>
+        {/* Real Data Charts */}
+        <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 mb-10">
+          {/* Scatter Plot */}
+          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">📈 ENGAGEMENT VS VIEWS</h2>
+              <span className="text-[10px] text-gray-500 data-mono">{filtered.length} videos</span>
+            </div>
+            <svg viewBox="0 0 520 300" className="w-full" preserveAspectRatio="xMidYMid meet">
+              {(() => {
+                const width = 520
+                const height = 300
+                const margin = { top: 20, right: 20, bottom: 50, left: 55 }
+                const chartW = width - margin.left - margin.right
+                const chartH = height - margin.top - margin.bottom
+                const data = filtered.map((v: any) => ({
+                  views: Number(v.statistics?.viewCount || 0),
+                  engagement: getEngagementRate(v),
+                  title: v.snippet?.title || '',
+                })).filter((d: any) => d.views > 0)
+                if (data.length === 0) return <text x={width / 2} y={height / 2} fill="#9ca3af" fontSize="14" textAnchor="middle">No data</text>
+                const maxViews = Math.max(...data.map((d: any) => d.views), 1)
+                const maxEngagement = Math.max(...data.map((d: any) => d.engagement), 0.1)
+                const getX = (views: number) => margin.left + (Math.log10(views + 1) / Math.log10(maxViews + 1)) * chartW
+                const getY = (engagement: number) => margin.top + chartH - (engagement / Math.max(maxEngagement, 5)) * chartH
+                const xTicks = [0, 0.25, 0.5, 0.75, 1]
+                const yTicks = 4
+                return (
+                  <>
+                    <rect x={margin.left} y={margin.top} width={chartW} height={chartH} fill="#f3f4f6" opacity="0.5" rx="8" />
+                    {xTicks.map((t, i) => {
+                      const x = margin.left + t * chartW
+                      const viewVal = Math.round(Math.pow(10, t * Math.log10(maxViews + 1)) - 1)
+                      return (
+                        <g key={`x-${i}`}>
+                          <line x1={x} y1={margin.top} x2={x} y2={margin.top + chartH} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="2,2" />
+                          <text x={x} y={margin.top + chartH + 18} fill="#9ca3af" fontSize="10" textAnchor="middle" fontFamily="monospace">
+                            {viewVal >= 1e6 ? (viewVal / 1e6).toFixed(0) + 'M' : viewVal >= 1e3 ? (viewVal / 1e3).toFixed(0) + 'K' : viewVal}
+                          </text>
+                        </g>
+                      )
+                    })}
+                    {Array.from({ length: yTicks + 1 }, (_, i) => {
+                      const y = margin.top + (i / yTicks) * chartH
+                      const val = ((1 - i / yTicks) * Math.max(maxEngagement, 5))
+                      return (
+                        <g key={`y-${i}`}>
+                          <line x1={margin.left} y1={y} x2={margin.left + chartW} y2={y} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="2,2" />
+                          <text x={margin.left - 8} y={y + 4} fill="#9ca3af" fontSize="10" textAnchor="end" fontFamily="monospace">{val.toFixed(1)}%</text>
+                        </g>
+                      )
+                    })}
+                    <text x={margin.left + chartW / 2} y={height - 5} fill="#6b7280" fontSize="11" textAnchor="middle" fontWeight="bold" fontFamily="monospace">Views (log scale)</text>
+                    <text x={14} y={margin.top + chartH / 2} fill="#6b7280" fontSize="11" textAnchor="middle" fontWeight="bold" transform={`rotate(-90, 14, ${margin.top + chartH / 2})`} fontFamily="monospace">Engagement</text>
+                    {data.map((d: any, i: number) => (
+                      <circle
+                        key={i}
+                        cx={getX(d.views)}
+                        cy={getY(d.engagement)}
+                        r="5"
+                        fill={getTagColor(tagName)}
+                        opacity="0.8"
+                        stroke="#f3f4f6"
+                        strokeWidth="1"
+                      >
+                        <title>{d.title} — {formatNumber(d.views.toString())} views, {d.engagement.toFixed(2)}% engagement</title>
+                      </circle>
+                    ))}
+                  </>
+                )
+              })()}
+            </svg>
           </div>
-          <div className="flex items-end gap-2 sm:gap-3 h-36 sm:h-40">
-            {chartValues.map((val, idx) => {
-              const isPeak = idx === 6
-              const isHigh = val > 70
-              const barColor = isPeak ? 'from-red-500 to-orange-400' : isHigh ? 'from-green-500 to-emerald-400' : 'from-blue-500 to-cyan-400'
-              return (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                  <div className="text-zinc-300 text-[10px] sm:text-xs font-bold">{val}%</div>
-                  <div className="w-full rounded-t-lg relative overflow-hidden bg-zinc-800/50" style={{ height: `${val * 0.9}%` }}>
-                    <div className={`absolute inset-0 bg-gradient-to-t ${barColor} opacity-70`} />
-                    {isPeak && <div className="absolute top-1 left-1/2 -translate-x-1/2 text-lg">🔥</div>}
-                  </div>
-                  <span className={`text-[10px] sm:text-xs font-bold ${isPeak ? 'text-red-400' : 'text-zinc-500'}`}>{days[idx]}</span>
-                </div>
-              )
-            })}
-          </div>
-          <div className="mt-4 pt-4 border-t border-zinc-800 grid grid-cols-3 gap-4">
-            <div>
-              <div className="text-zinc-500 text-[10px]">📊 Week Low</div>
-              <div className="text-white text-sm font-bold">{Math.min(...chartValues)}%</div>
+
+          {/* Velocity Bar Chart */}
+          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">⚡ TOP VIDEOS BY VELOCITY</h2>
+              <span className="text-[10px] text-gray-500 data-mono">views/day</span>
             </div>
-            <div>
-              <div className="text-zinc-500 text-[10px]">📈 Week High</div>
-              <div className="text-red-400 text-sm font-bold">{Math.max(...chartValues)}%</div>
-            </div>
-            <div>
-              <div className="text-zinc-500 text-[10px]">🎯 Avg Growth</div>
-              <div className="text-green-400 text-sm font-bold">{Math.round(chartValues.reduce((a, b) => a + b, 0) / chartValues.length)}%</div>
-            </div>
+            <svg viewBox="0 0 520 300" className="w-full" preserveAspectRatio="xMidYMid meet">
+              {(() => {
+                const width = 520
+                const height = 300
+                const margin = { top: 20, right: 80, bottom: 20, left: 150 }
+                const chartW = width - margin.left - margin.right
+                const chartH = height - margin.top - margin.bottom
+                const data = [...filtered]
+                  .sort((a: any, b: any) => getViewVelocity(b) - getViewVelocity(a))
+                  .slice(0, 8)
+                  .map((v: any) => ({
+                    velocity: getViewVelocity(v),
+                    title: v.snippet?.title || '',
+                  }))
+                if (data.length === 0) return <text x={width / 2} y={height / 2} fill="#9ca3af" fontSize="14" textAnchor="middle">No data</text>
+                const maxVelocity = Math.max(...data.map((d: any) => d.velocity), 1)
+                const barSlot = chartH / data.length
+                const barHeight = barSlot * 0.65
+                const barGap = barSlot * 0.35
+                return (
+                  <>
+                    <rect x={margin.left} y={margin.top} width={chartW} height={chartH} fill="#f3f4f6" opacity="0.5" rx="8" />
+                    {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
+                      const x = margin.left + t * chartW
+                      const val = t * maxVelocity
+                      return (
+                        <g key={`grid-${i}`}>
+                          <line x1={x} y1={margin.top} x2={x} y2={margin.top + chartH} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="2,2" />
+                          <text x={x} y={margin.top + chartH + 14} fill="#9ca3af" fontSize="10" textAnchor="middle" fontFamily="monospace">
+                            {val >= 1e6 ? (val / 1e6).toFixed(1) + 'M' : val >= 1e3 ? (val / 1e3).toFixed(1) + 'K' : Math.round(val)}
+                          </text>
+                        </g>
+                      )
+                    })}
+                    {data.map((d: any, i: number) => {
+                      const y = margin.top + i * barSlot + barGap / 2
+                      const w = (d.velocity / maxVelocity) * chartW
+                      return (
+                        <g key={i}>
+                          <rect x={margin.left} y={y} width={w} height={barHeight} rx="4" fill={getTagColor(tagName)} opacity="0.85" />
+                          <text x={margin.left - 8} y={y + barHeight / 2 + 4} fill="#374151" fontSize="10" textAnchor="end" fontFamily="monospace">
+                            {d.title.length > 20 ? d.title.slice(0, 20) + '...' : d.title}
+                          </text>
+                          <text x={margin.left + w + 6} y={y + barHeight / 2 + 4} fill="#6b7280" fontSize="10" fontWeight="bold" fontFamily="monospace">
+                            {d.velocity >= 1e6 ? (d.velocity / 1e6).toFixed(1) + 'M/d' : d.velocity >= 1e3 ? (d.velocity / 1e3).toFixed(1) + 'K/d' : Math.round(d.velocity) + '/d'}
+                          </text>
+                        </g>
+                      )
+                    })}
+                  </>
+                )
+              })()}
+            </svg>
           </div>
         </div>
 
         {/* AI Analysis */}
-        <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 sm:p-6 mb-10">
-          <h2 className="text-lg sm:text-xl font-bold mb-3 flex items-center gap-2">
-            <span className="text-yellow-400">🧠</span> AI Trend Analysis
-          </h2>
-          <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">{analysis}</p>
+        <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 mb-10 glow-hover corner-accent">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-yellow-400 to-yellow-600" />
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+              <span className="text-yellow-600">🧠</span> AI Trend Analysis
+            </h2>
+          </div>
+          <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{analysis}</p>
         </div>
 
         {/* Video Ideas */}
         <div className="mb-10">
-          <h2 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
-            <span className="text-red-400">🔥</span> Video Ideas You Should Upload Today
-          </h2>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-red-400 to-red-600" />
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+              <span className="text-red-600">🔥</span> Video Ideas You Should Upload Today
+            </h2>
+          </div>
           <div className="grid sm:grid-cols-3 gap-4">
             {ideas.map((idea, idx) => (
-              <div key={idx} className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5">
-                <div className="text-zinc-500 text-xs font-bold mb-2">💡 IDEA #{idx + 1}</div>
-                <div className="font-bold text-sm sm:text-base">&quot;{idea}&quot;</div>
+              <div key={idx} className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent">
+                <div className="text-gray-500 text-xs font-bold mb-2 data-mono tracking-wider">💡 IDEA #{idx + 1}</div>
+                <div className="font-bold text-sm sm:text-base text-gray-900">&quot;{idea}&quot;</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Video Grid */}
-        <h2 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
-          <span className="text-yellow-400">✦</span> Top {tagName} Videos
-        </h2>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-1 h-6 rounded-full bg-gradient-to-b from-yellow-400 to-yellow-600" />
+          <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+            <span className="text-yellow-600">✦</span> Top {tagName} Videos
+          </h2>
+        </div>
 
         {filtered.length === 0 && (
-          <div className="text-zinc-500 text-sm py-10">No videos found for this tag right now.</div>
+          <div className="text-gray-500 text-sm py-10">No videos found for this tag right now.</div>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {filtered.map((video: any) => (
             <Link key={video.id} href={`/video/${video.id}`} className="group block">
-              <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl sm:rounded-2xl overflow-hidden hover:border-zinc-700 transition-colors">
+              <div className="glass-panel neon-border rounded-xl sm:rounded-2xl overflow-hidden glow-hover corner-accent">
                 <div className="relative aspect-video overflow-hidden">
                   <img
                     src={video.snippet?.thumbnails?.high?.url}
@@ -238,16 +347,16 @@ export default async function TagPage({ params }: TagPageProps) {
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     loading="lazy"
                   />
-                  <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded-lg text-[10px] sm:text-xs font-medium">
+                  <div className="absolute bottom-2 right-2 glass-panel px-2 py-1 rounded-lg text-[10px] sm:text-xs font-medium data-mono text-gray-700">
                     {formatNumber(video.statistics?.viewCount)} views
                   </div>
                 </div>
                 <div className="p-3 sm:p-5">
-                  <h3 className="font-bold text-sm sm:text-base line-clamp-2 mb-2 group-hover:text-red-400 transition-colors">
+                  <h3 className="font-bold text-sm sm:text-base line-clamp-2 mb-2 group-hover:text-red-600 transition-colors text-gray-900">
                     {video.snippet?.title}
                   </h3>
-                  <div className="flex items-center gap-2 text-zinc-500 text-xs">
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center text-[10px] font-bold">
+                  <div className="flex items-center gap-2 text-gray-500 text-xs">
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-[10px] font-bold text-gray-700">
                       {video.snippet?.channelTitle?.[0]}
                     </div>
                     <span className="truncate">{video.snippet?.channelTitle}</span>

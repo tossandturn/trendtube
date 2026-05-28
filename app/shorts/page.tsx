@@ -1,26 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-
-const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
+import { getViewVelocity, getTagEmoji } from '@/lib/analytics'
+import { fetchTrendingVideos } from '@/lib/api-client'
+import { getRegion } from '@/lib/region-server'
 
 export const metadata: Metadata = {
   title: 'Trending YouTube Shorts Today | Viral Shorts Radar',
   description: 'Explore the latest viral YouTube Shorts, analyze rapid growth videos, and identify creator opportunities before everyone else.',
-}
-
-async function fetchVideos() {
-  if (!API_KEY) return []
-  try {
-    const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=50&regionCode=US&key=${API_KEY}`,
-      { next: { revalidate: 3600 } }
-    )
-    if (!res.ok) return []
-    const data = await res.json()
-    return data.items || []
-  } catch {
-    return []
-  }
 }
 
 function formatNumber(n: string | undefined) {
@@ -54,16 +40,9 @@ function getHookStyle(title: string): string {
   return 'Curiosity gap'
 }
 
-function seededRandom(seed: string, max: number) {
-  let hash = 0
-  for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0
-  }
-  return Math.abs(hash) % max
-}
-
 export default async function ShortsPage() {
-  const videos = await fetchVideos()
+  const region = await getRegion()
+  const videos = await fetchTrendingVideos(region, 50)
   const shortsVideos = videos.filter((video: any) => {
     const title = video.snippet?.title?.toLowerCase() || ''
     return title.includes('shorts') || title.includes('#shorts') || title.includes('short')
@@ -71,20 +50,22 @@ export default async function ShortsPage() {
   const finalShorts = shortsVideos.length > 0 ? shortsVideos : videos
 
   return (
-    <main className="min-h-screen bg-[#070707] text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+    <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">
+      <div className="ambient-glow-tl" />
+      <div className="ambient-glow-tr" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-6 sm:mb-8"
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-6 sm:mb-8"
         >
           <span className="text-lg">←</span>
           <span className="text-sm font-medium">Back to Trends</span>
         </Link>
 
         <div className="mb-8 sm:mb-10">
-          <div className="text-zinc-500 text-xs font-bold tracking-widest uppercase mb-2">SHORTS RADAR</div>
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4">Shorts Exploding Right Now</h1>
-          <p className="text-zinc-400 text-sm sm:text-base max-w-2xl leading-relaxed">
+          <div className="text-gray-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">📱 SHORTS RADAR</div>
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">{getTagEmoji('Shorts')} Shorts Exploding Right Now</h1>
+          <p className="text-gray-500 text-sm sm:text-base max-w-2xl leading-relaxed">
             Explore the latest viral YouTube Shorts, analyze rapid growth videos, and identify
             creator opportunities before everyone else.
           </p>
@@ -94,36 +75,36 @@ export default async function ShortsPage() {
           {finalShorts.map((video: any) => {
             const viralScore = getViralScore(video)
             const hookStyle = getHookStyle(video.snippet?.title || '')
-            const growth = seededRandom(video.id + '-growth', 400) + 100
+            const velocity = getViewVelocity(video)
             return (
               <Link key={video.id} href={`/video/${video.id}`} className="group block">
-                <div className="aspect-[9/16] rounded-xl sm:rounded-2xl overflow-hidden relative bg-zinc-900">
+                <div className="aspect-[9/16] rounded-xl sm:rounded-2xl overflow-hidden relative glass-panel neon-border glow-hover">
                   <img
                     src={video.snippet?.thumbnails?.high?.url}
                     alt={`Shorts thumbnail for ${video.snippet?.title}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                  <div className="absolute top-2 left-2 bg-red-500 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/10 to-transparent" />
+                  <div className="absolute top-2 left-2 bg-red-500/90 px-2 py-0.5 rounded-md text-[10px] font-bold shadow-[0_0_10px_rgba(220,38,38,0.3)] text-white">
                     SHORTS
                   </div>
-                  <div className="absolute top-2 right-2 bg-black/60 backdrop-blur px-2 py-0.5 rounded-md text-[10px] font-bold text-white">
+                  <div className="absolute top-2 right-2 glass-panel px-2 py-0.5 rounded-md text-[10px] font-bold text-gray-700 data-mono">
                     {viralScore}/100
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <div className="text-white font-bold text-xs line-clamp-2 mb-1">
+                    <div className="text-gray-900 font-bold text-xs line-clamp-2 mb-1">
                       {video.snippet?.title}
                     </div>
-                    <div className="text-zinc-400 text-[10px] mb-1">
+                    <div className="text-gray-500 text-[10px] mb-1 data-mono">
                       {formatNumber(video.statistics?.viewCount)} views
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] text-zinc-500 bg-black/40 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] text-gray-500 glass-panel px-1.5 py-0.5 rounded data-mono">
                         {hookStyle}
                       </span>
-                      <span className="text-[10px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded font-bold">
-                        +{growth}%
+                      <span className="text-[10px] text-green-600 bg-green-100 px-1.5 py-0.5 rounded font-bold data-mono text-glow-green">
+                        {velocity >= 1e6 ? (velocity / 1e6).toFixed(1) + 'M/d' : velocity >= 1e3 ? (velocity / 1e3).toFixed(1) + 'K/d' : Math.round(velocity) + '/d'}
                       </span>
                     </div>
                   </div>

@@ -3,41 +3,11 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import VideoPlayer from '@/app/components/VideoPlayer'
 import AdBanner from '@/app/components/AdBanner'
+import { fetchVideoById, fetchRelatedVideos } from '@/lib/api-client'
+import { getRegion } from '@/lib/region-server'
 
 interface VideoPageProps {
   params: Promise<{ id: string }>
-}
-
-const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
-
-async function fetchVideoById(id: string) {
-  if (!API_KEY) return null
-  try {
-    const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${id}&key=${API_KEY}`,
-      { next: { revalidate: 300 } }
-    )
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.items?.[0] || null
-  } catch {
-    return null
-  }
-}
-
-async function fetchRelatedVideos(region: string = 'US') {
-  if (!API_KEY) return []
-  try {
-    const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=12&regionCode=${region}&key=${API_KEY}`,
-      { next: { revalidate: 300 } }
-    )
-    if (!res.ok) return []
-    const data = await res.json()
-    return data.items || []
-  } catch {
-    return []
-  }
 }
 
 function formatNumber(n: string | undefined) {
@@ -100,17 +70,20 @@ export default async function VideoPage({ params }: VideoPageProps) {
   const video = await fetchVideoById(id)
   if (!video) return notFound()
 
-  const related = await fetchRelatedVideos()
+  const region = await getRegion()
+  const related = await fetchRelatedVideos(region)
   const insights = generateInsights(video)
   const engagement = calculateEngagement(video)
 
   return (
-    <main className="min-h-screen bg-[#070707] text-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+    <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">
+      <div className="ambient-glow-tl" />
+      <div className="ambient-glow-tr" />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-10">
         {/* Back */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-6 sm:mb-8"
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-6 sm:mb-8"
         >
           <span className="text-lg">←</span>
           <span className="text-sm font-medium">Back to Trends</span>
@@ -120,40 +93,40 @@ export default async function VideoPage({ params }: VideoPageProps) {
         <div className="mb-6 sm:mb-8">
           <VideoPlayer
             videoId={id}
-            thumbnail={video.snippet?.thumbnails?.high?.url}
+            thumbnail={video.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
           />
         </div>
 
         {/* Title & Channel */}
         <div className="mb-8 sm:mb-10">
-          <h1 className="text-xl sm:text-3xl font-bold leading-snug mb-3">
+          <h1 className="text-xl sm:text-3xl font-bold leading-snug mb-3 text-glow text-gray-900">
             {video.snippet?.title}
           </h1>
-          <div className="flex items-center gap-3 text-zinc-400">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-xs font-bold">
+          <div className="flex items-center gap-3 text-gray-500">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-xs font-bold shadow-[0_0_15px_rgba(220,38,38,0.2)] text-white">
               {video.snippet?.channelTitle?.[0]}
             </div>
-            <span className="font-medium text-zinc-300">{video.snippet?.channelTitle}</span>
+            <span className="font-medium text-gray-700">{video.snippet?.channelTitle}</span>
           </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">👁️ Views</div>
-            <div className="text-xl sm:text-2xl font-black">{formatNumber(video.statistics?.viewCount)}</div>
+          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">👁️ VIEWS</div>
+            <div className="text-xl sm:text-2xl font-black data-mono text-glow text-gray-900">{formatNumber(video.statistics?.viewCount)}</div>
           </div>
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">❤️ Likes</div>
-            <div className="text-xl sm:text-2xl font-black text-red-400">{formatNumber(video.statistics?.likeCount)}</div>
+          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">❤️ LIKES</div>
+            <div className="text-xl sm:text-2xl font-black text-red-600 data-mono text-glow-red">{formatNumber(video.statistics?.likeCount)}</div>
           </div>
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">💬 Comments</div>
-            <div className="text-xl sm:text-2xl font-black text-blue-400">{formatNumber(video.statistics?.commentCount)}</div>
+          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">💬 COMMENTS</div>
+            <div className="text-xl sm:text-2xl font-black text-blue-600 data-mono">{formatNumber(video.statistics?.commentCount)}</div>
           </div>
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">⚡ Engagement</div>
-            <div className="text-xl sm:text-2xl font-black text-green-400">{engagement}%</div>
+          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">⚡ ENGAGEMENT</div>
+            <div className="text-xl sm:text-2xl font-black text-green-600 data-mono text-glow-green">{engagement}%</div>
           </div>
         </div>
 
@@ -161,20 +134,23 @@ export default async function VideoPage({ params }: VideoPageProps) {
 
         {/* AI Insights */}
         <div className="mb-8 sm:mb-10">
-          <h2 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
-            <span className="text-yellow-400">🧠</span> AI Trend Analysis
-          </h2>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-yellow-400 to-yellow-600" />
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+              <span className="text-yellow-600">🧠</span> AI Trend Analysis
+            </h2>
+          </div>
           <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
             {insights.map((insight, idx) => (
               <div
                 key={idx}
-                className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-4 sm:p-5 hover:border-zinc-700 transition-colors"
+                className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent"
               >
                 <div className="flex items-start gap-3">
-                  <div className="text-2xl">{insight.icon}</div>
+                  <div className="text-2xl float-slow">{insight.icon}</div>
                   <div>
-                    <div className="font-bold text-sm sm:text-base mb-1">{insight.title}</div>
-                    <div className="text-zinc-400 text-xs sm:text-sm leading-relaxed">{insight.desc}</div>
+                    <div className="font-bold text-sm sm:text-base mb-1 text-gray-900">{insight.title}</div>
+                    <div className="text-gray-500 text-xs sm:text-sm leading-relaxed">{insight.desc}</div>
                   </div>
                 </div>
               </div>
@@ -185,15 +161,18 @@ export default async function VideoPage({ params }: VideoPageProps) {
         {/* Related Videos */}
         {related.length > 0 && (
           <div>
-            <h2 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
-              <span className="text-red-400">▶</span> Related Trending Videos
-            </h2>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-1 h-6 rounded-full bg-gradient-to-b from-red-400 to-red-600" />
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+                <span className="text-red-600">▶</span> Related Trending Videos
+              </h2>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {related.map((v: any) => (
                 <Link
                   key={v.id}
                   href={`/video/${v.id}`}
-                  className="group block bg-zinc-900/40 border border-zinc-800 rounded-2xl overflow-hidden hover:border-zinc-700 transition-colors"
+                  className="group block glass-panel neon-border rounded-2xl overflow-hidden glow-hover corner-accent"
                 >
                   <div className="aspect-video overflow-hidden">
                     <img
@@ -203,10 +182,10 @@ export default async function VideoPage({ params }: VideoPageProps) {
                     />
                   </div>
                   <div className="p-3 sm:p-4">
-                    <h3 className="font-bold text-sm line-clamp-2 mb-1 group-hover:text-red-400 transition-colors">
+                    <h3 className="font-bold text-sm line-clamp-2 mb-1 group-hover:text-red-600 transition-colors text-gray-900">
                       {v.snippet?.title}
                     </h3>
-                    <div className="text-zinc-500 text-xs">
+                    <div className="text-gray-500 text-xs data-mono">
                       {v.snippet?.channelTitle} · {formatNumber(v.statistics?.viewCount)} views
                     </div>
                   </div>

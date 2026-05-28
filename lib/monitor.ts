@@ -1,0 +1,247 @@
+/* =========================================================
+   MONITORING & ALERTING — Unattended operation safety net
+========================================================= */
+
+export interface AlertPayload {
+  level: 'critical' | 'warning' | 'info'
+  source: string
+  message: string
+  detail?: string
+  timestamp: string
+}
+
+export interface HealthReport {
+  status: 'healthy' | 'degraded' | 'down'
+  checks: {
+    youtubeApi: { ok: boolean; latencyMs: number; error?: string }
+    quota: { ok: boolean; used: number; limit: number; percentage: number }
+    dataFreshness: { ok: boolean; lastUpdate: string | null; hoursSince: number; error?: string }
+    errors: { ok: boolean; count1h: number; recent: AlertPayload[] }
+  }
+  timestamp: string
+  version: string
+}
+
+/* ---- In-memory alert buffer (resets on serverless cold start) ---- */
+const alertBuffer: AlertPayload[] = []
+const MAX_BUFFER = 100
+
+/* ---- Config ---- */
+const ALERT_EMAIL = process.env.ALERT_EMAIL || ''
+const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
+const ALERT_WEBHOOK_URL = process.env.ALERT_WEBHOOK_URL || ''
+const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
+
+/* ---- Quota tracking (approximate) ---- */
+let quotaUsedToday = 0
+const QUOTA_DAILY_LIMIT = 10_000 // YouTube Data API default
+
+export function trackQuotaUsage(units: number) {
+  quotaUsedToday += units
+}
+
+export function getQuotaStatus() {
+  const percentage = Math.round((quotaUsedToday / QUOTA_DAILY_LIMIT) * 100)
+  return {
+    used: quotaUsedToday,
+    limit: QUOTA_DAILY_LIMIT,
+    percentage,
+    ok: percentage < 90,
+  }
+}
+
+export function resetQuotaTracking() {
+  quotaUsedToday = 0
+}
+
+/* ---- Alerting ---- */
+export async function sendAlert(payload: AlertPayload) {
+  alertBuffer.push(payload)
+  if (alertBuffer.length > MAX_BUFFER) alertBuffer.shift()
+
+  const logLine = `[${payload.level.toUpperCase()}] ${payload.source}: ${payload.message}`
+  if (payload.level === 'critical') console.error(logLine)
+  else if (payload.level === 'warning') console.warn(logLine)
+  else console.info(logLine)
+
+  // Email via Resend
+  if (RESEND_API_KEY && ALERT_EMAIL) {
+    try {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'TubeFission Alerts <alerts@tubefission.com>',
+          to: ALERT_EMAIL,
+          subject: `[${payload.level.toUpperCase()}] TubeFission ${payload.source}`,
+          text: `${payload.message}\n\nDetail: ${payload.detail || 'N/A'}\nTime: ${payload.timestamp}`,
+        }),
+      })
+    } catch (e) {
+      console.error('Failed to send email alert:', e)
+    }
+  }
+
+  // Generic webhook fallback
+  if (ALERT_WEBHOOK_URL) {
+    try {
+      await fetch(ALERT_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+    } catch (e) {
+      console.error('Failed to send webhook alert:', e)
+    }
+  }
+}
+
+export function getRecentAlerts(level?: 'critical' | 'warning' | 'info', limit = 20): AlertPayload[] {
+  let alerts = [...alertBuffer]
+  if (level) alerts = alerts.filter((a) => a.level === level)
+  return alerts.slice(-limit)
+}
+
+/* ---- Enhanced fetch with monitoring ---- */
+export async function monitoredFetch(
+  url: string,
+  options?: RequestInit & { quotaUnits?: number; retries?: number }
+): Promise<Response> {
+  const { quotaUnits = 1, retries = 2, ...fetchOptions } = options || {}
+  const start = Date.now()
+  let lastError: Error | undefined
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, fetchOptions)
+      const latency = Date.now() - start
+
+      if (quotaUnits) trackQuotaUsage(quotaUnits)
+
+      if (!res.ok) {
+        const errorMsg = `HTTP ${res.status} from ${new URL(url).hostname}`
+        if (res.status >= 500 || attempt < retries) {
+          lastError = new Error(errorMsg)
+          if (attempt < retries) {
+            await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)))
+            continue
+          }
+        }
+        sendAlert({
+          level: res.status >= 500 ? 'critical' : 'warning',
+          source: 'API Client',
+          message: errorMsg,
+          detail: `URL: ${url}\nStatus: ${res.status}\nLatency: ${latency}ms`,
+          timestamp: new Date().toISOString(),
+        })
+        return res
+      }
+
+      return res
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err))
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)))
+      }
+    }
+  }
+
+  const finalError = lastError || new Error('Unknown fetch error')
+  sendAlert({
+    level: 'critical',
+    source: 'API Client',
+    message: `Request failed after ${retries + 1} attempts`,
+    detail: `${finalError.message}\nURL: ${url}`,
+    timestamp: new Date().toISOString(),
+  })
+  throw finalError
+}
+
+/* ---- Health check ---- */
+export async function runHealthCheck(): Promise<HealthReport> {
+  const now = new Date()
+  const report: HealthReport = {
+    status: 'healthy',
+    checks: {
+      youtubeApi: { ok: false, latencyMs: 0 },
+      quota: getQuotaStatus(),
+      dataFreshness: { ok: false, lastUpdate: null, hoursSince: Infinity },
+      errors: { ok: true, count1h: 0, recent: [] },
+    },
+    timestamp: now.toISOString(),
+    version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev',
+  }
+
+  // Check YouTube API
+  if (YOUTUBE_API_KEY) {
+    const t0 = Date.now()
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&maxResults=1&regionCode=US&key=${YOUTUBE_API_KEY}`,
+        { cache: 'no-store' }
+      )
+      report.checks.youtubeApi.latencyMs = Date.now() - t0
+      report.checks.youtubeApi.ok = res.ok
+      if (!res.ok) {
+        report.checks.youtubeApi.error = `HTTP ${res.status}`
+      }
+    } catch (e) {
+      report.checks.youtubeApi.latencyMs = Date.now() - t0
+      report.checks.youtubeApi.error = e instanceof Error ? e.message : String(e)
+    }
+  } else {
+    report.checks.youtubeApi.error = 'No API key configured'
+  }
+
+  // Check data freshness (history.json)
+  try {
+    const { loadHistory } = await import('./analytics')
+    const history = loadHistory()
+    const last = history[history.length - 1]
+    if (last) {
+      report.checks.dataFreshness.lastUpdate = last.timestamp
+      const hoursSince = (now.getTime() - new Date(last.timestamp).getTime()) / (1000 * 60 * 60)
+      report.checks.dataFreshness.hoursSince = Math.round(hoursSince * 10) / 10
+      report.checks.dataFreshness.ok = hoursSince < 48
+    }
+  } catch {
+    report.checks.dataFreshness.error = 'history.json not found'
+  }
+
+  // Error summary
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString()
+  report.checks.errors.recent = alertBuffer.filter((a) => a.timestamp >= oneHourAgo)
+  report.checks.errors.count1h = report.checks.errors.recent.length
+  report.checks.errors.ok = report.checks.errors.count1h < 5
+
+  // Overall status
+  if (!report.checks.youtubeApi.ok || !report.checks.errors.ok) {
+    report.status = 'down'
+  } else if (!report.checks.quota.ok || !report.checks.dataFreshness.ok) {
+    report.status = 'degraded'
+  }
+
+  // Auto-alert on degraded/down
+  if (report.status === 'down') {
+    await sendAlert({
+      level: 'critical',
+      source: 'Health Check',
+      message: 'TubeFission is DOWN',
+      detail: `API: ${report.checks.youtubeApi.ok ? 'OK' : report.checks.youtubeApi.error}\nQuota: ${report.checks.quota.percentage}%\nData: ${report.checks.dataFreshness.hoursSince}h old\nErrors(1h): ${report.checks.errors.count1h}`,
+      timestamp: report.timestamp,
+    })
+  } else if (report.status === 'degraded') {
+    await sendAlert({
+      level: 'warning',
+      source: 'Health Check',
+      message: 'TubeFission is DEGRADED',
+      detail: `API: ${report.checks.youtubeApi.ok ? 'OK' : report.checks.youtubeApi.error}\nQuota: ${report.checks.quota.percentage}%\nData: ${report.checks.dataFreshness.hoursSince}h old`,
+      timestamp: report.timestamp,
+    })
+  }
+
+  return report
+}
