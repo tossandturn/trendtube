@@ -79,8 +79,8 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
   const { slug } = await params
   const name = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
   return {
-    title: `${name} YouTube Trends Today | Viral ${name} Videos & Shorts`,
-    description: `Track the fastest-growing ${name} YouTube trends, viral videos, and Shorts opportunities with real-time creator intelligence.`,
+    title: `${name} YouTube Potential Today | Viral ${name} Videos & Shorts`,
+    description: `Track the fastest-growing ${name} YouTube potential, viral videos, and Shorts opportunities with real-time creator intelligence.`,
   }
 }
 
@@ -113,6 +113,14 @@ export default async function TagPage({ params }: TagPageProps) {
   const avgViews = tagVideos.length > 0 ? tagVideos.reduce((s: number, v: any) => s + v.views, 0) / tagVideos.length : 0
   const avgEngagement = tagVideos.length > 0 ? tagVideos.reduce((s: number, v: any) => s + v.engagement, 0) / tagVideos.length : 0
   const avgVelocity = tagVideos.length > 0 ? tagVideos.reduce((s: number, v: any) => s + v.velocity, 0) / tagVideos.length : 0
+  const totalViews = tagVideos.reduce((s: number, v: any) => s + v.views, 0)
+  const medianViews = tagVideos.length > 0 ? tagVideos.sort((a: any, b: any) => a.views - b.views)[Math.floor(tagVideos.length / 2)]?.views || 0 : 0
+
+  // Calculate opportunity score (demand/supply ratio)
+  const allVideosTotal = videos.reduce((s: number, v: any) => s + Number(v.statistics?.viewCount || 0), 0)
+  const categoryShare = totalViews / (allVideosTotal || 1)
+  const categorySupply = filtered.length / (videos.length || 1)
+  const opportunityScore = categorySupply > 0 ? (categoryShare / categorySupply) * 100 : 50
 
   return (
     <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">
@@ -124,14 +132,14 @@ export default async function TagPage({ params }: TagPageProps) {
           className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-6 sm:mb-8"
         >
           <span className="text-lg">←</span>
-          <span className="text-sm font-medium">Back to Trends</span>
+          <span className="text-sm font-medium">Back to Potential</span>
         </Link>
 
         <div className="mb-8 sm:mb-10">
           <div className="text-gray-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">🏷️ TAG INTELLIGENCE</div>
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">{tagEmoji} {tagName} YouTube Trends Today</h1>
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">{tagEmoji} {tagName} YouTube Potential Today</h1>
           <p className="text-gray-500 text-sm sm:text-base max-w-2xl leading-relaxed">
-            Track the fastest-growing {tagName} YouTube trends, viral videos, and Shorts opportunities
+            Track the fastest-growing {tagName} YouTube potential, viral videos, and Shorts opportunities
             with real-time creator intelligence.
           </p>
         </div>
@@ -158,6 +166,181 @@ export default async function TagPage({ params }: TagPageProps) {
         </div>
 
         <AdBanner slot="4567890123" className="my-8" />
+
+        {/* Potential Intelligence Dashboard */}
+        <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 mb-10 glow-hover corner-accent">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-6 rounded-full bg-gradient-to-b from-blue-400 to-blue-600" />
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+                <span className="text-blue-600">📊</span> Potential Intelligence Dashboard
+              </h2>
+            </div>
+            <span className="text-xs text-gray-500 data-mono bg-gray-100 px-2 py-1 rounded">Live Data</span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+              <div className="text-blue-600 text-xs font-bold mb-1 data-mono tracking-wider">TOTAL VIEWS</div>
+              <div className="text-2xl font-black data-mono text-blue-700">{formatNumber(Math.floor(totalViews).toString())}</div>
+              <div className="text-xs text-blue-500 mt-1">Category volume</div>
+            </div>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+              <div className="text-green-600 text-xs font-bold mb-1 data-mono tracking-wider">AVG ENGAGEMENT</div>
+              <div className="text-2xl font-black data-mono text-green-700">{avgEngagement.toFixed(2)}%</div>
+              <div className="text-xs text-green-500 mt-1">Audience quality</div>
+            </div>
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+              <div className="text-purple-600 text-xs font-bold mb-1 data-mono tracking-wider">AVG VELOCITY</div>
+              <div className="text-2xl font-black data-mono text-purple-700">
+                {avgVelocity >= 1e6 ? (avgVelocity / 1e6).toFixed(1) + 'M' : avgVelocity >= 1e3 ? (avgVelocity / 1e3).toFixed(1) + 'K' : Math.round(avgVelocity)}/d
+              </div>
+              <div className="text-xs text-purple-500 mt-1">Growth speed</div>
+            </div>
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+              <div className="text-orange-600 text-xs font-bold mb-1 data-mono tracking-wider">OPPORTUNITY</div>
+              <div className="text-2xl font-black data-mono text-orange-700">{opportunityScore.toFixed(0)}</div>
+              <div className="text-xs text-orange-500 mt-1">{opportunityScore > 100 ? 'High demand' : opportunityScore > 50 ? 'Moderate' : 'Saturated'}</div>
+            </div>
+          </div>
+
+          {/* Velocity Trend Analysis */}
+          <div className="mb-6">
+            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono mb-4">⚡ VELOCITY DISTRIBUTION</h3>
+            <svg viewBox="0 0 600 200" className="w-full" preserveAspectRatio="xMidYMid meet">
+              {(() => {
+                const width = 600
+                const height = 200
+                const margin = { top: 20, right: 30, bottom: 40, left: 60 }
+                const chartW = width - margin.left - margin.right
+                const chartH = height - margin.top - margin.bottom
+
+                const velocityBuckets = [
+                  { label: '0-1K', min: 0, max: 1000 },
+                  { label: '1K-10K', min: 1000, max: 10000 },
+                  { label: '10K-100K', min: 10000, max: 100000 },
+                  { label: '100K-1M', min: 100000, max: 1000000 },
+                  { label: '1M+', min: 1000000, max: Infinity },
+                ]
+
+                const bucketCounts = velocityBuckets.map(bucket => ({
+                  ...bucket,
+                  count: tagVideos.filter((v: any) => v.velocity >= bucket.min && v.velocity < bucket.max).length
+                }))
+
+                const maxCount = Math.max(...bucketCounts.map(b => b.count), 1)
+
+                const barWidth = chartW / bucketCounts.length * 0.7
+                const barSpacing = chartW / bucketCounts.length * 0.3
+
+                return (
+                  <>
+                    <rect x={margin.left} y={margin.top} width={chartW} height={chartH} fill="#f3f4f6" opacity="0.5" rx="8" />
+                    {/* Grid lines */}
+                    {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
+                      const y = margin.top + chartH - t * chartH
+                      return (
+                        <g key={`grid-${i}`}>
+                          <line x1={margin.left} y1={y} x2={margin.left + chartW} y2={y} stroke="#e5e7eb" strokeWidth="1" />
+                          <text x={margin.left - 8} y={y + 4} fill="#9ca3af" fontSize="10" textAnchor="end" fontFamily="monospace">
+                            {Math.round(t * maxCount)}
+                          </text>
+                        </g>
+                      )
+                    })}
+                    {/* Bars */}
+                    {bucketCounts.map((bucket, i) => {
+                      const x = margin.left + i * (barWidth + barSpacing) + barSpacing / 2
+                      const barHeight = (bucket.count / maxCount) * chartH
+                      const y = margin.top + chartH - barHeight
+                      return (
+                        <g key={i}>
+                          <rect x={x} y={y} width={barWidth} height={barHeight} fill={getTagColor(tagName)} opacity="0.85" rx="4" />
+                          <text x={x + barWidth / 2} y={margin.top + chartH + 18} fill="#6b7280" fontSize="10" textAnchor="middle" fontFamily="monospace">
+                            {bucket.label}
+                          </text>
+                          {bucket.count > 0 && (
+                            <text x={x + barWidth / 2} y={y - 6} fill="#374151" fontSize="11" textAnchor="middle" fontWeight="bold" fontFamily="monospace">
+                              {bucket.count}
+                            </text>
+                          )}
+                        </g>
+                      )
+                    })}
+                    <text x={margin.left + chartW / 2} y={height - 5} fill="#6b7280" fontSize="11" textAnchor="middle" fontWeight="bold" fontFamily="monospace">Views per Day</text>
+                    <text x={14} y={margin.top + chartH / 2} fill="#6b7280" fontSize="11" textAnchor="middle" fontWeight="bold" transform={`rotate(-90, 14, ${margin.top + chartH / 2})`} fontFamily="monospace">Video Count</text>
+                  </>
+                )
+              })()}
+            </svg>
+          </div>
+
+          {/* Competition Analysis */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                <span>🎯</span> Market Opportunity
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-500">Category Share of Views</span>
+                    <span className="font-bold text-gray-700">{(categoryShare * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full" style={{ width: `${Math.min(categoryShare * 100 * 5, 100)}%` }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-500">Category Share of Content</span>
+                    <span className="font-bold text-gray-700">{(categorySupply * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full" style={{ width: `${Math.min(categorySupply * 100 * 5, 100)}%` }} />
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-3 leading-relaxed">
+                {opportunityScore > 100
+                  ? 'High demand, low supply. Excellent opportunity for new creators to capture attention.'
+                  : opportunityScore > 50
+                  ? 'Balanced market. Consistent opportunity with quality content.'
+                  : 'Saturated market. Requires exceptional differentiation to stand out.'}
+              </p>
+            </div>
+
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                <span>📈</span> Performance Benchmarks
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Median Views</span>
+                  <span className="font-bold data-mono text-gray-700">{formatNumber(Math.floor(medianViews).toString())}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Top 10% Threshold</span>
+                  <span className="font-bold data-mono text-gray-700">
+                    {formatNumber(Math.floor(tagVideos.sort((a: any, b: any) => b.views - a.views)[Math.floor(tagVideos.length * 0.1)]?.views || 0).toString())}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Engagement Quality</span>
+                  <span className={`font-bold data-mono ${avgEngagement > 5 ? 'text-green-600' : avgEngagement > 2 ? 'text-yellow-600' : 'text-gray-600'}`}>
+                    {avgEngagement > 5 ? 'High' : avgEngagement > 2 ? 'Medium' : 'Low'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Velocity Potential</span>
+                  <span className={`font-bold data-mono ${avgVelocity > 50000 ? 'text-green-600' : avgVelocity > 10000 ? 'text-yellow-600' : 'text-gray-600'}`}>
+                    {avgVelocity > 50000 ? 'Viral' : avgVelocity > 10000 ? 'Growing' : 'Steady'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Real Data Charts */}
         <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 mb-10">
@@ -300,7 +483,7 @@ export default async function TagPage({ params }: TagPageProps) {
           <div className="flex items-center gap-3 mb-3">
             <div className="w-1 h-6 rounded-full bg-gradient-to-b from-yellow-400 to-yellow-600" />
             <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-              <span className="text-yellow-600">🧠</span> AI Trend Analysis
+              <span className="text-yellow-600">🧠</span> AI Potential Analysis
             </h2>
           </div>
           <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{analysis}</p>
@@ -328,7 +511,7 @@ export default async function TagPage({ params }: TagPageProps) {
         <div className="flex items-center gap-3 mb-4">
           <div className="w-1 h-6 rounded-full bg-gradient-to-b from-yellow-400 to-yellow-600" />
           <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-            <span className="text-yellow-600">✦</span> Top {tagName} Videos
+            <span className="text-yellow-600">✦</span> Top {tagName} Potential
           </h2>
         </div>
 

@@ -19,6 +19,7 @@ export const REGION_META: Record<Region, { label: string; flag: string; lang: st
 }
 
 export const REGION_LABELS: Record<Region, {
+  full: string
   trending: string
   shorts: string
   emerging: string
@@ -32,6 +33,7 @@ export const REGION_LABELS: Record<Region, {
   backToTrends: string
 }> = {
   US: {
+    full: 'United States',
     trending: 'Trending',
     shorts: 'Shorts',
     emerging: 'Emerging',
@@ -45,6 +47,7 @@ export const REGION_LABELS: Record<Region, {
     backToTrends: 'Back to Trends',
   },
   JP: {
+    full: 'Japan',
     trending: 'トレンド',
     shorts: 'ショート',
     emerging: '急上昇',
@@ -58,6 +61,7 @@ export const REGION_LABELS: Record<Region, {
     backToTrends: 'トレンドに戻る',
   },
   KR: {
+    full: 'Korea',
     trending: '트렌딩',
     shorts: '쇼츠',
     emerging: '급상승',
@@ -71,6 +75,7 @@ export const REGION_LABELS: Record<Region, {
     backToTrends: '트렌드로 돌아가기',
   },
   GB: {
+    full: 'United Kingdom',
     trending: 'Trending',
     shorts: 'Shorts',
     emerging: 'Emerging',
@@ -84,6 +89,7 @@ export const REGION_LABELS: Record<Region, {
     backToTrends: 'Back to Trends',
   },
   HK: {
+    full: 'Hong Kong',
     trending: '熱門',
     shorts: 'Shorts',
     emerging: '新興趨勢',
@@ -97,6 +103,7 @@ export const REGION_LABELS: Record<Region, {
     backToTrends: '返回熱門',
   },
   TW: {
+    full: 'Taiwan',
     trending: '熱門',
     shorts: 'Shorts',
     emerging: '新興趨勢',
