@@ -572,7 +572,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
               </span>
-              <span className="text-red-400 text-xs font-bold tracking-widest uppercase">Live Trend Radar</span>
+              <span className="text-red-400 text-xs font-bold tracking-widest uppercase">🟢 Live Trend Radar</span>
             </div>
             <div className="text-3xl sm:text-5xl font-black tracking-tight">TubeFission</div>
             <p className="text-zinc-500 mt-1 text-sm sm:text-base">Discover viral YouTube trends before everyone else.</p>
@@ -626,22 +626,44 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                   <div className="bg-black/30 rounded-xl p-3">
-                    <div className="text-zinc-500 text-xs mb-1">Competition</div>
-                    <div className="text-green-400 font-bold text-sm">LOW</div>
+                    <div className="text-zinc-500 text-xs mb-1">🎯 Competition</div>
+                    <div className="text-green-400 font-bold text-sm">LOW 🟢</div>
                   </div>
                   <div className="bg-black/30 rounded-xl p-3">
-                    <div className="text-zinc-500 text-xs mb-1">Predicted Peak</div>
-                    <div className="text-white font-bold text-sm">Next 48h</div>
+                    <div className="text-zinc-500 text-xs mb-1">⏰ Predicted Peak</div>
+                    <div className="text-white font-bold text-sm">Next 48h 🚀</div>
                   </div>
                   <div className="bg-black/30 rounded-xl p-3">
-                    <div className="text-zinc-500 text-xs mb-1">Creator Urgency</div>
-                    <div className="text-red-400 font-bold text-sm">HIGH</div>
+                    <div className="text-zinc-500 text-xs mb-1">⚡ Creator Urgency</div>
+                    <div className="text-red-400 font-bold text-sm">HIGH 🔥</div>
+                  </div>
+                </div>
+
+                {/* Mini Trend Sparkline */}
+                <div className="bg-black/40 rounded-xl p-4 mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-zinc-500 text-xs mb-1">📊 7-Day Momentum</div>
+                    <div className="text-green-400 text-xs font-bold">+{topOpportunityTag.growth}% 📈</div>
+                  </div>
+                  <div className="flex items-end gap-1 h-16">
+                    {[35, 48, 42, 58, 72, 85, topOpportunityTag.growth > 100 ? 100 : topOpportunityTag.growth].map((val, idx) => (
+                      <div key={idx} className="flex-1 flex flex-col items-center gap-1">
+                        <div className="w-full rounded-sm relative overflow-hidden bg-zinc-800/50" style={{ height: `${val}%` }}>
+                          <div className={`absolute inset-0 ${idx === 6 ? 'bg-gradient-to-t from-red-500 to-orange-400' : 'bg-gradient-to-t from-green-600 to-green-400'} opacity-80`} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Today'].map((d) => (
+                      <span key={d} className="text-[9px] text-zinc-600">{d}</span>
+                    ))}
                   </div>
                 </div>
 
                 {topOpportunityVideo && (
                   <div className="bg-black/40 rounded-xl p-4 mb-6">
-                    <div className="text-zinc-500 text-xs mb-1">Suggested Video</div>
+                    <div className="text-zinc-500 text-xs mb-1">💡 Suggested Video</div>
                     <div className="font-bold text-sm sm:text-base line-clamp-1">
                       &quot;{generateSuggestedTitles(topOpportunityTag.tag)[0]}&quot;
                     </div>
@@ -691,8 +713,8 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                 onMouseEnter={() => setActiveTagIndex(index)}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-zinc-500 text-xs font-bold">#{index + 1}</span>
-                  <span className="text-green-400 text-xs font-black">+{item.growth}%</span>
+                  <span className="text-zinc-500 text-xs font-bold">🏆 #{index + 1}</span>
+                  <span className="text-green-400 text-xs font-black">📈 +{item.growth}%</span>
                 </div>
                 <div className="font-bold text-sm sm:text-base mb-2">{item.tag}</div>
                 <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden mb-2">
@@ -733,18 +755,18 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                     </h3>
                     <div className="grid grid-cols-3 gap-2 mb-3">
                       <div>
-                        <div className="text-zinc-500 text-[10px]">Views</div>
+                        <div className="text-zinc-500 text-[10px]">👁️ Views</div>
                         <div className="text-white text-xs font-bold">{formatNumber(video.statistics?.viewCount)}</div>
                       </div>
                       <div>
-                        <div className="text-zinc-500 text-[10px]">Competition</div>
+                        <div className="text-zinc-500 text-[10px]">⚔️ Competition</div>
                         <div className={`text-xs font-bold ${competition === 'LOW' ? 'text-green-400' : competition === 'MEDIUM' ? 'text-yellow-400' : 'text-red-400'}`}>
-                          {competition}
+                          {competition === 'LOW' ? '🟢 ' : competition === 'MEDIUM' ? '🟡 ' : '🔴 '}{competition}
                         </div>
                       </div>
                       <div>
-                        <div className="text-zinc-500 text-[10px]">Action</div>
-                        <div className="text-red-400 text-xs font-bold">24h</div>
+                        <div className="text-zinc-500 text-[10px]">⏰ Action</div>
+                        <div className="text-red-400 text-xs font-bold">24h ⚡</div>
                       </div>
                     </div>
                     <div className="text-zinc-400 text-xs leading-relaxed">
@@ -788,7 +810,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                         </span>
                       </div>
                       <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded-lg text-[10px] sm:text-xs font-medium">
-                        {formatNumber(video.statistics?.viewCount)} views
+                        👁️ {formatNumber(video.statistics?.viewCount)}
                       </div>
                     </div>
 
@@ -799,7 +821,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                       </h3>
 
                       <div className="text-green-400 text-xs font-bold mb-3">
-                        {getTrendGrowth(video)}
+                        📈 {getTrendGrowth(video)}
                       </div>
 
                       <div className="flex items-center gap-2 text-zinc-500 text-xs mb-3">
@@ -858,7 +880,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         {/* ===== SECTION 5: SHORTS PREVIEW ===== */}
         <section className="mb-16 sm:mb-20">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 sm:mb-8">
-            <SectionHeader icon="▶" title="Shorts Exploding Right Now" subtitle="Vertical content with maximum algorithmic reach" />
+            <SectionHeader icon="📱" title="Shorts Exploding Right Now" subtitle="Vertical content with maximum algorithmic reach" />
             <Link href="/shorts" className="text-sm font-bold text-red-400 hover:text-red-300 transition shrink-0">View All Shorts →</Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
@@ -905,11 +927,11 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
           <div className="grid sm:grid-cols-3 gap-4">
             {missedOpportunities.map(({ video, tag, missedGrowth }, idx) => (
               <div key={`missed-${video.id}`} className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 sm:p-6">
-                <div className="text-red-400 font-black text-3xl sm:text-4xl mb-2">+{missedGrowth}%</div>
-                <div className="text-white font-bold text-lg mb-1">{tag}</div>
+                <div className="text-red-400 font-black text-3xl sm:text-4xl mb-2">📉 +{missedGrowth}%</div>
+                <div className="text-white font-bold text-lg mb-1">💔 {tag}</div>
                 <div className="text-zinc-500 text-sm line-clamp-1 mb-4">{video.snippet?.title}</div>
                 <div className="flex items-center gap-3 text-xs text-zinc-400">
-                  <span>{formatNumber(video.statistics?.viewCount)} views</span>
+                  <span>👁️ {formatNumber(video.statistics?.viewCount)} views</span>
                 </div>
                 <div className="mt-4 pt-4 border-t border-zinc-800">
                   <Link href={`/tag/${slugifyTag(tag)}`} className="text-xs font-bold text-red-400 hover:text-red-300 transition">
@@ -924,7 +946,7 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
         {/* ===== SECTION 7: CREATOR SUGGESTIONS ===== */}
         <section className="mb-16 sm:mb-20">
           <div className="mb-6 sm:mb-8">
-            <SectionHeader icon="🔥" title="What You Should Upload Today" subtitle="AI-generated opportunities based on current momentum" />
+            <SectionHeader icon="💡" title="What You Should Upload Today" subtitle="AI-generated opportunities based on current momentum" />
           </div>
           <div className="grid sm:grid-cols-3 gap-4">
             {creatorSuggestions.map((suggestion) => (
@@ -935,19 +957,19 @@ export default function TrendingDashboard({ initialVideos }: TrendingDashboardPr
                 </div>
                 <div className="text-white font-bold text-lg mb-1">{suggestion.tag}</div>
                 <div className="bg-black/30 rounded-xl p-3 mb-4">
-                  <div className="text-zinc-500 text-[10px] mb-1">Suggested Title</div>
+                  <div className="text-zinc-500 text-[10px] mb-1">🎬 Suggested Title</div>
                   <div className="font-bold text-sm">&quot;{suggestion.titles[0]}&quot;</div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div>
-                    <div className="text-zinc-500 text-[10px]">Competition</div>
+                    <div className="text-zinc-500 text-[10px]">⚔️ Competition</div>
                     <div className={`text-sm font-bold ${suggestion.competition === 'LOW' ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {suggestion.competition}
+                      {suggestion.competition === 'LOW' ? '🟢 ' : '🟡 '}{suggestion.competition}
                     </div>
                   </div>
                   <div>
-                    <div className="text-zinc-500 text-[10px]">Saturation In</div>
-                    <div className="text-red-400 text-sm font-bold">{suggestion.saturationDays} days</div>
+                    <div className="text-zinc-500 text-[10px]">⏳ Saturation In</div>
+                    <div className="text-red-400 text-sm font-bold">{suggestion.saturationDays} days ⏰</div>
                   </div>
                 </div>
                 <Link

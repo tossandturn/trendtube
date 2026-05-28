@@ -103,8 +103,14 @@ export default async function TagPage({ params }: TagPageProps) {
   const analysis = TAG_ANALYSIS[slug.toLowerCase()] || `${tagName} is experiencing significant growth across YouTube. Creators who upload early are capturing outsized attention and subscriber gains.`
   const ideas = VIDEO_IDEAS[slug.toLowerCase()] || [`${tagName} content that blows up`, `Why ${tagName} is trending now`, `The ${tagName} opportunity you missed`]
 
-  const chartValues = Array.from({ length: 7 }, (_, i) => hashRandom(slug + '-chart-' + i, 50) + 30)
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  // Generate realistic 7-day growth curve — today is the peak since content is trending now
+  const baseGrowth = 120 + hashRandom(slug + '-base', 180)
+  const chartValues = Array.from({ length: 7 }, (_, i) => {
+    const dayFactor = Math.pow((i + 1) / 7, 1.5) // exponential rise toward today
+    const noise = hashRandom(slug + '-chart-' + i, 20) - 10
+    return Math.max(15, Math.min(98, Math.round(baseGrowth * dayFactor + noise)))
+  })
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Today']
 
   return (
     <main className="min-h-screen bg-[#070707] text-white">
@@ -118,7 +124,7 @@ export default async function TagPage({ params }: TagPageProps) {
         </Link>
 
         <div className="mb-8 sm:mb-10">
-          <div className="text-zinc-500 text-xs font-bold tracking-widest uppercase mb-2">TAG INTELLIGENCE</div>
+          <div className="text-zinc-500 text-xs font-bold tracking-widest uppercase mb-2">🏷️ TAG INTELLIGENCE</div>
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4">{tagName} YouTube Trends Today</h1>
           <p className="text-zinc-400 text-sm sm:text-base max-w-2xl leading-relaxed">
             Track the fastest-growing {tagName} YouTube trends, viral videos, and Shorts opportunities
@@ -128,11 +134,11 @@ export default async function TagPage({ params }: TagPageProps) {
 
         <div className="grid sm:grid-cols-3 gap-4 mb-10">
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">Trending Videos</div>
+            <div className="text-zinc-500 text-xs sm:text-sm mb-1">📊 Trending Videos</div>
             <div className="text-xl sm:text-2xl font-black">{filtered.length}</div>
           </div>
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">Avg Views</div>
+            <div className="text-zinc-500 text-xs sm:text-sm mb-1">👁️ Avg Views</div>
             <div className="text-xl sm:text-2xl font-black text-red-400">
               {formatNumber(
                 Math.floor(
@@ -143,7 +149,7 @@ export default async function TagPage({ params }: TagPageProps) {
             </div>
           </div>
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">Growth Signal</div>
+            <div className="text-zinc-500 text-xs sm:text-sm mb-1">📈 Growth Signal</div>
             <div className="text-xl sm:text-2xl font-black text-green-400">+{420 + hashRandom(slug, 200)}%</div>
           </div>
         </div>
@@ -152,23 +158,47 @@ export default async function TagPage({ params }: TagPageProps) {
 
         {/* 7-Day Growth Chart */}
         <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 sm:p-6 mb-10">
-          <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">7-Day Growth Curve</h2>
-          <div className="flex items-end gap-2 h-32">
-            {chartValues.map((val, idx) => (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full bg-zinc-800 rounded-t-lg relative overflow-hidden" style={{ height: `${val}%` }}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-green-500/40 to-green-400/10" />
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">📈 7-Day Growth Curve</h2>
+            <span className="text-green-400 text-xs font-bold">🔥 +{chartValues[6] - chartValues[0]}% this week</span>
+          </div>
+          <div className="flex items-end gap-2 sm:gap-3 h-36 sm:h-40">
+            {chartValues.map((val, idx) => {
+              const isPeak = idx === 6
+              const isHigh = val > 70
+              const barColor = isPeak ? 'from-red-500 to-orange-400' : isHigh ? 'from-green-500 to-emerald-400' : 'from-blue-500 to-cyan-400'
+              return (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-2">
+                  <div className="text-zinc-300 text-[10px] sm:text-xs font-bold">{val}%</div>
+                  <div className="w-full rounded-t-lg relative overflow-hidden bg-zinc-800/50" style={{ height: `${val * 0.9}%` }}>
+                    <div className={`absolute inset-0 bg-gradient-to-t ${barColor} opacity-70`} />
+                    {isPeak && <div className="absolute top-1 left-1/2 -translate-x-1/2 text-lg">🔥</div>}
+                  </div>
+                  <span className={`text-[10px] sm:text-xs font-bold ${isPeak ? 'text-red-400' : 'text-zinc-500'}`}>{days[idx]}</span>
                 </div>
-                <span className="text-zinc-500 text-[10px]">{days[idx]}</span>
-              </div>
-            ))}
+              )
+            })}
+          </div>
+          <div className="mt-4 pt-4 border-t border-zinc-800 grid grid-cols-3 gap-4">
+            <div>
+              <div className="text-zinc-500 text-[10px]">📊 Week Low</div>
+              <div className="text-white text-sm font-bold">{Math.min(...chartValues)}%</div>
+            </div>
+            <div>
+              <div className="text-zinc-500 text-[10px]">📈 Week High</div>
+              <div className="text-red-400 text-sm font-bold">{Math.max(...chartValues)}%</div>
+            </div>
+            <div>
+              <div className="text-zinc-500 text-[10px]">🎯 Avg Growth</div>
+              <div className="text-green-400 text-sm font-bold">{Math.round(chartValues.reduce((a, b) => a + b, 0) / chartValues.length)}%</div>
+            </div>
           </div>
         </div>
 
         {/* AI Analysis */}
         <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 sm:p-6 mb-10">
           <h2 className="text-lg sm:text-xl font-bold mb-3 flex items-center gap-2">
-            <span className="text-yellow-400">✦</span> AI Trend Analysis
+            <span className="text-yellow-400">🧠</span> AI Trend Analysis
           </h2>
           <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">{analysis}</p>
         </div>
@@ -181,7 +211,7 @@ export default async function TagPage({ params }: TagPageProps) {
           <div className="grid sm:grid-cols-3 gap-4">
             {ideas.map((idea, idx) => (
               <div key={idx} className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5">
-                <div className="text-zinc-500 text-xs font-bold mb-2">IDEA #{idx + 1}</div>
+                <div className="text-zinc-500 text-xs font-bold mb-2">💡 IDEA #{idx + 1}</div>
                 <div className="font-bold text-sm sm:text-base">&quot;{idea}&quot;</div>
               </div>
             ))}

@@ -140,19 +140,19 @@ export default async function VideoPage({ params }: VideoPageProps) {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">Views</div>
+            <div className="text-zinc-500 text-xs sm:text-sm mb-1">👁️ Views</div>
             <div className="text-xl sm:text-2xl font-black">{formatNumber(video.statistics?.viewCount)}</div>
           </div>
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">Likes</div>
+            <div className="text-zinc-500 text-xs sm:text-sm mb-1">❤️ Likes</div>
             <div className="text-xl sm:text-2xl font-black text-red-400">{formatNumber(video.statistics?.likeCount)}</div>
           </div>
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">Comments</div>
+            <div className="text-zinc-500 text-xs sm:text-sm mb-1">💬 Comments</div>
             <div className="text-xl sm:text-2xl font-black text-blue-400">{formatNumber(video.statistics?.commentCount)}</div>
           </div>
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-            <div className="text-zinc-500 text-xs sm:text-sm mb-1">Engagement</div>
+            <div className="text-zinc-500 text-xs sm:text-sm mb-1">⚡ Engagement</div>
             <div className="text-xl sm:text-2xl font-black text-green-400">{engagement}%</div>
           </div>
         </div>
@@ -162,7 +162,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
         {/* AI Insights */}
         <div className="mb-8 sm:mb-10">
           <h2 className="text-lg sm:text-xl font-bold mb-4 flex items-center gap-2">
-            <span className="text-yellow-400">✦</span> AI Trend Analysis
+            <span className="text-yellow-400">🧠</span> AI Trend Analysis
           </h2>
           <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
             {insights.map((insight, idx) => (
