@@ -396,7 +396,7 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-tight">
-                Find Viral YouTube Trends<br />
+                Find Viral YouTube Potential<br />
                 <span className="text-red-600">Before Everyone Else</span>
               </h1>
 
@@ -409,7 +409,7 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
                   href="/trending"
                   className="px-8 py-4 bg-red-600 text-white rounded-xl font-bold text-base hover:bg-red-700 transition shadow-lg shadow-red-600/20"
                 >
-                  Start Finding Trends →
+                  Start Finding Potential →
                 </Link>
                 <button
                   onClick={() => document.getElementById('live-demo')?.scrollIntoView({ behavior: 'smooth' })}
@@ -784,7 +784,7 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
             href="/trending"
             className="block w-full py-3 bg-red-600 text-white text-center rounded-xl font-bold"
           >
-            Start Finding Trends →
+            Start Finding Potential →
           </Link>
         </div>
 
@@ -801,7 +801,7 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
             <div>
               <h4 className="font-bold mb-4">Product</h4>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/trending" className="hover:text-red-600">Trends</Link></li>
+                <li><Link href="/trending" className="hover:text-red-600">Potential</Link></li>
                 <li><Link href="/shorts" className="hover:text-red-600">Shorts</Link></li>
                 <li><Link href="/pricing" className="hover:text-red-600">Pricing</Link></li>
                 <li><Link href="/api" className="hover:text-red-600">API</Link></li>
