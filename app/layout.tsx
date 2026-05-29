@@ -16,9 +16,44 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TubeFission — Discover Viral YouTube Trends Before They Explode",
+  title: "YouTube Video Downloader & Analytics Tool | Tubefission",
   description:
-    "Discover exploding YouTube trends, viral Shorts, and creator opportunities before everyone else. Updated daily with AI analysis.",
+    "Download YouTube videos without watermark instantly. Analyze channels, trends, and top-performing content using Tubefission. Free, fast, and secure.",
+  keywords: [
+    "YouTube downloader",
+    "free YouTube download",
+    "YouTube video downloader",
+    "download YouTube MP4",
+    "YouTube channel analytics",
+    "viral trends",
+    "YouTube analytics tool",
+  ],
+  alternates: {
+    canonical: "https://tubefission.com",
+  },
+  openGraph: {
+    title: "YouTube Video Downloader & Analytics Tool | Tubefission",
+    description: "Download YouTube videos without watermark instantly. Analyze channels, trends, and top-performing content.",
+    url: "https://tubefission.com",
+    siteName: "Tubefission",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "YouTube Video Downloader & Analytics Tool | Tubefission",
+    description: "Download YouTube videos without watermark instantly. Analyze channels and trends.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default async function RootLayout({

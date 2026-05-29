@@ -1,188 +1,249 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getRegion } from '@/lib/region-server'
-import { fetchTrendingVideos } from '@/lib/api-client'
-import { extractTrendsFromRegion, getAllCategoriesFromReal, getAllTagsFromReal } from '@/lib/trend-extractor'
-import { REGION_META } from '@/lib/region'
+import { SoftwareApplicationSchema, FAQPageSchema, BreadcrumbSchema } from '@/app/components/JsonLd'
+import { DownloadHeroForm } from '@/app/components/DownloadHeroForm'
 
 export const metadata: Metadata = {
-  title: 'TubeFission — Discover Viral YouTube Opportunities Before Everyone Else',
-  description: 'Real-time creator intelligence platform for YouTube trends, Shorts, and breakout niches. Analyze velocity, saturation, and breakout potential with real data from 6 countries.',
-  keywords: 'youtube trends, viral content, creator intelligence, shorts, analytics',
+  title: 'YouTube Video Downloader & Analytics Tool | Tubefission',
+  description: 'Download YouTube videos without watermark instantly. Analyze channels, trends, and top-performing content using Tubefission. Free, fast, and secure.',
   alternates: {
     canonical: 'https://tubefission.com',
   },
-  openGraph: {
-    title: 'TubeFission — Creator Intelligence Platform',
-    description: 'Discover viral YouTube opportunities before everyone else.',
-    url: 'https://tubefission.com',
-    type: 'website',
-  },
 }
 
-export default async function HomePage() {
-  const region = await getRegion()
-  const regionMeta = REGION_META[region]
-  const videos = await fetchTrendingVideos(region, 50)
-  const trends = videos.length > 0 ? await extractTrendsFromRegion(region, 50) : []
+const FAQ_ITEMS = [
+  {
+    question: 'Is Tubefission free to use?',
+    answer: 'Yes, Tubefission is completely free. You can download YouTube videos and analyze channels without paying anything or creating an account.',
+  },
+  {
+    question: 'Do I need to install any software?',
+    answer: 'No. Tubefission runs entirely in your web browser. Simply paste a YouTube URL and start downloading or analyzing instantly.',
+  },
+  {
+    question: 'Is it legal to download YouTube videos?',
+    answer: 'Downloading videos for personal, offline use is generally acceptable. However, redistributing copyrighted content without permission violates YouTube Terms of Service and copyright law. Always respect content creators rights.',
+  },
+  {
+    question: 'What video quality can I download?',
+    answer: 'Tubefission supports downloading videos in multiple resolutions, including HD and Full HD, depending on the original upload quality.',
+  },
+  {
+    question: 'Can I analyze any YouTube channel?',
+    answer: 'Yes. Paste any channel URL to see detailed analytics including subscriber growth, top-performing videos, engagement rates, and trending content patterns.',
+  },
+  {
+    question: 'Does Tubefission add watermarks to downloads?',
+    answer: 'No. We do not add any watermarks to downloaded videos. The file you receive matches the original quality and format.',
+  },
+]
 
-  const categories = getAllCategoriesFromReal(trends)
-  const tags = getAllTagsFromReal(trends)
-
-  const totalViews = videos.reduce((sum, v) => sum + Number(v.statistics?.viewCount || 0), 0)
-  const totalLikes = videos.reduce((sum, v) => sum + Number(v.statistics?.likeCount || 0), 0)
-
-  const topTrends = trends.slice(0, 5)
-
+export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#fafafa]">
-      {/* HERO */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-100 to-[#fafafa]" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 relative">
-          <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-200 text-sm text-gray-600 mb-8 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Live data from {regionMeta.label}
-            </div>
-            <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
-              Discover Viral YouTube<br className="hidden sm:block" /> Opportunities Before Everyone Else
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Real-time creator intelligence platform for YouTube trends, Shorts, and breakout niches.
-              All data extracted from real viral videos. Country is the first filter.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/trending"
-                className="w-full sm:w-auto px-8 py-3.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
-              >
-                Start Free
-              </Link>
-              <Link
-                href="/trends"
-                className="w-full sm:w-auto px-8 py-3.5 bg-white text-gray-900 font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                Explore Trends
-              </Link>
-            </div>
+    <main className="min-h-screen bg-white">
+      {/* Structured Data */}
+      <SoftwareApplicationSchema />
+      <FAQPageSchema items={FAQ_ITEMS} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: 'https://tubefission.com' },
+      ]} />
+
+      {/* ===== HERO SECTION ===== */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white pt-16 pb-20 sm:pt-24 sm:pb-28">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
+            YouTube Video Downloader<br className="hidden sm:block" /> & Analytics Platform
+          </h1>
+          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Download YouTube videos without watermark, analyze channels, and track trends instantly with Tubefission.
+          </p>
+
+          {/* CTA Input */}
+          <DownloadHeroForm />
+
+          {/* Trust Indicators */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-gray-600">
+            <span className="inline-flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
+              No Login Required
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
+              Free To Use
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
+              Fast Processing
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
+              Secure Download
+            </span>
           </div>
         </div>
       </section>
 
-      {/* SOCIAL PROOF — REAL DATA */}
-      <section className="border-y border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-gray-900">{videos.length}</p>
-              <p className="text-sm text-gray-500 mt-1">Videos Analyzed ({region})</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-gray-900">{(totalViews / 1e9).toFixed(1)}B</p>
-              <p className="text-sm text-gray-500 mt-1">Total Views</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-gray-900">{(totalLikes / 1e6).toFixed(1)}M</p>
-              <p className="text-sm text-gray-500 mt-1">Total Likes</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-gray-900">{trends.length}</p>
-              <p className="text-sm text-gray-500 mt-1">Trends Detected</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TOP TRENDS — REAL */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Top Potential in {regionMeta.label}</h2>
-            <Link href="/trends" className="text-sm text-blue-600 hover:text-blue-700 font-medium">View all →</Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {topTrends.map(trend => (
-              <Link
-                key={trend.slug}
-                href={`/trends/${trend.slug}`}
-                className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900">{trend.title}</h3>
-                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">{trend.category}</span>
-                </div>
-                <p className="text-sm text-gray-600 line-clamp-2 mb-4">{trend.description}</p>
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="text-green-600 font-medium">+{(trend.avgVelocity / 1000).toFixed(0)}K vel</span>
-                  <span className="text-blue-600">{trend.breakoutScore.toFixed(0)} breakout</span>
-                  <span className="text-gray-400">{trend.videoCount} vids</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CATEGORIES */}
-      <section className="py-20 bg-white border-y border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Categories in {regionMeta.label}</h2>
-            <Link href="/trends" className="text-sm text-blue-600 hover:text-blue-700 font-medium">View all →</Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {categories.map((cat) => (
-              <Link
-                key={cat}
-                href={`/categories/${cat.toLowerCase().replace(/\s+/g, '-')}`}
-                className="p-4 bg-[#fafafa] rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all text-center"
-              >
-                <p className="font-medium text-gray-900">{cat}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {trends.filter(t => t.category === cat).length} trends
-                </p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* TAGS */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Live Tags from {regionMeta.label}</h2>
-          <div className="flex flex-wrap gap-2">
-            {tags.slice(0, 24).map((tag) => (
-              <Link
-                key={tag}
-                href={`/tag/${tag}`}
-                className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors"
-              >
-                #{tag}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FINAL CTA */}
-      <section className="py-20">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to find your next viral video?</h2>
-          <p className="text-gray-600 mb-8">Real data. Real trends. Real growth.</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/trending"
-              className="w-full sm:w-auto px-8 py-3.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Start Free
+      {/* ===== INTERNAL LINKS BAR ===== */}
+      <section className="border-y border-gray-200 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-sm">
+            <Link href="/download-youtube-video" className="text-blue-600 hover:text-blue-800 font-medium">
+              YouTube Video Download →
             </Link>
+            <Link href="/youtube-channel-analytics" className="text-blue-600 hover:text-blue-800 font-medium">
+              Channel Analytics →
+            </Link>
+            <Link href="/trending" className="text-blue-600 hover:text-blue-800 font-medium">
+              Trending Videos →
+            </Link>
+            <Link href="/trends" className="text-blue-600 hover:text-blue-800 font-medium">
+              Trend Database →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== LONG-FORM CONTENT ===== */}
+      <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <h2 className="text-3xl font-bold text-gray-900 mb-6">What Is Tubefission for YouTube?</h2>
+        <p className="text-gray-700 leading-relaxed mb-6">
+          Tubefission is a free <strong>YouTube video downloader and analytics platform</strong> designed for creators, marketers, and everyday viewers who want more control over their content consumption and research. Whether you need to save a tutorial for offline viewing, study a competitor channel, or discover viral trends before they peak, Tubefission gives you the tools to do it instantly in your browser.
+        </p>
+        <p className="text-gray-700 leading-relaxed mb-10">
+          Unlike many tools that require software installation, registration, or paid subscriptions, Tubefission operates entirely online with no login required. Paste a YouTube URL, and within seconds you can download the video or unlock deep analytics about its performance, audience engagement, and growth trajectory.
+        </p>
+
+        <h2 className="text-3xl font-bold text-gray-900 mb-6">How YouTube Download Works</h2>
+        <p className="text-gray-700 leading-relaxed mb-6">
+          Our <strong>YouTube downloader</strong> uses a simple three-step process that anyone can follow:
+        </p>
+        <ol className="list-decimal list-inside space-y-3 text-gray-700 leading-relaxed mb-10">
+          <li><strong>Copy the URL</strong> of the YouTube video you want to download from your browser address bar.</li>
+          <li><strong>Paste it into the input field</strong> at the top of this page and click the Download Now button.</li>
+          <li><strong>Select your preferred format and quality</strong>, then save the file directly to your device.</li>
+        </ol>
+        <p className="text-gray-700 leading-relaxed mb-10">
+          The entire process takes less than 10 seconds. We support multiple resolutions and formats, ensuring you get the best possible version of the video for your needs. Best of all, Tubefission does not add watermarks to your downloads, preserving the original viewing experience.
+        </p>
+
+        <h2 className="text-3xl font-bold text-gray-900 mb-6">Channel Analytics Explanation</h2>
+        <p className="text-gray-700 leading-relaxed mb-6">
+          Understanding how channels grow is essential for creators who want to compete on YouTube. Tubefissions <strong>channel analytics</strong> feature breaks down any public channel into actionable metrics:
+        </p>
+        <ul className="list-disc list-inside space-y-3 text-gray-700 leading-relaxed mb-10">
+          <li><strong>Subscriber velocity</strong> — how fast a channel is gaining subscribers relative to its upload frequency.</li>
+          <li><strong>Engagement rate</strong> — the ratio of likes and comments to total views, revealing content quality.</li>
+          <li><strong>Top-performing videos</strong> — identify which titles, thumbnails, and topics drive the most traffic.</li>
+          <li><strong>Upload consistency</strong> — track publishing schedules to understand audience retention patterns.</li>
+        </ul>
+        <p className="text-gray-700 leading-relaxed mb-10">
+          These metrics are computed from real YouTube API data, refreshed daily, and filtered by country so you can see what works in your specific market. No guesswork, no outdated spreadsheets — just clear, visual intelligence.
+        </p>
+
+        <h2 className="text-3xl font-bold text-gray-900 mb-6">Use Cases for Creators</h2>
+        <p className="text-gray-700 leading-relaxed mb-6">
+          Tubefission serves a wide range of creator workflows:
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+          <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+            <h3 className="font-semibold text-gray-900 mb-2">Competitor Research</h3>
+            <p className="text-sm text-gray-600">Download competitor videos to study their editing style, pacing, and hooks frame by frame.</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+            <h3 className="font-semibold text-gray-900 mb-2">Content Strategy</h3>
+            <p className="text-sm text-gray-600">Analyze trending channels in your niche to identify content gaps and high-opportunity topics.</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+            <h3 className="font-semibold text-gray-900 mb-2">Offline Learning</h3>
+            <p className="text-sm text-gray-600">Save tutorials, courses, and educational content for viewing during commutes or travel.</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+            <h3 className="font-semibold text-gray-900 mb-2">Trend Discovery</h3>
+            <p className="text-sm text-gray-600">Spot viral patterns early by tracking breakout scores and velocity across categories.</p>
+          </div>
+        </div>
+
+        <h2 className="text-3xl font-bold text-gray-900 mb-6">Trend Discovery with Real Data</h2>
+        <p className="text-gray-700 leading-relaxed mb-6">
+          Our trend engine does not rely on guesswork or static lists. Instead, it pulls live data from YouTubes most popular videos across six countries — the United States, Japan, South Korea, the United Kingdom, Hong Kong, and Taiwan. From these videos, we extract real trending keywords, compute velocity and saturation scores, and surface breakout opportunities that are still early enough to capture.
+        </p>
+        <p className="text-gray-700 leading-relaxed mb-10">
+          This means every trend you see on Tubefission is backed by actual view counts, engagement rates, and creator adoption metrics from the real platform. You are not reading predictions — you are reading data.
+        </p>
+
+        <h2 className="text-3xl font-bold text-gray-900 mb-6">Why Choose Tubefission?</h2>
+        <div className="space-y-4 mb-10">
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">1</div>
+            <div>
+              <h3 className="font-semibold text-gray-900">No Account Required</h3>
+              <p className="text-gray-600 text-sm">Start downloading and analyzing immediately without handing over your email or creating passwords.</p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">2</div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Zero Watermarks</h3>
+              <p className="text-gray-600 text-sm">Downloads preserve the original video quality with no overlays, logos, or branding added.</p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">3</div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Country-First Filtering</h3>
+              <p className="text-gray-600 text-sm">See what is actually trending in your target market, not generic global averages.</p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">4</div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Secure & Fast</h3>
+              <p className="text-gray-600 text-sm">All processing happens through encrypted connections. No files are stored on our servers.</p>
+            </div>
+          </div>
+        </div>
+
+        <h2 className="text-3xl font-bold text-gray-900 mb-6">Get Started in Seconds</h2>
+        <p className="text-gray-700 leading-relaxed mb-8">
+          Ready to download your first video or analyze a channel? Scroll back to the top of this page, paste a YouTube URL into the input field, and click <strong>Download Now</strong>. If you want deeper analytics, head over to our <Link href="/youtube-channel-analytics" className="text-blue-600 hover:underline">Channel Analytics</Link> page or explore the <Link href="/trends" className="text-blue-600 hover:underline">Trend Database</Link> to find your next viral topic.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link href="/download-youtube-video" className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors">
+            Download YouTube Video →
+          </Link>
+          <Link href="/youtube-channel-analytics" className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+            Analyze Channel →
+          </Link>
+        </div>
+      </article>
+
+      {/* ===== FAQ SECTION ===== */}
+      <section className="bg-gray-50 border-y border-gray-200">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">Frequently Asked Questions</h2>
+          <div className="space-y-6">
+            {FAQ_ITEMS.map((item, i) => (
+              <div key={i} className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-2">{item.question}</h3>
+                <p className="text-gray-600 leading-relaxed">{item.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== STICKY CTA FOOTER ===== */}
+      <section className="sticky bottom-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <p className="text-sm text-gray-600 flex-1 text-center sm:text-left">
+              Paste a YouTube URL to start downloading or analyzing
+            </p>
             <Link
-              href="/trends"
-              className="w-full sm:w-auto px-8 py-3.5 bg-white text-gray-900 font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              href="/download-youtube-video"
+              className="w-full sm:w-auto px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors text-center"
             >
-              Explore Trends
+              Download Now
             </Link>
           </div>
         </div>

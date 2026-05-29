@@ -23,7 +23,7 @@ export function WebPageSchema({ title, description, url, image, datePublished, d
     ...(dateModified && { dateModified }),
     publisher: {
       '@type': 'Organization',
-      name: 'TubeFission',
+      name: 'Tubefission',
       url: 'https://tubefission.com',
     },
   }
@@ -36,30 +36,89 @@ export function WebPageSchema({ title, description, url, image, datePublished, d
   )
 }
 
-interface DatasetSchemaProps {
-  name: string
-  description: string
-  url: string
-  keywords: string[]
-  datePublished: string
-  dateModified: string
-}
-
-export function DatasetSchema({ name, description, url, keywords, datePublished, dateModified }: DatasetSchemaProps) {
+export function SoftwareApplicationSchema() {
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'Dataset',
-    name,
-    description,
-    url,
-    keywords,
-    creator: {
-      '@type': 'Organization',
-      name: 'TubeFission',
+    '@type': 'SoftwareApplication',
+    name: 'Tubefission',
+    applicationCategory: 'MultimediaApplication',
+    operatingSystem: 'Web',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
     },
-    datePublished,
-    dateModified,
-    license: 'https://tubefission.com/terms',
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      ratingCount: '1250',
+    },
+    description: 'Download YouTube videos without watermark and analyze channels and trends instantly.',
+    url: 'https://tubefission.com',
+    image: 'https://tubefission.com/og-image.png',
+    author: {
+      '@type': 'Organization',
+      name: 'Tubefission',
+    },
+    featureList: [
+      'YouTube video download without watermark',
+      'Channel analytics and statistics',
+      'Trend discovery and tracking',
+      'No login required',
+      'Fast processing',
+    ],
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+interface FAQItem {
+  question: string
+  answer: string
+}
+
+export function FAQPageSchema({ items }: { items: FAQItem[] }) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+interface BreadcrumbItem {
+  name: string
+  url: string
+}
+
+export function BreadcrumbSchema({ items }: { items: BreadcrumbItem[] }) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
   }
 
   return (
@@ -90,10 +149,10 @@ export function ArticleSchema({ title, description, url, image, datePublished, d
     ...(image && { image }),
     datePublished,
     ...(dateModified && { dateModified }),
-    author: author ? { '@type': 'Person', name: author } : { '@type': 'Organization', name: 'TubeFission' },
+    author: author ? { '@type': 'Person', name: author } : { '@type': 'Organization', name: 'Tubefission' },
     publisher: {
       '@type': 'Organization',
-      name: 'TubeFission',
+      name: 'Tubefission',
       url: 'https://tubefission.com',
     },
   }

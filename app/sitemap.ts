@@ -5,6 +5,8 @@ const BASE_URL = 'https://tubefission.com'
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'hourly', priority: 1 },
+    { url: `${BASE_URL}/download-youtube-video`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.95 },
+    { url: `${BASE_URL}/youtube-channel-analytics`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.95 },
     { url: `${BASE_URL}/trends`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
     { url: `${BASE_URL}/trending`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
     { url: `${BASE_URL}/emerging`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
