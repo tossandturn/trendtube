@@ -1,24 +1,16 @@
 import { MetadataRoute } from 'next'
-import { getAllTrends, getAllTags, getTrendsByCategory } from '@/lib/db'
 
 const BASE_URL = 'https://tubefission.com'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Fetch dynamic data from database
-  const trends = getAllTrends()
-  const tags = getAllTags()
-  const categories = Array.from(new Set(trends.map(t => t.category).filter(Boolean)))
-
-  // Static routes
   const routes: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'hourly', priority: 1 },
-    { url: `${BASE_URL}/trends`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE_URL}/trends`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
     { url: `${BASE_URL}/trending`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
     { url: `${BASE_URL}/emerging`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
     { url: `${BASE_URL}/watchlist`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: `${BASE_URL}/alerts`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: `${BASE_URL}/ai-assistant`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-    // SEO Landing Pages
     { url: `${BASE_URL}/shorts`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE_URL}/youtube-ai-trends`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE_URL}/viral-youtube-shorts`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
@@ -31,46 +23,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/low-competition-keywords`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE_URL}/youtube-growth-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/youtube-ai-tools`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
-    // Creator Guides
     { url: `${BASE_URL}/guides/how-to-find-viral-youtube-topics`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/guides/how-youtube-shorts-go-viral`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/guides/best-youtube-niches`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/guides/youtube-trend-analysis`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
-    // Comparison Pages
     { url: `${BASE_URL}/compare/vidiq`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/compare/tubebuddy`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE_URL}/compare/google-trends`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE_URL}/login`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${BASE_URL}/signup`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
   ]
-
-  // Dynamic category pages
-  categories.forEach(category => {
-    routes.push({
-      url: `${BASE_URL}/categories/${category?.toLowerCase().replace(/\s+/g, '-')}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.8,
-    })
-  })
-
-  // Dynamic trend pages from database
-  trends.forEach(trend => {
-    routes.push({
-      url: `${BASE_URL}/trends/${trend.slug}`,
-      lastModified: new Date(trend.updated_at),
-      changeFrequency: 'daily',
-      priority: 0.8,
-    })
-  })
-
-  // Dynamic tag pages
-  tags.forEach(tag => {
-    routes.push({
-      url: `${BASE_URL}/tag/${tag}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    })
-  })
 
   return routes
 }

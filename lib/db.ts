@@ -12,10 +12,6 @@ export function getDb(): Database.Database {
   db = new Database(DB_PATH)
   if (!IS_VERCEL) db.pragma('journal_mode = WAL')
   initSchema(db)
-  if (IS_VERCEL && !seeded) {
-    seedData(db)
-    seeded = true
-  }
   return db
 }
 
@@ -76,49 +72,6 @@ function initSchema(db: Database.Database) {
       FOREIGN KEY (trend_id) REFERENCES trends(id)
     );
   `)
-}
-
-const SEED_TRENDS = [
-  { slug: 'ai-shorts', title: 'AI Shorts Trends 2026', category: 'Technology', description: 'Discover viral AI-powered Shorts trends. From ChatGPT tutorials to AI-generated content, learn how creators are leveraging AI to grow fast.', tags: ['ai', 'shorts', 'chatgpt', 'technology', 'automation'] },
-  { slug: 'gaming-youtube', title: 'Gaming YouTube Trends 2026', category: 'Gaming', description: 'Track the latest gaming trends on YouTube. From Minecraft builds to GTA updates, discover what gamers are watching right now.', tags: ['gaming', 'minecraft', 'gta', 'fortnite', 'esports'] },
-  { slug: 'mrbeast-style', title: 'MrBeast-Style Video Trends 2026', category: 'Entertainment', description: 'Analyze high-production challenge videos. Learn the psychology behind viral challenges and extreme content formats.', tags: ['challenge', 'entertainment', 'viral', 'high-production', 'collaboration'] },
-  { slug: 'youtube-automation', title: 'YouTube Automation Trends 2026', category: 'Business', description: 'Faceless channel strategies and automation workflows. Build scalable YouTube businesses without showing your face.', tags: ['automation', 'business', 'faceless', 'passive-income', 'outsourcing'] },
-  { slug: 'viral-music', title: 'Viral Music Trends 2026', category: 'Music', description: 'Track viral music trends, song covers, and music reaction content dominating YouTube right now.', tags: ['music', 'viral', 'covers', 'reactions', 'songs'] },
-  { slug: 'youtube-shorts', title: 'YouTube Shorts Trends 2026', category: 'Short-Form', description: 'Short-form content trends and viral Shorts strategies for maximum reach and engagement.', tags: ['shorts', 'viral', 'short-form', 'quick-content', 'algorithm'] },
-  { slug: 'coding-tutorials', title: 'Coding Tutorial Trends 2026', category: 'Education', description: 'Programming and coding tutorial trends. From Python to web development, track what learners are searching for.', tags: ['coding', 'programming', 'python', 'webdev', 'education'] },
-  { slug: 'crypto-finance', title: 'Crypto & Finance Trends 2026', category: 'Finance', description: 'Cryptocurrency, trading, and personal finance content trends on YouTube.', tags: ['crypto', 'finance', 'trading', 'bitcoin', 'investing'] },
-  { slug: 'food-cooking', title: 'Food & Cooking Trends 2026', category: 'Food', description: 'Culinary trends, recipe Shorts, and food review content capturing viewer attention.', tags: ['food', 'cooking', 'recipes', 'mukbang', 'reviews'] },
-  { slug: 'fitness-health', title: 'Fitness & Health Trends 2026', category: 'Health', description: 'Workout routines, health tips, and fitness transformation content trending on YouTube.', tags: ['fitness', 'health', 'workout', 'gym', 'transformation'] },
-]
-
-function seedData(db: Database.Database) {
-  const insertTrend = db.prepare('INSERT INTO trends (slug, title, category, description) VALUES (?, ?, ?, ?) RETURNING *')
-  const insertTag = db.prepare('INSERT OR IGNORE INTO trend_tags (trend_id, tag_name) VALUES (?, ?)')
-  const insertSnapshot = db.prepare(
-    `INSERT INTO trend_snapshots
-     (trend_id, velocity, views, likes, comments, creator_count, saturation_score, breakout_score, predicted_peak_hours, snapshot_date)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-  )
-  const today = new Date().toISOString().split('T')[0]
-
-  for (const t of SEED_TRENDS) {
-    const trend = insertTrend.get(t.slug, t.title, t.category, t.description) as Trend
-    for (const tag of t.tags) {
-      insertTag.run(trend.id, tag)
-    }
-    insertSnapshot.run(
-      trend.id,
-      Math.floor(Math.random() * 500000) + 50000,
-      Math.floor(Math.random() * 10000000) + 1000000,
-      Math.floor(Math.random() * 500000) + 50000,
-      Math.floor(Math.random() * 50000) + 5000,
-      Math.floor(Math.random() * 500) + 50,
-      Math.random() * 100,
-      Math.random() * 100,
-      Math.floor(Math.random() * 72) + 1,
-      today
-    )
-  }
 }
 
 /* =========================================================

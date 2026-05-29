@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getAllTrends, getAllTags } from '@/lib/db'
-import { getLatestSnapshot } from '@/lib/db'
+import { getRegion } from '@/lib/region-server'
+import { fetchTrendingVideos } from '@/lib/api-client'
+import { extractTrendsFromRegion, getAllCategoriesFromReal, getAllTagsFromReal } from '@/lib/trend-extractor'
+import { REGION_META } from '@/lib/region'
 
 export const metadata: Metadata = {
   title: 'TubeFission — Discover Viral YouTube Opportunities Before Everyone Else',
-  description: 'Real-time creator intelligence platform for YouTube trends, Shorts, and breakout niches. Analyze velocity, saturation, and breakout potential with historical data.',
+  description: 'Real-time creator intelligence platform for YouTube trends, Shorts, and breakout niches. Analyze velocity, saturation, and breakout potential with real data from 6 countries.',
   keywords: 'youtube trends, viral content, creator intelligence, shorts, analytics',
   alternates: {
     canonical: 'https://tubefission.com',
@@ -19,23 +21,18 @@ export const metadata: Metadata = {
 }
 
 export default async function HomePage() {
-  const trends = getAllTrends()
-  const tags = getAllTags()
-  const categories = Array.from(new Set(trends.map(t => t.category).filter(Boolean)))
+  const region = await getRegion()
+  const regionMeta = REGION_META[region]
+  const videos = await fetchTrendingVideos(region, 50)
+  const trends = videos.length > 0 ? await extractTrendsFromRegion(region, 50) : []
 
-  // Get total stats
-  let totalVelocity = 0
-  let totalViews = 0
-  let avgBreakout = 0
-  trends.forEach(t => {
-    const snap = getLatestSnapshot(t.id)
-    if (snap) {
-      totalVelocity += snap.velocity || 0
-      totalViews += snap.views || 0
-      avgBreakout += snap.breakout_score || 0
-    }
-  })
-  avgBreakout = trends.length > 0 ? avgBreakout / trends.length : 0
+  const categories = getAllCategoriesFromReal(trends)
+  const tags = getAllTagsFromReal(trends)
+
+  const totalViews = videos.reduce((sum, v) => sum + Number(v.statistics?.viewCount || 0), 0)
+  const totalLikes = videos.reduce((sum, v) => sum + Number(v.statistics?.likeCount || 0), 0)
+
+  const topTrends = trends.slice(0, 5)
 
   return (
     <main className="min-h-screen bg-[#fafafa]">
@@ -46,14 +43,14 @@ export default async function HomePage() {
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-200 text-sm text-gray-600 mb-8 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Live data from 6 countries
+              Live data from {regionMeta.label}
             </div>
             <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
               Discover Viral YouTube<br className="hidden sm:block" /> Opportunities Before Everyone Else
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
               Real-time creator intelligence platform for YouTube trends, Shorts, and breakout niches.
-              Analyze velocity, saturation, and historical performance data.
+              All data extracted from real viral videos. Country is the first filter.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
@@ -73,125 +70,78 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* SOCIAL PROOF */}
+      {/* SOCIAL PROOF — REAL DATA */}
       <section className="border-y border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
-              <p className="text-3xl font-bold text-gray-900">{trends.length}+</p>
-              <p className="text-sm text-gray-500 mt-1">Trends Tracked</p>
+              <p className="text-3xl font-bold text-gray-900">{videos.length}</p>
+              <p className="text-sm text-gray-500 mt-1">Videos Analyzed ({region})</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-gray-900">{(totalViews / 1e9).toFixed(1)}B+</p>
-              <p className="text-sm text-gray-500 mt-1">Views Analyzed</p>
+              <p className="text-3xl font-bold text-gray-900">{(totalViews / 1e9).toFixed(1)}B</p>
+              <p className="text-sm text-gray-500 mt-1">Total Views</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-gray-900">24h</p>
-              <p className="text-sm text-gray-500 mt-1">Daily Updates</p>
+              <p className="text-3xl font-bold text-gray-900">{(totalLikes / 1e6).toFixed(1)}M</p>
+              <p className="text-sm text-gray-500 mt-1">Total Likes</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-gray-900">6</p>
-              <p className="text-sm text-gray-500 mt-1">Countries Analyzed</p>
+              <p className="text-3xl font-bold text-gray-900">{trends.length}</p>
+              <p className="text-sm text-gray-500 mt-1">Trends Detected</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* PRODUCT PREVIEW */}
+      {/* TOP TRENDS — REAL */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Professional Intelligence Dashboard</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Built like Bloomberg Terminal for creators. Track velocity, saturation, breakout scores, and historical trends.
-            </p>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Top Potential in {regionMeta.label}</h2>
+            <Link href="/trends" className="text-sm text-blue-600 hover:text-blue-700 font-medium">View all →</Link>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 flex items-center gap-2">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
-              </div>
-              <span className="text-xs text-gray-400 ml-2">tubefission.com/trending</span>
-            </div>
-            <div className="p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Mock Metric Cards */}
-              <div className="lg:col-span-2 space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider">Velocity</p>
-                    <p className="text-2xl font-bold text-gray-900">2.4M <span className="text-sm font-normal text-green-600">+12%</span></p>
-                    <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full w-3/4 bg-green-500 rounded-full" />
-                    </div>
-                  </div>
-                  <div className="flex-1 bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider">Breakout Score</p>
-                    <p className="text-2xl font-bold text-gray-900">87 <span className="text-sm font-normal text-green-600">High</span></p>
-                    <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full w-[87%] bg-blue-500 rounded-full" />
-                    </div>
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {topTrends.map(trend => (
+              <Link
+                key={trend.slug}
+                href={`/trends/${trend.slug}`}
+                className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-gray-900">{trend.title}</h3>
+                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">{trend.category}</span>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 h-40 flex items-end justify-around">
-                  {[40, 65, 45, 80, 55, 90, 70, 85, 60, 95].map((h, i) => (
-                    <div key={i} className="w-6 bg-gray-300 rounded-t" style={{ height: `${h}%` }} />
-                  ))}
+                <p className="text-sm text-gray-600 line-clamp-2 mb-4">{trend.description}</p>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-green-600 font-medium">+{(trend.avgVelocity / 1000).toFixed(0)}K vel</span>
+                  <span className="text-blue-600">{trend.breakoutScore.toFixed(0)} breakout</span>
+                  <span className="text-gray-400">{trend.videoCount} vids</span>
                 </div>
-              </div>
-              <div className="space-y-3">
-                {['AI Shorts', 'Gaming', 'MrBeast Style', 'YouTube Automation'].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                    <span className="text-sm font-medium text-gray-900">{item}</span>
-                    <span className="text-xs text-green-600 font-medium">+{[12, 8, 5, 3][i]}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section className="py-20 bg-white border-y border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Everything you need to find viral content</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { title: 'Real-Time Velocity Tracking', desc: 'Monitor view velocity, engagement rates, and growth momentum across countries.' },
-              { title: 'Breakout Prediction', desc: 'AI-powered scoring identifies trends before they peak. Act early, grow faster.' },
-              { title: 'Historical Snapshots', desc: '365+ days of trend data. Understand lifecycle patterns and seasonality.' },
-              { title: 'Saturation Analysis', desc: 'Know exactly how competitive a niche is before you invest time in it.' },
-              { title: 'Daily Topic Recommendations', desc: 'AI-generated content ideas based on real trending data in your country.' },
-              { title: 'SEO-Ready Intelligence', desc: 'Every trend page is server-rendered and optimized for search engines.' },
-            ].map((f, i) => (
-              <div key={i} className="p-6 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
-                <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{f.desc}</p>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
       {/* CATEGORIES */}
-      <section className="py-20">
+      <section className="py-20 bg-white border-y border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Browse by Category</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Categories in {regionMeta.label}</h2>
             <Link href="/trends" className="text-sm text-blue-600 hover:text-blue-700 font-medium">View all →</Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {categories.map((cat) => (
               <Link
                 key={cat}
-                href={`/categories/${cat!.toLowerCase().replace(/\s+/g, '-')}`}
-                className="p-4 bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all text-center"
+                href={`/categories/${cat.toLowerCase().replace(/\s+/g, '-')}`}
+                className="p-4 bg-[#fafafa] rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all text-center"
               >
                 <p className="font-medium text-gray-900">{cat}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {trends.filter(t => t.category === cat).length} trends
+                </p>
               </Link>
             ))}
           </div>
@@ -199,11 +149,11 @@ export default async function HomePage() {
       </section>
 
       {/* TAGS */}
-      <section className="py-16 bg-white border-t border-gray-200">
+      <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Popular Tags</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Live Tags from {regionMeta.label}</h2>
           <div className="flex flex-wrap gap-2">
-            {tags.slice(0, 20).map((tag) => (
+            {tags.slice(0, 24).map((tag) => (
               <Link
                 key={tag}
                 href={`/tag/${tag}`}
@@ -220,7 +170,7 @@ export default async function HomePage() {
       <section className="py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to find your next viral video?</h2>
-          <p className="text-gray-600 mb-8">Join creators using data-driven intelligence to grow their channels.</p>
+          <p className="text-gray-600 mb-8">Real data. Real trends. Real growth.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/trending"

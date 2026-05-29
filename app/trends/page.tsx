@@ -1,46 +1,39 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { getAllTrends, getAllTags } from '@/lib/db'
-import { getLatestSnapshot } from '@/lib/db'
+import { getRegion } from '@/lib/region-server'
+import { fetchTrendingVideos } from '@/lib/api-client'
+import { extractTrendsFromRegion, type RealTrend } from '@/lib/trend-extractor'
+import { Breadcrumbs } from '@/app/components/Breadcrumbs'
 
 export const metadata: Metadata = {
   title: 'Trend Database | TubeFission',
-  description: 'Explore historical YouTube trend data. Analyze velocity, saturation, breakout potential, and creator adoption across content categories.',
-  keywords: 'youtube trends, viral content, creator intelligence, trend analysis',
+  description: 'Explore real YouTube trend data extracted from viral videos. Analyze velocity, saturation, breakout potential, and creator adoption across content categories.',
 }
 
 export default async function TrendsPage() {
-  const trends = getAllTrends()
-  const tags = getAllTags()
+  const region = await getRegion()
+  const videos = await fetchTrendingVideos(region, 50)
+  const trends = videos.length > 0 ? await extractTrendsFromRegion(region, 50) : []
 
-  // Get snapshots for display
-  const trendsWithStats = trends.map(t => {
-    const snapshot = getLatestSnapshot(t.id)
-    return {
-      ...t,
-      velocity: snapshot?.velocity || 0,
-      breakout: snapshot?.breakout_score || 0,
-      saturation: snapshot?.saturation_score || 0,
-    }
+  // Group by category from real data
+  const byCategory: Record<string, RealTrend[]> = {}
+  trends.forEach(t => {
+    if (!byCategory[t.category]) byCategory[t.category] = []
+    byCategory[t.category].push(t)
   })
 
-  // Group by category
-  const byCategory: Record<string, typeof trendsWithStats> = {}
-  trendsWithStats.forEach(t => {
-    const cat = t.category || 'Other'
-    if (!byCategory[cat]) byCategory[cat] = []
-    byCategory[cat].push(t)
-  })
+  const totalViews = trends.reduce((sum, t) => sum + t.totalViews, 0)
+  const avgBreakout = trends.length > 0
+    ? trends.reduce((sum, t) => sum + t.breakoutScore, 0) / trends.length
+    : 0
 
   return (
     <main className="min-h-screen bg-[#fafafa]">
-      {/* Breadcrumbs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <nav className="flex items-center text-sm text-gray-500">
-          <Link href="/" className="hover:text-gray-900">Home</Link>
-          <span className="mx-2">&gt;</span>
-          <span className="text-gray-900">Trends</span>
-        </nav>
+        <Breadcrumbs items={[
+          { label: 'Home', href: '/' },
+          { label: 'Trends' }
+        ]} />
       </div>
 
       {/* Hero */}
@@ -48,17 +41,16 @@ export default async function TrendsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Trend Intelligence Database
+              Real Trend Intelligence
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Historical trend data with velocity tracking, saturation analysis, and breakout predictions.
+              Trends extracted from actual viral videos in {region}. Zero fake data.
             </p>
           </div>
 
-          {/* Stats Grid */}
           <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Trends Tracked</p>
+              <p className="text-sm text-gray-500">Trends Detected</p>
               <p className="text-2xl font-bold text-gray-900">{trends.length}</p>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -66,12 +58,12 @@ export default async function TrendsPage() {
               <p className="text-2xl font-bold text-gray-900">{Object.keys(byCategory).length}</p>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Tags</p>
-              <p className="text-2xl font-bold text-gray-900">{tags.length}</p>
+              <p className="text-sm text-gray-500">Total Views Analyzed</p>
+              <p className="text-2xl font-bold text-gray-900">{(totalViews / 1e9).toFixed(1)}B</p>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Data Points</p>
-              <p className="text-2xl font-bold text-gray-900">365+</p>
+              <p className="text-sm text-gray-500">Avg Breakout</p>
+              <p className="text-2xl font-bold text-gray-900">{avgBreakout.toFixed(0)}</p>
             </div>
           </div>
         </div>
@@ -95,7 +87,7 @@ export default async function TrendsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {items.map(trend => (
                   <Link
-                    key={trend.id}
+                    key={trend.slug}
                     href={`/trends/${trend.slug}`}
                     className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow"
                   >
@@ -103,10 +95,13 @@ export default async function TrendsPage() {
                     <p className="text-sm text-gray-600 line-clamp-2 mb-4">{trend.description}</p>
                     <div className="flex items-center gap-4 text-sm">
                       <span className="text-green-600 font-medium">
-                        {trend.velocity > 0 ? `+${(trend.velocity / 1000).toFixed(1)}K` : '0'} velocity
+                        +{(trend.avgVelocity / 1000).toFixed(0)}K velocity
                       </span>
                       <span className="text-blue-600">
-                        {trend.breakout.toFixed(0)} breakout
+                        {trend.breakoutScore.toFixed(0)} breakout
+                      </span>
+                      <span className="text-gray-500">
+                        {trend.videoCount} videos
                       </span>
                     </div>
                   </Link>
@@ -114,24 +109,6 @@ export default async function TrendsPage() {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* Tags Section */}
-      <section className="pb-16 bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Browse by Tag</h2>
-          <div className="flex flex-wrap gap-2">
-            {tags.map(tag => (
-              <Link
-                key={tag}
-                href={`/tag/${tag}`}
-                className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors"
-              >
-                #{tag}
-              </Link>
-            ))}
-          </div>
         </div>
       </section>
     </main>
