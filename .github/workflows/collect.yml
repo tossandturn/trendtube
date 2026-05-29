@@ -30,9 +30,14 @@ jobs:
           ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
 
+      - name: Take trend snapshots
+        run: npx tsx scripts/take-snapshots.ts
+        env:
+          NEXT_PUBLIC_YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+
       - name: Commit and push
         run: |
           git config user.name "Data Bot"
           git config user.email "bot@tubefission.com"
-          git add public/data/history.json
+          git add public/data/history.json data/
           git diff --cached --quiet || (git commit -m "📊 Daily data collection $(date +%Y-%m-%d)" && git push)

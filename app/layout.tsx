@@ -41,6 +41,8 @@ export default async function RootLayout({
           crossOrigin="anonymous"
         ></script>
         <meta name="google-adsense-account" content="ca-pub-6772936350717773" />
+        {/* Plausible Analytics */}
+        <script defer data-domain="tubefission.com" src="https://plausible.io/js/script.js" />
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900">
         <RegionBar />

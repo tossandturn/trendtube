@@ -123,11 +123,15 @@ export interface HistoryEntry {
   }[]
 }
 
+import { existsSync, readFileSync } from 'fs'
+import { join } from 'path'
+
 export function loadHistory(): HistoryEntry[] {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const data = require('../public/data/history.json')
-    return data || []
+    const path = join(process.cwd(), 'public', 'data', 'history.json')
+    if (!existsSync(path)) return []
+    const raw = readFileSync(path, 'utf-8')
+    return JSON.parse(raw) || []
   } catch {
     return []
   }
