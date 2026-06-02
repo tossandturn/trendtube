@@ -6,6 +6,7 @@ import AIScoreCard from '@/app/components/AIScoreCard'
 import ChannelValueAnalysis from '@/app/components/ChannelValueAnalysis'
 import EnhancedChannelAnalytics from '@/app/components/EnhancedChannelAnalytics'
 import CreatorEcosystem from '@/app/components/CreatorEcosystem'
+import AudienceAnalytics from '@/app/components/AudienceAnalytics'
 import { fetchChannelById, fetchChannelVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { analyzeChannelIntelligence } from '@/lib/ai-insights'
@@ -797,6 +798,16 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
         {/* Enhanced Channel Analytics - 粉丝增长、活跃度、内容分区热度 */}
         <div className="mb-10">
           <EnhancedChannelAnalytics channelId={channel.id} />
+        </div>
+
+        {/* Audience Demographics */}
+        <div className="mb-10">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <span>👥</span> Audience Demographics
+          </h2>
+          <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+            <AudienceAnalytics channel={channel} />
+          </div>
         </div>
 
         {/* Creator Ecosystem - UP主生态洞察 */}

@@ -9,6 +9,8 @@ import EngagementAnalytics from '@/app/components/EngagementAnalytics'
 import SmartRecommendations from '@/app/components/SmartRecommendations'
 import CommentAnalysis from '@/app/components/CommentAnalysis'
 import ContentVelocity from '@/app/components/ContentVelocity'
+import VideoExport from '@/app/components/VideoExport'
+import AudienceAnalytics from '@/app/components/AudienceAnalytics'
 import { fetchVideoById, fetchRelatedVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
@@ -669,22 +671,25 @@ export default async function VideoPage({ params }: VideoPageProps) {
           />
         </div>
 
+        {/* Audience Demographics */}
+        <div className="mb-8 sm:mb-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-cyan-400 to-cyan-600" />
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+              <span className="text-cyan-600">👥</span> Audience Demographics
+            </h2>
+          </div>
+          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+            <AudienceAnalytics video={video} />
+          </div>
+        </div>
+
         {/* Data Export */}
         <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover mb-10">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">📥 EXPORT DATA</h3>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition flex items-center gap-2">
-              <span>📊</span> Export Metrics
-            </button>
-            <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition flex items-center gap-2">
-              <span>🔗</span> Copy Video URL
-            </button>
-            <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition flex items-center gap-2">
-              <span>📱</span> Share Analysis
-            </button>
-          </div>
+          <VideoExport video={video} />
         </div>
 
         {/* Related Videos */}
