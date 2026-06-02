@@ -17,6 +17,10 @@ async function sendVerificationEmail(email: string, username: string, token: str
 
   const verificationUrl = `${APP_URL}/verify-email?token=${token}`
 
+  // Use environment variable for sender or default to Resend onboarding
+  const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev'
+  const FROM_NAME = process.env.FROM_NAME || 'TubeFission'
+
   try {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -25,7 +29,7 @@ async function sendVerificationEmail(email: string, username: string, token: str
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'TubeFission <verify@tubefission.com>',
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
         to: email,
         subject: 'Verify your TubeFission account',
         html: `
@@ -53,11 +57,19 @@ async function sendVerificationEmail(email: string, username: string, token: str
     })
 
     if (!response.ok) {
-      const error = await response.text()
-      console.error('Failed to send email:', error)
+      const errorData = await response.json().catch(() => ({ message: await response.text() }))
+      console.error('Failed to send email:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        from: FROM_EMAIL,
+        to: email,
+      })
       return false
     }
 
+    const data = await response.json()
+    console.log('Email sent successfully:', { id: data.id, to: email })
     return true
   } catch (error) {
     console.error('Error sending email:', error)
