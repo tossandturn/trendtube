@@ -199,30 +199,9 @@ export async function sendAlert(payload: AlertPayload) {
   else if (payload.level === 'warning') console.warn(logLine)
   else console.info(logLine)
 
-  // Add to daily digest
+  // Add to daily digest - ALL alerts batched for daily summary
   addAlertToDigest(payload)
-
-  // Only send immediate email for critical issues
-  // Everything else goes into the daily digest
-  if (payload.level === 'critical' && RESEND_API_KEY && ALERT_EMAIL) {
-    try {
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'TubeFission Alerts <alerts@tubefission.com>',
-          to: ALERT_EMAIL,
-          subject: `[CRITICAL] TubeFission ${payload.source}`,
-          text: `${payload.message}\n\nDetail: ${payload.detail || 'N/A'}\nTime: ${payload.timestamp}`,
-        }),
-      })
-    } catch (e) {
-      console.error('Failed to send critical email alert:', e)
-    }
-  }
+  // No immediate emails - everything goes into daily digest
 }
 
 export function getRecentAlerts(level?: 'critical' | 'warning' | 'info', limit = 20): AlertPayload[] {
