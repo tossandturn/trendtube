@@ -26,9 +26,7 @@ jobs:
         run: npx tsx scripts/collect-data.ts
         env:
           NEXT_PUBLIC_YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
-          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          # Alerts go to daily digest only
 
       - name: Take trend snapshots
         run: npx tsx scripts/take-snapshots.ts

@@ -2,7 +2,7 @@ name: Health Check
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour
+    - cron: '0 * * * *'  # Every hour - health check only, no emails
   workflow_dispatch:
 
 jobs:
@@ -24,6 +24,12 @@ jobs:
         run: npx tsx scripts/health-check.ts
         env:
           NEXT_PUBLIC_YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
-          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          # No email env vars - alerts go to daily digest
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-digest
+          path: data/daily-digest.json
+          retention-days: 7
+

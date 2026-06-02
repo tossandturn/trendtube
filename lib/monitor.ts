@@ -1,6 +1,10 @@
 /* =========================================================
-   MONITORING & ALERTING — Unattended operation safety net
+   MONITORING & ALERTING — Daily Digest System
+   Alerts are batched and sent once per day to avoid spam
 ========================================================= */
+
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs'
+import { join } from 'path'
 
 export interface AlertPayload {
   level: 'critical' | 'warning' | 'info'
@@ -9,6 +13,17 @@ export interface AlertPayload {
   detail?: string
   timestamp: string
 }
+
+interface DailyDigest {
+  date: string
+  critical: AlertPayload[]
+  warning: AlertPayload[]
+  info: AlertPayload[]
+  sent: boolean
+}
+
+const DATA_DIR = join(process.cwd(), 'data')
+const DIGEST_FILE = join(DATA_DIR, 'daily-digest.json')
 
 export interface HealthReport {
   status: 'healthy' | 'degraded' | 'down'
@@ -22,9 +37,131 @@ export interface HealthReport {
   version: string
 }
 
-/* ---- In-memory alert buffer (resets on serverless cold start) ---- */
-const alertBuffer: AlertPayload[] = []
-const MAX_BUFFER = 100
+/* ---- Daily Digest Management ---- */
+function getTodayKey(): string {
+  return new Date().toISOString().split('T')[0] // YYYY-MM-DD
+}
+
+function ensureDataDir(): void {
+  if (!existsSync(DATA_DIR)) {
+    mkdirSync(DATA_DIR, { recursive: true })
+  }
+}
+
+function loadDigest(): DailyDigest {
+  ensureDataDir()
+  const today = getTodayKey()
+
+  if (existsSync(DIGEST_FILE)) {
+    try {
+      const data = JSON.parse(readFileSync(DIGEST_FILE, 'utf-8'))
+      if (data.date === today) {
+        return data
+      }
+    } catch {
+      // File corrupted, start fresh
+    }
+  }
+
+  return {
+    date: today,
+    critical: [],
+    warning: [],
+    info: [],
+    sent: false,
+  }
+}
+
+function saveDigest(digest: DailyDigest): void {
+  ensureDataDir()
+  writeFileSync(DIGEST_FILE, JSON.stringify(digest, null, 2))
+}
+
+export function addAlertToDigest(payload: AlertPayload): void {
+  const digest = loadDigest()
+  digest[payload.level].push(payload)
+  saveDigest(digest)
+}
+
+export async function sendDailyDigest(): Promise<void> {
+  const digest = loadDigest()
+
+  if (digest.sent) {
+    console.log('Daily digest already sent for', digest.date)
+    return
+  }
+
+  const totalAlerts = digest.critical.length + digest.warning.length + digest.info.length
+
+  if (totalAlerts === 0) {
+    console.log('No alerts to report for', digest.date)
+    digest.sent = true
+    saveDigest(digest)
+    return
+  }
+
+  // Build email content
+  let html = `
+    <h2>TubeFission Daily Report - ${digest.date}</h2>
+    <p>Total alerts: ${totalAlerts}</p>
+    <ul>
+      <li>🔴 Critical: ${digest.critical.length}</li>
+      <li>⚠️ Warning: ${digest.warning.length}</li>
+      <li>ℹ️ Info: ${digest.info.length}</li>
+    </ul>
+  `
+
+  if (digest.critical.length > 0) {
+    html += '<h3>🔴 Critical Issues</h3><ul>'
+    digest.critical.forEach(alert => {
+      html += `<li><strong>${alert.source}</strong>: ${alert.message}<br/><small>${alert.timestamp}</small></li>`
+    })
+    html += '</ul>'
+  }
+
+  if (digest.warning.length > 0) {
+    html += '<h3>⚠️ Warnings</h3><ul>'
+    digest.warning.forEach(alert => {
+      html += `<li><strong>${alert.source}</strong>: ${alert.message}</li>`
+    })
+    html += '</ul>'
+  }
+
+  if (digest.info.length > 0) {
+    html += '<h3>ℹ️ Info</h3><ul>'
+    digest.info.slice(-10).forEach(alert => {
+      html += `<li>${alert.source}: ${alert.message}</li>`
+    })
+    if (digest.info.length > 10) {
+      html += `<li>... and ${digest.info.length - 10} more</li>`
+    }
+    html += '</ul>'
+  }
+
+  // Send email
+  if (RESEND_API_KEY && ALERT_EMAIL) {
+    try {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'TubeFission Alerts <alerts@tubefission.com>',
+          to: ALERT_EMAIL,
+          subject: `📊 TubeFission Daily Report - ${digest.date} (${totalAlerts} alerts)`,
+          html: html,
+        }),
+      })
+      console.log('Daily digest sent successfully')
+      digest.sent = true
+      saveDigest(digest)
+    } catch (e) {
+      console.error('Failed to send daily digest:', e)
+    }
+  }
+}
 
 /* ---- Config ---- */
 const ALERT_EMAIL = process.env.ALERT_EMAIL || ''
@@ -56,16 +193,18 @@ export function resetQuotaTracking() {
 
 /* ---- Alerting ---- */
 export async function sendAlert(payload: AlertPayload) {
-  alertBuffer.push(payload)
-  if (alertBuffer.length > MAX_BUFFER) alertBuffer.shift()
-
+  // Always log to console
   const logLine = `[${payload.level.toUpperCase()}] ${payload.source}: ${payload.message}`
   if (payload.level === 'critical') console.error(logLine)
   else if (payload.level === 'warning') console.warn(logLine)
   else console.info(logLine)
 
-  // Email via Resend
-  if (RESEND_API_KEY && ALERT_EMAIL) {
+  // Add to daily digest
+  addAlertToDigest(payload)
+
+  // Only send immediate email for critical issues
+  // Everything else goes into the daily digest
+  if (payload.level === 'critical' && RESEND_API_KEY && ALERT_EMAIL) {
     try {
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -76,33 +215,26 @@ export async function sendAlert(payload: AlertPayload) {
         body: JSON.stringify({
           from: 'TubeFission Alerts <alerts@tubefission.com>',
           to: ALERT_EMAIL,
-          subject: `[${payload.level.toUpperCase()}] TubeFission ${payload.source}`,
+          subject: `[CRITICAL] TubeFission ${payload.source}`,
           text: `${payload.message}\n\nDetail: ${payload.detail || 'N/A'}\nTime: ${payload.timestamp}`,
         }),
       })
     } catch (e) {
-      console.error('Failed to send email alert:', e)
-    }
-  }
-
-  // Generic webhook fallback
-  if (ALERT_WEBHOOK_URL) {
-    try {
-      await fetch(ALERT_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-    } catch (e) {
-      console.error('Failed to send webhook alert:', e)
+      console.error('Failed to send critical email alert:', e)
     }
   }
 }
 
 export function getRecentAlerts(level?: 'critical' | 'warning' | 'info', limit = 20): AlertPayload[] {
-  let alerts = [...alertBuffer]
+  const digest = loadDigest()
+  let alerts: AlertPayload[] = [
+    ...digest.critical,
+    ...digest.warning,
+    ...digest.info,
+  ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+
   if (level) alerts = alerts.filter((a) => a.level === level)
-  return alerts.slice(-limit)
+  return alerts.slice(0, limit)
 }
 
 /* ---- Enhanced fetch with monitoring ---- */
