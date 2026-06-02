@@ -16,32 +16,58 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YouTube Video Downloader & Analytics Tool | Tubefission",
+  title: "YouTube AI Analytics & Trend Intelligence Platform | Tubefission",
   description:
-    "Download YouTube videos without watermark instantly. Analyze channels, trends, and top-performing content using Tubefission. Free, fast, and secure.",
+    "AI-powered YouTube analytics platform. Analyze channels, discover viral trends, track competitor performance, and get data-driven content insights. Free, no registration.",
   keywords: [
-    "YouTube downloader",
-    "free YouTube download",
-    "YouTube video downloader",
-    "download YouTube MP4",
-    "YouTube channel analytics",
-    "viral trends",
-    "YouTube analytics tool",
+    "YouTube analytics",
+    "YouTube AI analysis",
+    "channel analytics",
+    "viral trend discovery",
+    "competitor research",
+    "YouTube growth tool",
+    "content strategy",
   ],
   alternates: {
     canonical: "https://tubefission.com",
   },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: { url: '/apple-touch-icon.png', sizes: '180x180' },
+    shortcut: '/favicon.ico',
+    other: [
+      { rel: 'mask-icon', url: '/favicon.svg', color: '#FF0000' },
+    ],
+  },
+  manifest: '/site.webmanifest',
+  other: {
+    'msapplication-TileColor': '#FF0000',
+    'msapplication-config': '/browserconfig.xml',
+  },
   openGraph: {
-    title: "YouTube Video Downloader & Analytics Tool | Tubefission",
-    description: "Download YouTube videos without watermark instantly. Analyze channels, trends, and top-performing content.",
+    title: "YouTube AI Analytics & Trend Intelligence Platform | Tubefission",
+    description: "AI-powered YouTube analytics platform. Analyze channels, discover viral trends, track competitor performance.",
     url: "https://tubefission.com",
     siteName: "Tubefission",
     type: "website",
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'TubeFission - YouTube AI Analytics Platform',
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "YouTube Video Downloader & Analytics Tool | Tubefission",
-    description: "Download YouTube videos without watermark instantly. Analyze channels and trends.",
+    title: "YouTube AI Analytics & Trend Intelligence Platform | Tubefission",
+    description: "AI-powered YouTube analytics platform. Analyze channels, discover viral trends, track competitor performance.",
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,

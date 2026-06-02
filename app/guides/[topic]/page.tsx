@@ -1295,7 +1295,7 @@ export default async function GuidePage({ params }: GuidePageProps) {
         <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
           <Link href="/" className="hover:text-red-600">Home</Link>
           <span>→</span>
-          <Link href="/guides" className="hover:text-red-600">Guides</Link>
+          <span className="text-gray-400">Guide</span>
           <span>→</span>
           <span className="text-gray-900">{guideData.title}</span>
         </nav>

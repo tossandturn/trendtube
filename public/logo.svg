@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF0000"/>
+      <stop offset="100%" style="stop-color:#CC0000"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon -->
+  <rect x="5" y="5" width="50" height="50" rx="12" fill="url(#grad)"/>
+  <polygon points="20,22 42,30 20,38" fill="white"/>
+  <path d="M 40 12 L 48 12 L 48 20" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 44 16 L 50 10" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- Text -->
+  <text x="65" y="38" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#111827">Tube</text>
+  <text x="138" y="38" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#FF0000">Fission</text>
+</svg>

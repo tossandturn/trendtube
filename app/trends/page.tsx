@@ -4,10 +4,11 @@ import { getRegion } from '@/lib/region-server'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { extractTrendsFromRegion, type RealTrend } from '@/lib/trend-extractor'
 import { Breadcrumbs } from '@/app/components/Breadcrumbs'
+import { TrendDiscovery } from '@/app/components/TrendDiscovery'
 
 export const metadata: Metadata = {
-  title: 'Trend Database | TubeFission',
-  description: 'Explore real YouTube trend data extracted from viral videos. Analyze velocity, saturation, breakout potential, and creator adoption across content categories.',
+  title: 'Trend Discovery | TubeFission',
+  description: 'Discover viral YouTube trends in real-time. Analyze velocity, breakout potential, and creator opportunities across content categories.',
 }
 
 export default async function TrendsPage() {
@@ -69,46 +70,16 @@ export default async function TrendsPage() {
         </div>
       </section>
 
-      {/* Trend Categories */}
+      {/* Trend Discovery Component */}
       <section className="pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {Object.entries(byCategory).map(([category, items]) => (
-            <div key={category} className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">{category}</h2>
-                <Link
-                  href={`/categories/${category.toLowerCase().replace(/\s+/g, '-')}`}
-                  className="text-sm text-blue-600 hover:text-blue-700"
-                >
-                  View category →
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {items.map(trend => (
-                  <Link
-                    key={trend.slug}
-                    href={`/trends/${trend.slug}`}
-                    className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow"
-                  >
-                    <h3 className="font-semibold text-gray-900 mb-2">{trend.title}</h3>
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-4">{trend.description}</p>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="text-green-600 font-medium">
-                        +{(trend.avgVelocity / 1000).toFixed(0)}K velocity
-                      </span>
-                      <span className="text-blue-600">
-                        {trend.breakoutScore.toFixed(0)} breakout
-                      </span>
-                      <span className="text-gray-500">
-                        {trend.videoCount} videos
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
+          <TrendDiscovery
+            trends={trends.map(t => ({
+              ...t,
+              momentum: t.avgVelocity > 50000 ? 'rising' : t.avgVelocity < 10000 ? 'falling' : 'stable'
+            }))}
+            categories={Object.keys(byCategory)}
+          />
         </div>
       </section>
     </main>

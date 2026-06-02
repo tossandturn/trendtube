@@ -31,12 +31,12 @@ export function DownloadHeroForm() {
     }
 
     setLoading(true)
-    router.push(`/video/${videoId}?download=1`)
+    router.push(`/video/${videoId}`)
   }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-xl mx-auto"
-      aria-label="YouTube video download form"
+      aria-label="YouTube video analytics form"
     >
       <div className="flex flex-col sm:flex-row gap-2"
         role="search"
@@ -49,7 +49,7 @@ export function DownloadHeroForm() {
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste YouTube URL here..."
+          placeholder="Paste YouTube video URL to analyze..."
           className="flex-1 min-h-[48px] px-4 py-3 text-base sm:text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           required
         />
@@ -58,7 +58,7 @@ export function DownloadHeroForm() {
           disabled={loading}
           className="min-h-[48px] px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors whitespace-nowrap"
         >
-          {loading ? 'Processing...' : 'Download Now'}
+          {loading ? 'Analyzing...' : 'Analyze Now'}
         </button>
       </div>
       {error && (

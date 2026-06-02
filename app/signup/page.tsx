@@ -4,17 +4,29 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 export default function SignupPage() {
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [devToken, setDevToken] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
+    if (username.length < 3 || username.length > 20) {
+      setError('Username must be 3-20 characters')
+      setLoading(false)
+      return
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setError('Username can only contain letters, numbers, and underscores')
+      setLoading(false)
+      return
+    }
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
       setLoading(false)
@@ -25,13 +37,17 @@ export default function SignupPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, email, password }),
       })
       const data = await res.json()
       if (!res.ok) {
         setError(data.error || 'Registration failed')
+        setLoading(false)
       } else {
         setSuccess(true)
+        if (data.devToken) {
+          setDevToken(data.devToken)
+        }
       }
     } catch {
       setError('Network error')
@@ -44,15 +60,53 @@ export default function SignupPage() {
       <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm text-center">
-            <div className="text-4xl mb-4">🎉</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Account created!</h1>
-            <p className="text-gray-600 mb-6">You can now sign in to access your dashboard.</p>
+            <div className="text-4xl mb-4">📧</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Verify your email</h1>
+            <p className="text-gray-600 mb-4">
+              We&apos;ve sent a verification link to <strong>{email}</strong>
+            </p>
+            <p className="text-gray-500 text-sm mb-6">
+              Please check your inbox and click the link to activate your account. The link will expire in 24 hours.
+            </p>
+
+            {devToken && (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-yellow-800 text-sm font-medium mb-2">Development Mode</p>
+                <p className="text-yellow-700 text-xs mb-2">
+                  Email not configured. Use this link to verify:
+                </p>
+                <a
+                  href={`/verify-email?token=${devToken}`}
+                  className="text-blue-600 hover:text-blue-700 text-xs break-all"
+                >
+                  {`http://localhost:3000/verify-email?token=${devToken}`}
+                </a>
+              </div>
+            )}
+
             <Link
               href="/login"
               className="inline-flex items-center justify-center px-6 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800"
             >
-              Sign In
+              Go to Login
             </Link>
+
+            <div className="mt-6 text-sm text-gray-500">
+              Didn&apos;t receive the email?{' '}
+              <button
+                onClick={() => {
+                  fetch('/api/auth/send-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                  })
+                  alert('Verification email resent!')
+                }}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Resend
+              </button>
+            </div>
           </div>
         </div>
       </main>
@@ -73,6 +127,21 @@ export default function SignupPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+                minLength={3}
+                maxLength={20}
+                pattern="^[a-zA-Z0-9_]+$"
+                placeholder="Choose a username"
+              />
+              <p className="text-xs text-gray-500 mt-1">3-20 characters, letters, numbers, underscores only</p>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input

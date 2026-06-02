@@ -3,16 +3,23 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
+function generateSessionId(): string {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36)
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [needsVerification, setNeedsVerification] = useState(false)
+  const [resending, setResending] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setNeedsVerification(false)
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -22,16 +29,42 @@ export default function LoginPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Login failed')
+        if (data.requiresVerification) {
+          setNeedsVerification(true)
+          setError('Please verify your email before logging in.')
+        } else {
+          setError(data.error || 'Login failed')
+        }
       } else {
         // Store user in localStorage and redirect
         localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('analyzeSessionId', generateSessionId())
         window.location.href = '/trending'
       }
     } catch {
       setError('Network error')
     }
     setLoading(false)
+  }
+
+  async function resendVerification() {
+    setResending(true)
+    try {
+      const res = await fetch('/api/auth/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setError('Verification email sent! Please check your inbox.')
+      } else {
+        setError(data.error || 'Failed to resend verification email')
+      }
+    } catch {
+      setError('Network error')
+    }
+    setResending(false)
   }
 
   return (
@@ -42,8 +75,17 @@ export default function LoginPage() {
           <p className="text-gray-600 mb-6">Sign in to access your saved trends and alerts.</p>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+            <div className={`mb-4 p-3 rounded-lg text-sm ${needsVerification ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'}`}>
               {error}
+              {needsVerification && (
+                <button
+                  onClick={resendVerification}
+                  disabled={resending}
+                  className="mt-2 text-blue-600 hover:text-blue-700 font-medium underline"
+                >
+                  {resending ? 'Resending...' : 'Resend verification email'}
+                </button>
+              )}
             </div>
           )}
 

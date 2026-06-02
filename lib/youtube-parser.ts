@@ -5,6 +5,7 @@
 export function extractVideoId(url: string): string | null {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/, // YouTube Shorts
     /^([a-zA-Z0-9_-]{11})$/, // bare ID
   ]
   for (const p of patterns) {
@@ -15,15 +16,18 @@ export function extractVideoId(url: string): string | null {
 }
 
 export function extractChannelId(url: string): string | null {
+  const decodedUrl = decodeURIComponent(url)
   const patterns = [
-    /youtube\.com\/channel\/([a-zA-Z0-9_-]+)/,
-    /youtube\.com\/c\/([a-zA-Z0-9_-]+)/,
-    /youtube\.com\/user\/([a-zA-Z0-9_-]+)/,
-    /youtube\.com\/@([a-zA-Z0-9_-]+)/,
+    /youtube\.com\/channel\/([^\/\?&]+)/,
+    /youtube\.com\/c\/([^\/\?&]+)/,
+    /youtube\.com\/user\/([^\/\?&]+)/,
+    /youtube\.com\/(@[^\/\?&]+)/,
   ]
   for (const p of patterns) {
-    const m = url.match(p)
-    if (m) return m[1]
+    const m = decodedUrl.match(p)
+    if (m) {
+      return m[1]
+    }
   }
   return null
 }

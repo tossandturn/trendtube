@@ -99,7 +99,7 @@ function extractTrendingKeywords(videos: Video[]): Map<string, { count: number; 
     const engagement = getEngagementRate(video)
     const velocity = getViewVelocity(video)
 
-    words.forEach(word => {
+    words.forEach((word: string) => {
       const existing = keywords.get(word)
       if (existing) {
         existing.count++

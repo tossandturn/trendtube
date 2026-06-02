@@ -137,6 +137,145 @@ async function loadFallbackVideos(region: string): Promise<YouTubeVideo[]> {
   return []
 }
 
+/* ---- Fetch channel by ID or Handle ---- */
+export async function fetchChannelById(channelId: string): Promise<any | null> {
+  if (!API_KEY) return null
+
+  // Decode URL-encoded characters (e.g., %40 -> @)
+  const decodedId = decodeURIComponent(channelId)
+
+  // Check if it's a handle (starts with @)
+  const isHandle = decodedId.startsWith('@')
+  const param = isHandle ? `forHandle=${decodedId}` : `id=${decodedId}`
+  const url = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings,contentDetails&${param}&key=${API_KEY}`
+
+  try {
+    const res = await monitoredFetch(url, {
+      next: { revalidate: 300 },
+      quotaUnits: 1,
+      retries: 2,
+    })
+
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.items?.[0] || null
+  } catch {
+    return null
+  }
+}
+
+/* ---- Fetch channel videos ---- */
+export async function fetchChannelVideos(channelId: string, maxResults = 50): Promise<YouTubeVideo[]> {
+  if (!API_KEY) return []
+
+  // Decode URL-encoded characters
+  const decodedId = decodeURIComponent(channelId)
+
+  // If it's a handle, first fetch the channel to get the real channel ID
+  let realChannelId = decodedId
+  if (decodedId.startsWith('@')) {
+    const channel = await fetchChannelById(decodedId)
+    if (!channel) return []
+    realChannelId = channel.id
+  }
+
+  // First, get video IDs from channel
+  const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=id&channelId=${realChannelId}&order=date&type=video&maxResults=${maxResults}&key=${API_KEY}`
+
+  try {
+    const searchRes = await monitoredFetch(searchUrl, {
+      next: { revalidate: 3600 },
+      quotaUnits: Math.ceil(maxResults / 50) * 100, // search.list costs 100 units
+      retries: 2,
+    })
+
+    if (!searchRes.ok) return []
+
+    const searchData = await searchRes.json()
+    const videoIds = searchData.items?.map((item: any) => item.id?.videoId).filter(Boolean)
+
+    if (!videoIds || videoIds.length === 0) return []
+
+    // Then fetch video details in batch
+    const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds.join(',')}&key=${API_KEY}`
+    const videosRes = await monitoredFetch(videosUrl, {
+      next: { revalidate: 300 },
+      quotaUnits: Math.ceil(videoIds.length / 50) * 1,
+      retries: 2,
+    })
+
+    if (!videosRes.ok) return []
+
+    const videosData = await videosRes.json()
+    return videosData.items || []
+  } catch {
+    return []
+  }
+}
+
+/* ---- Fetch channel by username/custom URL ---- */
+export async function fetchChannelByUsername(username: string): Promise<any | null> {
+  if (!API_KEY) return null
+
+  const url = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings&forUsername=${username}&key=${API_KEY}`
+
+  try {
+    const res = await monitoredFetch(url, {
+      next: { revalidate: 300 },
+      quotaUnits: 1,
+      retries: 2,
+    })
+
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.items?.[0] || null
+  } catch {
+    return null
+  }
+}
+
+/* ---- Fetch comments for a video ---- */
+export interface YouTubeComment {
+  id: string
+  snippet: {
+    topLevelComment?: {
+      snippet: {
+        textDisplay: string
+        textOriginal: string
+        authorDisplayName: string
+        authorProfileImageUrl: string
+        likeCount: number
+        publishedAt: string
+      }
+    }
+    totalReplyCount?: number
+  }
+}
+
+export async function fetchVideoComments(videoId: string, maxResults = 100): Promise<YouTubeComment[]> {
+  if (!API_KEY) return []
+
+  const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=${maxResults}&order=relevance&key=${API_KEY}`
+
+  try {
+    const res = await monitoredFetch(url, {
+      next: { revalidate: 300 },
+      quotaUnits: Math.ceil(maxResults / 100) * 1,
+      retries: 2,
+    })
+
+    if (!res.ok) {
+      // Comments may be disabled for this video
+      return []
+    }
+
+    const data = await res.json()
+    return data.items || []
+  } catch {
+    return []
+  }
+}
+
 /* ---- Batch fetch for multiple regions ---- */
 export async function fetchMultiRegion(regions: string[]): Promise<Record<string, YouTubeVideo[]>> {
   const result: Record<string, YouTubeVideo[]> = {}

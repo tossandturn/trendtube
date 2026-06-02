@@ -123,11 +123,13 @@ export interface HistoryEntry {
   }[]
 }
 
-import { existsSync, readFileSync } from 'fs'
-import { join } from 'path'
-
 export function loadHistory(): HistoryEntry[] {
+  // Dynamic import to avoid client-side fs issues
+  if (typeof window !== 'undefined') return []
+
   try {
+    const { existsSync, readFileSync } = require('fs')
+    const { join } = require('path')
     const path = join(process.cwd(), 'public', 'data', 'history.json')
     if (!existsSync(path)) return []
     const raw = readFileSync(path, 'utf-8')

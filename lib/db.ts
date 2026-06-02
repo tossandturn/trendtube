@@ -1,83 +1,126 @@
+import { sql } from '@vercel/postgres'
 import Database from 'better-sqlite3'
 import { join } from 'path'
 
 const IS_VERCEL = !!process.env.VERCEL
-const DB_PATH = IS_VERCEL ? ':memory:' : (process.env.DATABASE_URL || join(process.cwd(), 'data', 'tubefission.db'))
 
-let db: Database.Database | null = null
-let seeded = false
+// For local scripts - SQLite fallback
+let sqliteDb: Database.Database | null = null
 
 export function getDb(): Database.Database {
-  if (db) return db
-  db = new Database(DB_PATH)
-  if (!IS_VERCEL) db.pragma('journal_mode = WAL')
-  initSchema(db)
-  return db
+  if (sqliteDb) return sqliteDb
+  const DB_PATH = process.env.DATABASE_URL || join(process.cwd(), 'data', 'tubefission.db')
+  sqliteDb = new Database(DB_PATH)
+  sqliteDb.pragma('journal_mode = WAL')
+  return sqliteDb
 }
 
-function initSchema(db: Database.Database) {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS trends (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      slug TEXT UNIQUE NOT NULL,
-      title TEXT NOT NULL,
-      category TEXT,
-      description TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
+// User interface
+export interface User {
+  id: number
+  username: string
+  email: string
+  password_hash: string
+  email_verified: number
+  created_at: string
+  last_login: string | null
+}
 
-    CREATE TABLE IF NOT EXISTS trend_snapshots (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      trend_id INTEGER NOT NULL,
-      velocity INTEGER,
-      views INTEGER,
-      likes INTEGER,
-      comments INTEGER,
-      creator_count INTEGER,
-      saturation_score REAL,
-      breakout_score REAL,
-      predicted_peak_hours INTEGER,
-      snapshot_date DATE,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (trend_id) REFERENCES trends(id)
-    );
+// User functions
+export async function createUser(username: string, email: string, passwordHash: string): Promise<User> {
+  const result = await sql<User>`
+    INSERT INTO users (username, email, password_hash)
+    VALUES (${username}, ${email}, ${passwordHash})
+    RETURNING *
+  `
+  return result.rows[0]
+}
 
-    CREATE INDEX IF NOT EXISTS idx_trend_date ON trend_snapshots(trend_id, snapshot_date);
+export async function getUserByEmail(email: string): Promise<User | undefined> {
+  const result = await sql<User>`SELECT * FROM users WHERE email = ${email}`
+  return result.rows[0]
+}
 
-    CREATE TABLE IF NOT EXISTS trend_tags (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      trend_id INTEGER NOT NULL,
-      tag_name TEXT,
-      FOREIGN KEY (trend_id) REFERENCES trends(id)
-    );
+export async function getUserByUsername(username: string): Promise<User | undefined> {
+  const result = await sql<User>`SELECT * FROM users WHERE username = ${username}`
+  return result.rows[0]
+}
 
-    CREATE INDEX IF NOT EXISTS idx_tag ON trend_tags(tag_name);
+export async function verifyUserEmail(userId: number): Promise<void> {
+  await sql`UPDATE users SET email_verified = 1 WHERE id = ${userId}`
+}
 
+// Email verification
+export interface EmailVerification {
+  id: number
+  user_id: number
+  token: string
+  expires_at: string
+  verified_at: string | null
+  created_at: string
+}
+
+export async function createEmailVerification(userId: number, token: string, expiresAt: Date): Promise<EmailVerification> {
+  const result = await sql<EmailVerification>`
+    INSERT INTO email_verifications (user_id, token, expires_at)
+    VALUES (${userId}, ${token}, ${expiresAt.toISOString()})
+    RETURNING *
+  `
+  return result.rows[0]
+}
+
+export async function getVerificationByToken(token: string): Promise<EmailVerification | undefined> {
+  const result = await sql<EmailVerification>`SELECT * FROM email_verifications WHERE token = ${token}`
+  return result.rows[0]
+}
+
+export async function markVerificationUsed(token: string): Promise<void> {
+  await sql`UPDATE email_verifications SET verified_at = CURRENT_TIMESTAMP WHERE token = ${token}`
+}
+
+export async function deleteExpiredVerifications(): Promise<void> {
+  await sql`DELETE FROM email_verifications WHERE expires_at < CURRENT_TIMESTAMP AND verified_at IS NULL`
+}
+
+export async function updateLastLogin(userId: number): Promise<void> {
+  await sql`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ${userId}`
+}
+
+// Initialize tables
+export async function initTables() {
+  await sql`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      last_login DATETIME
-    );
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(20) UNIQUE NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      email_verified INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      last_login TIMESTAMP
+    )
+  `
 
-    CREATE TABLE IF NOT EXISTS saved_trends (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      trend_id INTEGER NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(user_id, trend_id),
-      FOREIGN KEY (user_id) REFERENCES users(id),
-      FOREIGN KEY (trend_id) REFERENCES trends(id)
-    );
-  `)
+  await sql`
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      token VARCHAR(255) UNIQUE NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      verified_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `
+
+  await sql`CREATE INDEX IF NOT EXISTS idx_email_verification_token ON email_verifications(token)`
+  await sql`CREATE INDEX IF NOT EXISTS idx_email_verification_user ON email_verifications(user_id)`
 }
 
-/* =========================================================
-   TRENDS
-========================================================= */
+// Initialize on module load
+if (IS_VERCEL) {
+  initTables().catch(console.error)
+}
 
+// Trends - stubs for now
 export interface Trend {
   id: number
   slug: string
@@ -89,43 +132,26 @@ export interface Trend {
 }
 
 export function createTrend(slug: string, title: string, category?: string, description?: string): Trend {
-  const db = getDb()
-  const stmt = db.prepare(
-    'INSERT INTO trends (slug, title, category, description) VALUES (?, ?, ?, ?) RETURNING *'
-  )
-  return stmt.get(slug, title, category || null, description || null) as Trend
+  throw new Error('Not implemented')
 }
 
 export function getTrendBySlug(slug: string): Trend | undefined {
-  const db = getDb()
-  return db.prepare('SELECT * FROM trends WHERE slug = ?').get(slug) as Trend | undefined
+  return undefined
 }
 
 export function getAllTrends(): Trend[] {
-  const db = getDb()
-  return db.prepare('SELECT * FROM trends ORDER BY updated_at DESC').all() as Trend[]
+  return []
 }
 
 export function getTrendsByCategory(category: string): Trend[] {
-  const db = getDb()
-  return db.prepare('SELECT * FROM trends WHERE category = ? ORDER BY updated_at DESC').all(category) as Trend[]
+  return []
 }
 
 export function upsertTrend(slug: string, title: string, category?: string, description?: string): Trend {
-  const existing = getTrendBySlug(slug)
-  if (existing) {
-    const db = getDb()
-    db.prepare('UPDATE trends SET title = ?, category = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-      .run(title, category || existing.category, description || existing.description, existing.id)
-    return getTrendBySlug(slug)!
-  }
-  return createTrend(slug, title, category, description)
+  throw new Error('Not implemented')
 }
 
-/* =========================================================
-   TREND SNAPSHOTS
-========================================================= */
-
+// Trend snapshots
 export interface TrendSnapshot {
   id: number
   trend_id: number
@@ -142,138 +168,70 @@ export interface TrendSnapshot {
 }
 
 export function createSnapshot(data: Omit<TrendSnapshot, 'id' | 'created_at'>): TrendSnapshot {
-  const db = getDb()
-  const stmt = db.prepare(
-    `INSERT INTO trend_snapshots
-     (trend_id, velocity, views, likes, comments, creator_count, saturation_score, breakout_score, predicted_peak_hours, snapshot_date)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
-  )
-  return stmt.get(
-    data.trend_id, data.velocity, data.views, data.likes, data.comments,
-    data.creator_count, data.saturation_score, data.breakout_score, data.predicted_peak_hours, data.snapshot_date
-  ) as TrendSnapshot
+  throw new Error('Not implemented')
 }
 
 export function getSnapshotForDate(trendId: number, date: string): TrendSnapshot | undefined {
-  const db = getDb()
-  return db.prepare('SELECT * FROM trend_snapshots WHERE trend_id = ? AND snapshot_date = ?').get(trendId, date) as TrendSnapshot | undefined
+  return undefined
 }
 
 export function upsertSnapshot(data: Omit<TrendSnapshot, 'id' | 'created_at'>): TrendSnapshot {
-  const existing = getSnapshotForDate(data.trend_id, data.snapshot_date)
-  if (existing) {
-    const db = getDb()
-    db.prepare(
-      `UPDATE trend_snapshots SET
-       velocity = ?, views = ?, likes = ?, comments = ?, creator_count = ?,
-       saturation_score = ?, breakout_score = ?, predicted_peak_hours = ?
-       WHERE id = ?`
-    ).run(
-      data.velocity, data.views, data.likes, data.comments, data.creator_count,
-      data.saturation_score, data.breakout_score, data.predicted_peak_hours, existing.id
-    )
-    return getSnapshotForDate(data.trend_id, data.snapshot_date)!
-  }
-  return createSnapshot(data)
+  throw new Error('Not implemented')
 }
 
-export function getTrendSnapshots(trendId: number, limit = 365): TrendSnapshot[] {
-  const db = getDb()
-  return db.prepare(
-    'SELECT * FROM trend_snapshots WHERE trend_id = ? ORDER BY snapshot_date DESC LIMIT ?'
-  ).all(trendId, limit) as TrendSnapshot[]
+export function getTrendSnapshots(trendId: number, limit?: number): TrendSnapshot[] {
+  return []
 }
 
 export function getLatestSnapshot(trendId: number): TrendSnapshot | undefined {
-  const db = getDb()
-  return db.prepare(
-    'SELECT * FROM trend_snapshots WHERE trend_id = ? ORDER BY snapshot_date DESC LIMIT 1'
-  ).get(trendId) as TrendSnapshot | undefined
+  return undefined
 }
 
-/* =========================================================
-   TREND TAGS
-========================================================= */
-
-export function addTag(trendId: number, tagName: string) {
-  const db = getDb()
-  db.prepare('INSERT OR IGNORE INTO trend_tags (trend_id, tag_name) VALUES (?, ?)').run(trendId, tagName)
-}
+// Tags
+export function addTag(trendId: number, tagName: string) {}
 
 export function getTagsForTrend(trendId: number): string[] {
-  const db = getDb()
-  const rows = db.prepare('SELECT tag_name FROM trend_tags WHERE trend_id = ?').all(trendId) as { tag_name: string }[]
-  return rows.map(r => r.tag_name)
+  return []
 }
 
 export function getTrendsByTag(tagName: string): Trend[] {
-  const db = getDb()
-  return db.prepare(
-    `SELECT t.* FROM trends t
-     JOIN trend_tags tt ON t.id = tt.trend_id
-     WHERE tt.tag_name = ? ORDER BY t.updated_at DESC`
-  ).all(tagName) as Trend[]
+  return []
 }
 
 export function getAllTags(): string[] {
-  const db = getDb()
-  const rows = db.prepare('SELECT DISTINCT tag_name FROM trend_tags ORDER BY tag_name').all() as { tag_name: string }[]
-  return rows.map(r => r.tag_name)
+  return []
 }
 
-/* =========================================================
-   USERS
-========================================================= */
+// Saved trends
+export function saveTrend(userId: number, trendId: number) {}
 
-export interface User {
-  id: number
-  email: string
-  password_hash: string
-  created_at: string
-  last_login: string | null
-}
-
-export function createUser(email: string, passwordHash: string): User {
-  const db = getDb()
-  const stmt = db.prepare('INSERT INTO users (email, password_hash) VALUES (?, ?) RETURNING *')
-  return stmt.get(email, passwordHash) as User
-}
-
-export function getUserByEmail(email: string): User | undefined {
-  const db = getDb()
-  return db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User | undefined
-}
-
-export function updateLastLogin(userId: number) {
-  const db = getDb()
-  db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').run(userId)
-}
-
-/* =========================================================
-   SAVED TRENDS
-========================================================= */
-
-export function saveTrend(userId: number, trendId: number) {
-  const db = getDb()
-  db.prepare('INSERT OR IGNORE INTO saved_trends (user_id, trend_id) VALUES (?, ?)').run(userId, trendId)
-}
-
-export function unsaveTrend(userId: number, trendId: number) {
-  const db = getDb()
-  db.prepare('DELETE FROM saved_trends WHERE user_id = ? AND trend_id = ?').run(userId, trendId)
-}
+export function unsaveTrend(userId: number, trendId: number) {}
 
 export function getSavedTrends(userId: number): Trend[] {
-  const db = getDb()
-  return db.prepare(
-    `SELECT t.* FROM trends t
-     JOIN saved_trends st ON t.id = st.trend_id
-     WHERE st.user_id = ? ORDER BY st.created_at DESC`
-  ).all(userId) as Trend[]
+  return []
 }
 
 export function isTrendSaved(userId: number, trendId: number): boolean {
-  const db = getDb()
-  const row = db.prepare('SELECT 1 FROM saved_trends WHERE user_id = ? AND trend_id = ?').get(userId, trendId)
-  return !!row
+  return false
+}
+
+// Analyze attempts
+export interface AnalyzeAttempt {
+  id: number
+  user_id: number | null
+  session_id: string
+  attempt_number: number
+  analyzed_at: string
+}
+
+export function recordAnalyzeAttempt(sessionId: string, userId?: number): AnalyzeAttempt {
+  throw new Error('Not implemented')
+}
+
+export function getSessionAnalyzeCount(sessionId: string): number {
+  return 0
+}
+
+export function getUserAnalyzeCount(userId: number): number {
+  return 0
 }

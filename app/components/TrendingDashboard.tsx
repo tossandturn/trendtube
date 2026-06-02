@@ -830,24 +830,24 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
               <ul className="space-y-2 text-sm text-gray-600">
                 <li><Link href="/trending" className="hover:text-red-600">Potential</Link></li>
                 <li><Link href="/shorts" className="hover:text-red-600">Shorts</Link></li>
-                <li><Link href="/pricing" className="hover:text-red-600">Pricing</Link></li>
-                <li><Link href="/api" className="hover:text-red-600">API</Link></li>
+                <li><Link href="/ai-assistant" className="hover:text-red-600">AI Assistant</Link></li>
+                <li><Link href="/watchlist" className="hover:text-red-600">Watchlist</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4">Resources</h4>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/guides" className="hover:text-red-600">Guides</Link></li>
-                <li><Link href="/blog" className="hover:text-red-600">Blog</Link></li>
-                <li><Link href="/case-studies" className="hover:text-red-600">Case Studies</Link></li>
+                <li><Link href="/trends" className="hover:text-red-600">Trends</Link></li>
+                <li><Link href="/emerging" className="hover:text-red-600">Emerging</Link></li>
+                <li><Link href="/guides/how-to-find-viral-youtube-topics" className="hover:text-red-600">Guides</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4">Company</h4>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><Link href="/about" className="hover:text-red-600">About</Link></li>
-                <li><Link href="/contact" className="hover:text-red-600">Contact</Link></li>
-                <li><Link href="/privacy" className="hover:text-red-600">Privacy</Link></li>
+                <li><Link href="/" className="hover:text-red-600">Home</Link></li>
+                <li><Link href="/alerts" className="hover:text-red-600">Alerts</Link></li>
+                <li><Link href="/status" className="hover:text-red-600">Status</Link></li>
               </ul>
             </div>
           </div>

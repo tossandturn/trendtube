@@ -10,6 +10,30 @@ const nextConfig: NextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  async redirects() {
+    return [
+      {
+        source: '/download-youtube-video',
+        destination: '/youtube-channel-analytics',
+        permanent: true,
+      },
+      {
+        source: '/download-youtube-mp3',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/download-youtube-shorts',
+        destination: '/youtube-shorts-trends',
+        permanent: true,
+      },
+      {
+        source: '/youtube-thumbnail-downloader',
+        destination: '/',
+        permanent: true,
+      },
+    ]
+  },
 };
 
 export default nextConfig;

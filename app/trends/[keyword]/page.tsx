@@ -259,6 +259,59 @@ YouTube automation represents a paradigm shift in content creation—separating 
   },
 }
 
+// Comprehensive keyword list for SEO coverage - 80+ keywords
+export const TREND_KEYWORDS = [
+  // AI & Technology
+  'ai-shorts', 'chatgpt', 'ai-tools', 'midjourney', 'artificial-intelligence',
+  'tech-review', 'smartphone', 'app-review', 'coding-tutorial', 'programming',
+  'software-review', 'gadget-review', 'tech-news', 'cybersecurity', 'blockchain',
+
+  // Gaming
+  'gaming-youtube', 'minecraft', 'fortnite', 'gta', 'valorant',
+  'roblox', 'call-of-duty', 'mobile-gaming', 'esports', 'game-review',
+  'gaming-setup', 'walkthrough', 'speedrun', 'challenge-gaming', 'multiplayer',
+
+  // Finance & Business
+  'passive-income', 'side-hustle', 'stock-market', 'crypto',
+  'personal-finance', 'entrepreneurship', 'online-business', 'dropshipping',
+  'affiliate-marketing', 'investing', 'wealth-building', 'financial-freedom',
+
+  // Health & Fitness
+  'workout', 'fitness', 'gym', 'health', 'diet', 'exercise', 'yoga',
+  'meditation', 'mental-health', 'nutrition', 'weight-loss', 'bodybuilding',
+
+  // Education & Learning
+  'tutorial', 'how-to', 'learn', 'education', 'study', 'course',
+  'language-learning', 'skill-building', 'online-learning', 'productivity',
+  'study-tips', 'exam-prep', 'career-advice', 'self-improvement',
+
+  // Entertainment & Lifestyle
+  'vlog', 'travel', 'food', 'cooking', 'recipe', 'mukbang', 'beauty',
+  'fashion', 'skincare', 'makeup', 'lifestyle', 'home-decor', 'diy',
+
+  // YouTube Growth
+  'youtube-automation', 'mrbeast-style', 'viral-video', 'content-creation',
+  'channel-growth', 'monetization', 'youtube-seo', 'thumbnail-design',
+  'video-editing', 'script-writing', 'audience-retention', 'clickbait',
+
+  // Short-Form Content
+  'shorts-viral', 'tiktok', 'reels', 'shorts-strategy', 'viral-clips',
+  'trending-sounds', 'shorts-monetization', 'quick-tips', 'life-hacks',
+
+  // Music & Creative
+  'music', 'cover-song', 'reaction-video', 'album-review', 'music-production',
+  'singing', 'instrument', 'dj', 'remix', 'creative-content',
+
+  // Social Issues & Commentary
+  'news-commentary', 'social-issues', 'politics', 'conspiracy', 'mystery',
+  'true-crime', 'unsolved', 'documentary', 'expose', 'investigation',
+]
+
+// Static generation for all keywords at build time
+export async function generateStaticParams() {
+  return TREND_KEYWORDS.map(keyword => ({ keyword }))
+}
+
 // Default trend data generator
 function generateTrendData(keyword: string) {
   const normalized = keyword.replace(/-/g, ' ')

@@ -1,7 +1,75 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { REGIONS, REGION_META, type Region } from '@/lib/region'
+
+interface User {
+  id: number
+  username: string
+  email: string
+}
+
+function UserNav() {
+  const [user, setUser] = useState<User | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    const userJson = localStorage.getItem('user')
+    if (userJson) {
+      try {
+        setUser(JSON.parse(userJson))
+      } catch {
+        localStorage.removeItem('user')
+      }
+    }
+  }, [])
+
+  function logout() {
+    localStorage.removeItem('user')
+    setUser(null)
+    window.location.reload()
+  }
+
+  if (!mounted) return null
+
+  if (user) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg border border-gray-200">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+            {user.username[0].toUpperCase()}
+          </div>
+          <span className="text-sm font-medium text-gray-700">{user.username}</span>
+        </div>
+        <button
+          onClick={logout}
+          className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          Logout
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Link
+        href="/login"
+        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+      >
+        Sign In
+      </Link>
+      <Link
+        href="/signup"
+        className="px-3 py-1.5 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+      >
+        Sign Up
+      </Link>
+    </div>
+  )
+}
 
 export default function RegionBar() {
   const [region, setRegion] = useState<Region>('US')
@@ -26,10 +94,10 @@ export default function RegionBar() {
     return (
       <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-3">
-          <div className="flex items-center gap-2 mr-auto">
-            <YouTubeLogo />
+          <Link href="/" className="flex items-center gap-2 mr-auto hover:opacity-80 transition-opacity">
+            <img src="/favicon.svg" alt="TubeFission" className="w-7 h-7" />
             <span className="text-sm font-bold tracking-tight text-gray-900">TubeFission</span>
-          </div>
+          </Link>
           <div className="flex gap-1" />
         </div>
       </div>
@@ -39,60 +107,45 @@ export default function RegionBar() {
   return (
     <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center gap-3">
-        {/* YouTube Branding */}
-        <div className="flex items-center gap-2 mr-auto">
-          <YouTubeLogo />
+        {/* YouTube Branding - Clickable Logo */}
+        <Link href="/" className="flex items-center gap-2 mr-auto hover:opacity-80 transition-opacity">
+          <img src="/favicon.svg" alt="TubeFission" className="w-7 h-7" />
           <div className="hidden sm:flex flex-col">
             <span className="text-sm font-bold tracking-tight leading-tight text-gray-900">TubeFission</span>
             <span className="text-[10px] text-gray-500 data-mono leading-tight">YOUTUBE INTELLIGENCE</span>
           </div>
           <span className="sm:hidden text-sm font-bold tracking-tight text-gray-900">TubeFission</span>
-        </div>
+        </Link>
 
-        {/* Region Selector */}
-        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 border border-gray-200">
-          <span className="text-[10px] text-gray-500 data-mono px-2 hidden sm:inline">REGION</span>
-          {REGIONS.map((r) => (
-            <button
-              key={r}
-              onClick={() => switchRegion(r)}
-              className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${
-                region === r
-                  ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.25)]'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
-              }`}
-              title={REGION_META[r].label}
-            >
-              <img
-                src={`https://flagcdn.com/w40/${REGION_META[r].flag}.png`}
-                alt={REGION_META[r].label}
-                className="w-4 h-3 rounded-sm object-cover"
-                loading="lazy"
-              />
-              <span>{r}</span>
-            </button>
-          ))}
+        {/* Region Selector & User Nav */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 border border-gray-200">
+            <span className="text-[10px] text-gray-500 data-mono px-2 hidden sm:inline">REGION</span>
+            {REGIONS.map((r) => (
+              <button
+                key={r}
+                onClick={() => switchRegion(r)}
+                className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${
+                  region === r
+                    ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.25)]'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-white'
+                }`}
+                title={REGION_META[r].label}
+              >
+                <img
+                  src={`https://flagcdn.com/w40/${REGION_META[r].flag}.png`}
+                  alt={REGION_META[r].label}
+                  className="w-4 h-3 rounded-sm object-cover"
+                  loading="lazy"
+                />
+                <span>{r}</span>
+              </button>
+            ))}
+          </div>
+          <UserNav />
         </div>
       </div>
     </div>
   )
 }
 
-function YouTubeLogo() {
-  return (
-    <div className="flex items-center gap-1.5">
-      <svg
-        className="w-6 h-6"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M23.5 6.19a3.02 3.02 0 00-2.12-2.14C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.55A3.02 3.02 0 00.5 6.19 31.5 31.5 0 000 12a31.5 31.5 0 00.5 5.81 3.02 3.02 0 002.12 2.14c1.88.55 9.38.55 9.38.55s7.5 0 9.38-.55a3.02 3.02 0 002.12-2.14A31.5 31.5 0 0024 12a31.5 31.5 0 00-.5-5.81z"
-          fill="#FF0000"
-        />
-        <path d="M9.55 15.5V8.5l6.27 3.5-6.27 3.5z" fill="white" />
-      </svg>
-    </div>
-  )
-}
