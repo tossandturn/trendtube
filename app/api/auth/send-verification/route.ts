@@ -57,7 +57,16 @@ async function sendVerificationEmail(email: string, username: string, token: str
     })
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: await response.text() }))
+      let errorData: { message: string } = { message: 'Unknown error' }
+      try {
+        errorData = await response.json()
+      } catch {
+        try {
+          errorData = { message: await response.text() }
+        } catch {
+          errorData = { message: `HTTP ${response.status}` }
+        }
+      }
       console.error('Failed to send email:', {
         status: response.status,
         statusText: response.statusText,

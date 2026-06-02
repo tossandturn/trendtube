@@ -2,7 +2,7 @@
    YOUTUBE API CLIENT — Resilient, monitored, with fallback
 ========================================================= */
 
-import { monitoredFetch, trackQuotaUsage, sendAlert } from './monitor'
+import { monitoredFetch, trackQuotaUsage, sendAlert } from './monitored-fetch'
 
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
 

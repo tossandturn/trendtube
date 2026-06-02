@@ -324,7 +324,8 @@ export async function runHealthCheck(): Promise<HealthReport> {
 
   // Error summary
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString()
-  report.checks.errors.recent = alertBuffer.filter((a) => a.timestamp >= oneHourAgo)
+  const recentAlerts = getRecentAlerts(undefined, 100)
+  report.checks.errors.recent = recentAlerts.filter((a) => a.timestamp >= oneHourAgo).slice(0, 20)
   report.checks.errors.count1h = report.checks.errors.recent.length
   report.checks.errors.ok = report.checks.errors.count1h < 5
 
