@@ -3,7 +3,8 @@ import { createEmailVerification, getUserByEmail, deleteExpiredVerifications } f
 import { randomBytes } from 'crypto'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+// Use production URL as fallback for API routes (server-side only)
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://tubefission.com'
 
 function generateToken(): string {
   // Generate a URL-safe random token (16 bytes = 32 hex characters)
