@@ -6,8 +6,8 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 function generateToken(): string {
-  // Generate a URL-safe random token (32 bytes = 64 hex characters)
-  return randomBytes(32).toString('hex')
+  // Generate a URL-safe random token (16 bytes = 32 hex characters)
+  return randomBytes(16).toString('hex')
 }
 
 async function sendVerificationEmail(email: string, username: string, token: string) {
@@ -18,12 +18,16 @@ async function sendVerificationEmail(email: string, username: string, token: str
   }
 
   const verificationUrl = `${APP_URL}/verify-email?token=${token}`
+  console.log('Generating verification URL:', verificationUrl)
 
-  // Use environment variable for sender or default to Resend onboarding
+  // Use environment variable for sender
   const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev'
   const FROM_NAME = process.env.FROM_NAME || 'TubeFission'
 
+  console.log('Sending email with from:', `${FROM_NAME} <${FROM_EMAIL}>`)
+
   try {
+    // Use text-only email to avoid spam filter issues with links
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -34,32 +38,23 @@ async function sendVerificationEmail(email: string, username: string, token: str
         from: `${FROM_NAME} <${FROM_EMAIL}>`,
         to: email,
         subject: 'Verify your TubeFission account',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #111827;">Welcome to TubeFission, ${username}!</h2>
-            <p style="color: #4B5563; font-size: 16px;">
-              Thank you for signing up. Please verify your email address to complete your registration.
-            </p>
-            <div style="margin: 30px 0;">
-              <a href="${verificationUrl}"
-                 style="background-color: #111827; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 500;">
-                Verify Email Address
-              </a>
-            </div>
-            <p style="color: #6B7280; font-size: 14px;">
-              Or copy and paste this link into your browser:<br>
-              <a href="${verificationUrl}" style="color: #3B82F6;">${verificationUrl}</a>
-            </p>
-            <p style="color: #9CA3AF; font-size: 12px; margin-top: 30px;">
-              This link will expire in 24 hours. If you did not create an account, you can safely ignore this email.
-            </p>
-          </div>
-        `,
+        text: `Welcome to TubeFission, ${username}!
+
+Thank you for signing up. Please verify your email address to complete your registration.
+
+Copy and paste this link into your browser:
+${verificationUrl}
+
+This link will expire in 24 hours. If you did not create an account, you can safely ignore this email.
+
+---
+TubeFission - YouTube Intelligence Platform
+${APP_URL}`,
       }),
     })
 
     if (!response.ok) {
-      let errorData: { message: string } = { message: 'Unknown error' }
+      let errorData: { message?: string; name?: string } = { message: 'Unknown error' }
       try {
         errorData = await response.json()
       } catch {
@@ -75,6 +70,7 @@ async function sendVerificationEmail(email: string, username: string, token: str
         error: errorData,
         from: FROM_EMAIL,
         to: email,
+        url: verificationUrl,
       })
       return false
     }
