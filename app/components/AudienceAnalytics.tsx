@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import Link from 'next/link'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 
 interface AudienceAnalyticsProps {
@@ -48,18 +49,77 @@ const CATEGORY_DEMOGRAPHICS: Record<string, { male: number; age: string; regions
   '29': { male: 50, age: '25-44', regions: { US: 50, UK: 15, CA: 12, AU: 8, Other: 15 } }, // Nonprofits & Activism
 }
 
+// Extended interest keywords database with relevance scores and routes
+const EXTENDED_KEYWORDS: Record<string, { relevance: number; route: string }> = {
+  'Gaming': { relevance: 100, route: '/gaming-youtube-trends' },
+  'Technology': { relevance: 98, route: '/youtube-ai-trends' },
+  'Tutorial': { relevance: 95, route: '/youtube-video-analyzer' },
+  'Entertainment': { relevance: 92, route: '/entertainment' },
+  'Music': { relevance: 90, route: '/viral-music-trends' },
+  'Education': { relevance: 88, route: '/youtube-trends' },
+  'Vlog': { relevance: 85, route: '/youtube-trends' },
+  'Review': { relevance: 82, route: '/youtube-video-analyzer' },
+  'Comedy': { relevance: 80, route: '/entertainment' },
+  'Sports': { relevance: 78, route: '/youtube-trends' },
+  'Fitness': { relevance: 75, route: '/youtube-trends' },
+  'Food': { relevance: 72, route: '/youtube-trends' },
+  'Travel': { relevance: 70, route: '/youtube-trends' },
+  'Fashion': { relevance: 68, route: '/youtube-trends' },
+  'Beauty': { relevance: 65, route: '/youtube-trends' },
+  'DIY': { relevance: 62, route: '/youtube-trends' },
+  'Science': { relevance: 60, route: '/youtube-trends' },
+  'News': { relevance: 58, route: '/youtube-trends' },
+  'Animation': { relevance: 55, route: '/entertainment' },
+  'Documentary': { relevance: 52, route: '/youtube-trends' },
+  'Tech Review': { relevance: 95, route: '/youtube-ai-trends' },
+  'Unboxing': { relevance: 88, route: '/youtube-video-analyzer' },
+  'Challenge': { relevance: 85, route: '/viral-video-ideas' },
+  'Reaction': { relevance: 82, route: '/entertainment' },
+  'Podcast': { relevance: 78, route: '/youtube-trends' },
+  'Shorts': { relevance: 95, route: '/youtube-shorts-trends' },
+  'Livestream': { relevance: 72, route: '/gaming-youtube-trends' },
+  'ASMR': { relevance: 70, route: '/entertainment' },
+  'Cooking': { relevance: 75, route: '/youtube-trends' },
+  'Mukbang': { relevance: 72, route: '/youtube-trends' },
+  'Prank': { relevance: 78, route: '/viral-video-ideas' },
+  'Magic': { relevance: 65, route: '/entertainment' },
+  'Dance': { relevance: 80, route: '/viral-music-trends' },
+  'Cover': { relevance: 75, route: '/viral-music-trends' },
+  'Remix': { relevance: 72, route: '/viral-music-trends' },
+  'Parody': { relevance: 70, route: '/entertainment' },
+  'Meme': { relevance: 85, route: '/viral-video-ideas' },
+  'Trend': { relevance: 90, route: '/youtube-trends' },
+  'Viral': { relevance: 88, route: '/viral-video-ideas' },
+  'How-To': { relevance: 92, route: '/youtube-video-analyzer' },
+  'Guide': { relevance: 88, route: '/youtube-trends' },
+  'Tips': { relevance: 85, route: '/youtube-trends' },
+  'Tricks': { relevance: 82, route: '/youtube-trends' },
+  'Hacks': { relevance: 80, route: '/youtube-trends' },
+  'Comparison': { relevance: 78, route: '/youtube-video-analyzer' },
+  'Test': { relevance: 75, route: '/youtube-video-analyzer' },
+  'Experiment': { relevance: 77, route: '/viral-video-ideas' },
+  'Speedrun': { relevance: 90, route: '/gaming-youtube-trends' },
+  'Walkthrough': { relevance: 85, route: '/gaming-youtube-trends' },
+  'Gameplay': { relevance: 88, route: '/gaming-youtube-trends' },
+  "Let's Play": { relevance: 82, route: '/gaming-youtube-trends' },
+  'Esports': { relevance: 80, route: '/gaming-youtube-trends' },
+  'Montage': { relevance: 75, route: '/gaming-youtube-trends' },
+  'Highlight': { relevance: 78, route: '/gaming-youtube-trends' },
+  'Stream': { relevance: 72, route: '/gaming-youtube-trends' },
+  'Commentary': { relevance: 70, route: '/gaming-youtube-trends' },
+}
+
 // Keyword-based interest mapping
 const INTEREST_KEYWORDS: Record<string, string[]> = {
-  'Tech': ['tech', 'technology', 'gadget', 'review', 'unboxing', 'iphone', 'android', 'ai', 'software'],
-  'Gaming': ['game', 'gaming', 'gameplay', 'playthrough', 'minecraft', 'fortnite', 'roblox', 'gta'],
-  'Beauty': ['makeup', 'skincare', 'beauty', 'fashion', 'style', 'tutorial', 'routine'],
-  'Fitness': ['workout', 'fitness', 'gym', 'exercise', 'training', 'health', 'yoga', 'meditation'],
-  'Food': ['cooking', 'recipe', 'food', 'restaurant', 'review', 'taste', 'kitchen'],
-  'Travel': ['travel', 'vlog', 'vacation', 'trip', 'tour', 'adventure', 'explore'],
-  'Music': ['music', 'song', 'album', 'concert', 'cover', 'remix', 'dance'],
-  'Sports': ['sports', 'football', 'basketball', 'soccer', 'nfl', 'nba', 'highlights'],
-  'Education': ['learn', 'tutorial', 'how to', 'lesson', 'course', 'study', 'explained'],
-  'Entertainment': ['funny', 'comedy', 'prank', 'challenge', 'reaction', 'meme'],
+  'Gaming': ['game', 'gaming', 'gameplay', 'playthrough', 'minecraft', 'fortnite', 'roblox', 'gta', 'speedrun', 'walkthrough'],
+  'Technology': ['tech', 'technology', 'gadget', 'review', 'unboxing', 'iphone', 'android', 'ai', 'software', 'app'],
+  'Entertainment': ['funny', 'comedy', 'prank', 'challenge', 'reaction', 'meme', 'entertainment'],
+  'Music': ['music', 'song', 'album', 'concert', 'cover', 'remix', 'dance', 'viral music'],
+  'Education': ['learn', 'tutorial', 'how to', 'lesson', 'course', 'study', 'explained', 'guide', 'tips'],
+  'Sports': ['sports', 'football', 'basketball', 'soccer', 'nfl', 'nba', 'highlights', 'fitness'],
+  'Lifestyle': ['vlog', 'travel', 'food', 'cooking', 'fashion', 'beauty', 'makeup', 'lifestyle'],
+  'Science': ['science', 'experiment', 'documentary', 'education', 'knowledge'],
+  'News': ['news', 'politics', 'current events', 'update', 'breaking'],
 }
 
 function estimateDemographics(video?: AudienceAnalyticsProps['video'], channel?: AudienceAnalyticsProps['channel']) {
@@ -250,28 +310,55 @@ export default function AudienceAnalytics({ video, channel }: AudienceAnalyticsP
           </div>
         </div>
 
-        {/* Interest Keywords */}
+        {/* Interest Keywords - Clickable Word Cloud */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 lg:col-span-2">
           <h4 className="text-sm font-semibold text-gray-600 mb-4 flex items-center gap-2">
             <span>☁️</span> Audience Interests
           </h4>
           <div className="flex flex-wrap gap-3 justify-center">
-            {data.interests.map((interest, index) => (
-              <span
-                key={interest.name}
-                className="px-4 py-2 rounded-full font-medium transition-all hover:scale-105 cursor-default"
-                style={{
-                  fontSize: `${12 + (interest.score / maxInterestScore) * 8}px`,
-                  backgroundColor: `hsl(${200 + index * 25}, 70%, ${85 - interest.score}%)`,
-                  color: `hsl(${200 + index * 25}, 80%, 25%)`,
-                }}
-              >
-                {interest.name}
-              </span>
-            ))}
+            {data.interests.map((interest, index) => {
+              const keywordData = EXTENDED_KEYWORDS[interest.name]
+              const size = Math.max(12, Math.min(28, 12 + (interest.score / maxInterestScore) * 16))
+              const route = keywordData?.route || `/trends/${interest.name.toLowerCase()}`
+              return (
+                <Link
+                  key={interest.name}
+                  href={route}
+                  className="px-4 py-2 rounded-full font-medium transition-all hover:scale-110 hover:shadow-md cursor-pointer inline-block"
+                  style={{
+                    fontSize: `${size}px`,
+                    backgroundColor: `hsl(${200 + index * 15}, 70%, ${85 - (interest.score / maxInterestScore) * 20}%)`,
+                    color: `hsl(${200 + index * 15}, 80%, 25%)`,
+                  }}
+                >
+                  {interest.name}
+                </Link>
+              )
+            })}
+            {/* Add extra keywords from EXTENDED_KEYWORDS that weren't matched */}
+            {Object.entries(EXTENDED_KEYWORDS)
+              .filter(([name]) => !data.interests.some(i => i.name === name))
+              .slice(0, 15)
+              .map(([name, data], index) => {
+                const size = Math.max(10, Math.min(20, 10 + (data.relevance / 100) * 10))
+                return (
+                  <Link
+                    key={name}
+                    href={data.route}
+                    className="px-3 py-1.5 rounded-full font-medium transition-all hover:scale-110 hover:shadow-md cursor-pointer inline-block opacity-70"
+                    style={{
+                      fontSize: `${size}px`,
+                      backgroundColor: `hsl(${300 + index * 10}, 60%, 90%)`,
+                      color: `hsl(${300 + index * 10}, 70%, 30%)`,
+                    }}
+                  >
+                    {name}
+                  </Link>
+                )
+              })}
           </div>
           <p className="text-xs text-gray-500 text-center mt-4">
-            Based on video content, tags, and category analysis
+            Based on video content, tags, and category analysis. Click any keyword to explore related trends.
           </p>
         </div>
       </div>

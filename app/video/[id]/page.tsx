@@ -689,7 +689,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">📥 EXPORT DATA</h3>
           </div>
-          <VideoExport video={video} />
+          <VideoExport video={video} velocity={velocity} engagement={engagement} />
         </div>
 
         {/* Related Videos */}
