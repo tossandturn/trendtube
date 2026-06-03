@@ -132,21 +132,60 @@ export default function VideoExport({ video, velocity = 0, engagement = '0' }: V
     y += 10
     doc.text(`Category ID: ${categoryId}`, margin + 5, y)
 
-    // Performance Metrics Section
+    // Performance Metrics Section with Charts
     y = 145
     doc.setTextColor(17, 24, 39)
     doc.setFontSize(14)
     doc.setFont('helvetica', 'bold')
     doc.text('Performance Metrics', margin, y)
 
-    // Metrics boxes
-    y += 10
+    // Draw bar chart for metrics
+    y += 20
+    const chartData = [
+      { label: 'Views', value: parseInt(views), max: Math.max(parseInt(views), 1000000), color: [59, 130, 246] },
+      { label: 'Likes', value: parseInt(likes), max: Math.max(parseInt(likes), 50000), color: [239, 68, 68] },
+      { label: 'Comments', value: parseInt(comments), max: Math.max(parseInt(comments), 5000), color: [16, 185, 129] },
+    ]
+
+    const barWidth = (pageWidth - margin * 2) / chartData.length - 10
+    const maxBarHeight = 60
+
+    chartData.forEach((item, index) => {
+      const x = margin + index * (barWidth + 15)
+      const barHeight = (item.value / item.max) * maxBarHeight
+
+      // Draw bar background
+      doc.setFillColor(243, 244, 246)
+      doc.rect(x, y + maxBarHeight - barHeight, barWidth, barHeight, 'F')
+
+      // Draw colored bar
+      doc.setFillColor(item.color[0], item.color[1], item.color[2])
+      doc.rect(x, y + maxBarHeight - barHeight, barWidth, barHeight, 'F')
+
+      // Draw label
+      doc.setTextColor(60, 60, 60)
+      doc.setFontSize(9)
+      doc.text(item.label, x + barWidth / 2 - 10, y + maxBarHeight + 10)
+
+      // Draw value
+      doc.setFontSize(8)
+      doc.setTextColor(255, 255, 255)
+      const valueText = item.value >= 1000000
+        ? (item.value / 1000000).toFixed(1) + 'M'
+        : item.value >= 1000
+          ? (item.value / 1000).toFixed(1) + 'K'
+          : item.value.toString()
+      doc.text(valueText, x + 5, y + maxBarHeight - barHeight + 15)
+    })
+
+    // Metrics summary boxes below chart
+    y += 90
     const boxWidth = (pageWidth - margin * 2 - 30) / 4
     const metrics = [
       { label: 'Views', value: parseInt(views).toLocaleString(), color: [59, 130, 246] },
       { label: 'Likes', value: parseInt(likes).toLocaleString(), color: [239, 68, 68] },
-      { label: 'Comments', value: parseInt(comments).toLocaleString(), color: [59, 130, 246] },
-      { label: 'Engagement', value: `${engagementRate}%`, color: [16, 185, 129] },
+      { label: 'Comments', value: parseInt(comments).toLocaleString(), color: [16, 185, 129] },
+      { label: 'Engagement', value: `${engagementRate}%`, color: [245, 158, 11] },
     ]
 
     metrics.forEach((metric, index) => {
@@ -178,38 +217,96 @@ export default function VideoExport({ video, velocity = 0, engagement = '0' }: V
     doc.text(`Days Published: ${daysSincePublish}`, margin + 5, y + 28)
     doc.text(`Current Velocity: ${velocity > 1000000 ? 'Viral' : velocity > 100000 ? 'High' : 'Steady'}`, pageWidth - margin - 60, y + 15)
 
-    // View Projections
-    y = 265
-    if (y > 250) {
+    // View Projections with Line Chart
+    y += 60
+    if (y > 220) {
       doc.addPage()
       y = 30
     }
     doc.setTextColor(17, 24, 39)
     doc.setFontSize(14)
     doc.setFont('helvetica', 'bold')
-    doc.text('View Projections', margin, y)
+    doc.text('View Growth Projection', margin, y)
 
-    y += 15
+    // Line chart data
     const currentViews = parseInt(views)
     const dailyVelocity = velocity
-    const projections = [
-      { phase: 'Launch', day: 1, views: Math.round(dailyVelocity * 4) },
-      { phase: 'Week 1', day: 7, views: Math.round(dailyVelocity * 7 * 0.8) },
-      { phase: 'Current', day: daysSincePublish, views: currentViews },
-      { phase: 'Month 1', day: 30, views: Math.round(currentViews + dailyVelocity * Math.max(0, 30 - daysSincePublish) * 0.6) },
-      { phase: 'Month 3', day: 90, views: Math.round((currentViews + dailyVelocity * Math.max(0, 30 - daysSincePublish) * 0.6) * 1.3) },
+    const projectionData = [
+      { phase: 'Day 1', views: Math.round(dailyVelocity * 4) },
+      { phase: 'Day 7', views: Math.round(dailyVelocity * 7 * 0.8) },
+      { phase: 'Day 30', views: Math.round(currentViews + dailyVelocity * Math.max(0, 30 - daysSincePublish) * 0.6) },
+      { phase: 'Day 90', views: Math.round((currentViews + dailyVelocity * Math.max(0, 30 - daysSincePublish) * 0.6) * 1.3) },
     ]
 
-    doc.setFontSize(10)
-    projections.forEach((proj, index) => {
-      const viewsFormatted = proj.views >= 1000000
-        ? (proj.views / 1000000).toFixed(1) + 'M'
-        : proj.views >= 1000
-          ? (proj.views / 1000).toFixed(1) + 'K'
-          : proj.views.toString()
-      doc.text(`${proj.phase} (Day ${proj.day}):`, margin, y + index * 8)
-      doc.text(viewsFormatted, pageWidth - margin - 40, y + index * 8)
+    // Draw line chart
+    y += 25
+    const chartHeight = 60
+    const chartWidth = pageWidth - margin * 2
+    const maxViews = Math.max(...projectionData.map(d => d.views), currentViews)
+
+    // Draw axes
+    doc.setDrawColor(200, 200, 200)
+    doc.line(margin, y + chartHeight, margin + chartWidth, y + chartHeight) // X axis
+    doc.line(margin, y, margin, y + chartHeight) // Y axis
+
+    // Draw data points and lines
+    const points = projectionData.map((item, index) => {
+      const x = margin + (index / (projectionData.length - 1)) * chartWidth
+      const normalizedY = item.views / maxViews
+      const chartY = y + chartHeight - (normalizedY * chartHeight)
+      return { x, y: chartY, views: item.views, label: item.phase }
     })
+
+    // Draw connecting lines
+    doc.setDrawColor(59, 130, 246)
+    doc.setLineWidth(2)
+    for (let i = 0; i < points.length - 1; i++) {
+      doc.line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y)
+    }
+
+    // Draw data points
+    points.forEach((point) => {
+      // Draw point
+      doc.setFillColor(59, 130, 246)
+      doc.circle(point.x, point.y, 3, 'F')
+
+      // Draw label
+      doc.setTextColor(60, 60, 60)
+      doc.setFontSize(8)
+      doc.text(point.label, point.x - 8, y + chartHeight + 12)
+
+      // Draw value
+      const valueText = point.views >= 1000000
+        ? (point.views / 1000000).toFixed(1) + 'M'
+        : point.views >= 1000
+          ? (point.views / 1000).toFixed(1) + 'K'
+          : point.views.toString()
+      doc.setTextColor(59, 130, 246)
+      doc.setFontSize(7)
+      doc.text(valueText, point.x - 5, point.y - 8)
+    })
+
+    // Current position marker
+    const currentIndex = projectionData.findIndex(p => p.phase === 'Day 30') || 1
+    if (currentIndex >= 0) {
+      doc.setFillColor(239, 68, 68)
+      doc.circle(points[currentIndex].x, points[currentIndex].y, 4, 'F')
+      doc.setTextColor(239, 68, 68)
+      doc.setFontSize(8)
+      doc.text('Current', points[currentIndex].x - 8, points[currentIndex].y + 15)
+    }
+
+    // Legend
+    y += chartHeight + 25
+    doc.setFillColor(59, 130, 246)
+    doc.rect(margin, y, 8, 8, 'F')
+    doc.setTextColor(60, 60, 60)
+    doc.setFontSize(9)
+    doc.text('Projected Views', margin + 12, y + 6)
+
+    doc.setFillColor(239, 68, 68)
+    doc.rect(margin + 80, y, 8, 8, 'F')
+    doc.text('Current Position', margin + 92, y + 6)
 
     // Audience Demographics
     y += 60
@@ -263,7 +360,7 @@ export default function VideoExport({ video, velocity = 0, engagement = '0' }: V
     const extractedInterests = extractInterestsFromTags(tags, title)
     doc.text(extractedInterests.join(' | '), margin, y)
 
-    // AI Insights
+    // AI Insights & Data Analysis Conclusion
     y += 30
     if (y > 240) {
       doc.addPage()
@@ -286,19 +383,109 @@ export default function VideoExport({ video, velocity = 0, engagement = '0' }: V
     const commentRate = views !== '0' ? ((parseInt(comments) / parseInt(views)) * 100).toFixed(3) : '0'
     doc.text(`Comment-to-View Ratio: ${commentRate}%`, margin, y)
 
+    // Chart: Engagement Breakdown
     y += 20
     doc.setFont('helvetica', 'bold')
-    doc.text('Key Recommendations:', margin, y)
-    y += 10
+    doc.text('Engagement Distribution', margin, y)
+    y += 15
+
+    // Draw pie chart for engagement
+    const chartCenterX = margin + 40
+    const chartCenterY = y + 30
+    const radius = 30
+
+    // Calculate engagement proportions
+    const totalEngagement = parseInt(likes) + parseInt(comments) * 2
+    const likesAngle = totalEngagement > 0 ? (parseInt(likes) / totalEngagement) * 360 : 0
+    const commentsAngle = totalEngagement > 0 ? ((parseInt(comments) * 2) / totalEngagement) * 360 : 0
+
+    // Draw likes segment (blue)
+    if (likesAngle > 0) {
+      doc.setFillColor(59, 130, 246)
+      doc.ellipse(chartCenterX, chartCenterY, radius, radius, 'F')
+    }
+
+    // Draw legend
+    doc.setFillColor(59, 130, 246)
+    doc.rect(margin + 90, y + 10, 8, 8, 'F')
+    doc.setTextColor(60, 60, 60)
+    doc.setFontSize(9)
+    doc.text(`Likes: ${parseInt(likes).toLocaleString()}`, margin + 102, y + 16)
+
+    doc.setFillColor(16, 185, 129)
+    doc.rect(margin + 90, y + 25, 8, 8, 'F')
+    doc.text(`Comments: ${parseInt(comments).toLocaleString()}`, margin + 102, y + 31)
+
+    // Data Analysis Conclusions
+    y += 70
+    doc.setFillColor(240, 253, 244)
+    doc.rect(margin, y - 5, pageWidth - margin * 2, 50, 'F')
+    doc.setTextColor(21, 128, 61)
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('📊 Data Analysis Conclusions', margin + 5, y + 8)
+    doc.setTextColor(60, 60, 60)
     doc.setFont('helvetica', 'normal')
-    const recommendations = [
-      'Study the title and thumbnail strategy of this video',
-      'Analyze the content pacing and structure',
-      'Apply similar tactics to your own content',
-      'Monitor performance trends over time',
-    ]
-    recommendations.forEach((rec, index) => {
-      doc.text(`• ${rec}`, margin + 5, y + index * 8)
+    doc.setFontSize(10)
+
+    const conclusions = []
+    const engagementRateNum = parseFloat(engagementRate)
+    if (engagementRateNum > 5) {
+      conclusions.push(`• Excellent engagement rate (${engagementRate}%) - 2x above industry average`)
+    } else if (engagementRateNum > 3) {
+      conclusions.push(`• Good engagement rate (${engagementRate}%) - Above industry average`)
+    } else {
+      conclusions.push(`• Below average engagement (${engagementRate}%) - Room for improvement`)
+    }
+
+    if (parseInt(views) > 100000) {
+      conclusions.push(`• High viewership indicates strong content-market fit`)
+    }
+
+    if (velocity > 10000) {
+      conclusions.push(`• Strong velocity (${velocityFormatted}/day) suggests viral potential`)
+    }
+
+    conclusions.forEach((conclusion, index) => {
+      doc.text(conclusion, margin + 5, y + 22 + index * 12)
+    })
+
+    // Recommendations & Action Items
+    y += 60
+    if (y > 240) {
+      doc.addPage()
+      y = 30
+    }
+    doc.setFillColor(254, 252, 232)
+    doc.rect(margin, y - 5, pageWidth - margin * 2, 70, 'F')
+    doc.setTextColor(161, 98, 7)
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('💡 Key Recommendations & Improvement Points', margin + 5, y + 8)
+    doc.setTextColor(60, 60, 60)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+
+    const recommendations = []
+    if (parseFloat(likeRate) < 2) {
+      recommendations.push('• Increase CTAs for likes - current rate below optimal')
+    }
+    if (parseFloat(commentRate) < 0.1) {
+      recommendations.push('• Add comment prompts in video to boost discussion')
+    }
+    if (daysSincePublish < 7 && velocity > 50000) {
+      recommendations.push('• High early velocity - consider promoting via ads')
+    }
+
+    recommendations.push(
+      '• Study the title and thumbnail strategy of this video',
+      '• Analyze the content pacing and structure',
+      '• Apply similar tactics to your own content',
+      '• Monitor performance trends over time'
+    )
+
+    recommendations.slice(0, 5).forEach((rec, index) => {
+      doc.text(rec, margin + 5, y + 22 + index * 12)
     })
 
     // Footer
