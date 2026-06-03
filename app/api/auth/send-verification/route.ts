@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createEmailVerification, getUserByEmail, deleteExpiredVerifications } from '@/lib/db'
+import { randomBytes } from 'crypto'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 function generateToken(): string {
-  return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2)
+  // Generate a URL-safe random token (32 bytes = 64 hex characters)
+  return randomBytes(32).toString('hex')
 }
 
 async function sendVerificationEmail(email: string, username: string, token: string) {
