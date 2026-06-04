@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { createUser, getUserByEmail, getUserByUsername, createEmailVerification } from '@/lib/db'
+import { createUser, getUserByEmail, getUserByUsername, createEmailVerification } from '@/lib/auth-db'
+import { randomBytes } from 'crypto'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 function generateToken(): string {
-  return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2)
+  return randomBytes(16).toString('hex')
 }
 
 async function sendVerificationEmail(email: string, username: string, token: string) {

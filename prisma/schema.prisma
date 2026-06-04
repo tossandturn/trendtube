@@ -1,0 +1,393 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Trend {
+  id                   String   @id @default(cuid())
+  slug                 String   @unique
+  title                String
+  description          String
+  category             String
+  country              String   @default("US")
+  growthRate           Float    @default(0)
+  views                String   @default("0")
+  creators             Int      @default(0)
+  thumbnail            String?
+  isViral              Boolean  @default(false)
+  isNew                Boolean  @default(false)
+  velocity             Float    @default(0)
+  saturation           Float    @default(0)
+  creatorFit           Float    @default(0)
+  engagement           Float    @default(0)
+  avgViews             String   @default("0")
+  competition          String   @default("LOW")
+  viralScore           Float    @default(0)
+  opportunityScore     Float    @default(0)
+  whyItBlowsUp        String?
+  peakExpected         String?
+  urgency              String   @default("MEDIUM")
+  actionTime           String?
+  suggestedTitle       String?
+  creatorsUploaded     Int      @default(0)
+  aiPrediction         String?
+  aiScore              Float?
+  // AI Prediction Fields
+  predictedEngagement Int?
+  momentumScore        Float?
+  trendForecast7d      Float?
+  trendForecast30d     Float?
+  viralProbability     Float?   @default(0)
+  peakTime             DateTime?
+  // Metadata
+  publishedAt          DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  tags          TrendTag[]
+  videos        Video[]
+  trendCreators TrendCreator[]
+  watchlists    Watchlist[]
+
+  @@index([category])
+  @@index([country])
+  @@index([isViral])
+  @@index([isNew])
+  @@index([publishedAt])
+  @@index([aiScore])
+  @@index([viralScore])
+  @@index([momentumScore])
+  @@index([velocity])
+}
+
+model Tag {
+  id     String     @id @default(cuid())
+  name   String     @unique
+  trends TrendTag[]
+}
+
+model TrendTag {
+  trendId String
+  tagId   String
+
+  trend Trend @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([trendId, tagId])
+}
+
+model Video {
+  id           String   @id @default(cuid())
+  trendId      String
+  tiktokId     String?  @unique
+  url          String?
+  thumbnail    String?
+  views        String   @default("0")
+  likes        String   @default("0")
+  shares       String   @default("0")
+  comments     String   @default("0")
+  duration     String?
+  viralScore   Float    @default(0)
+  shortsScore  Float    @default(0)
+  curiosityGap String?
+  // AI Analysis
+  engagementRate Float?
+  retentionRate  Float?
+  watchTime      Float?
+  publishedAt  DateTime @default(now())
+  scrapedAt    DateTime @default(now())
+
+  trend Trend @relation(fields: [trendId], references: [id], onDelete: Cascade)
+
+  @@index([trendId])
+  @@index([scrapedAt])
+  @@index([viralScore])
+}
+
+model Creator {
+  id                   String   @id @default(cuid())
+  tiktokId            String?  @unique
+  username            String   @unique
+  displayName         String
+  avatar              String?
+  followers           Int      @default(0)
+  following           Int      @default(0)
+  likes               Int      @default(0)
+  niche               String?
+  bio                 String?
+  isVerified          Boolean  @default(false)
+  // AI Metrics
+  momentumScore       Float    @default(0)
+  engagementRate      Float    @default(0)
+  avgViews            Int      @default(0)
+  viralVideoRate      Float    @default(0)
+  audienceOverlap     Json?
+  predictedGrowth7d   Float?
+  predictedGrowth30d  Float?
+  lastAnalyzed        DateTime?
+  updatedAt           DateTime @updatedAt
+
+  trends TrendCreator[]
+  videos CreatorVideo[]
+  watchlists Watchlist[]
+
+  @@index([momentumScore])
+  @@index([followers])
+  @@index([niche])
+}
+
+model TrendCreator {
+  trendId   String
+  creatorId String
+  role      String   @default("early")
+
+  trend   Trend   @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@id([trendId, creatorId])
+}
+
+model CreatorVideo {
+  id        String   @id @default(cuid())
+  creatorId String
+  videoId   String
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
+}
+
+model Hashtag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  views       String   @default("0")
+  videos      Int      @default(0)
+  growthRate  Float    @default(0)
+  category    String?
+  isRising    Boolean  @default(false)
+  // AI Analysis
+  velocity    Float    @default(0)
+  engagementRate Float?
+  avgViews    Int?
+  viralScore  Float?
+  relatedHashtags Json?
+  scrapedAt   DateTime @default(now())
+
+  // Relations
+  watchlists  Watchlist[]
+
+  @@index([isRising])
+  @@index([growthRate])
+  @@index([velocity])
+}
+
+model Sound {
+  id          String   @id @default(cuid())
+  tiktokId    String?  @unique
+  title       String
+  author      String?
+  thumbnail   String?
+  uses        Int      @default(0)
+  growthRate  Float    @default(0)
+  isViral     Boolean  @default(false)
+  // AI Analysis
+  velocity    Float?
+  viralScore  Float?
+  trendingSince DateTime?
+  scrapedAt   DateTime @default(now())
+
+  @@index([isViral])
+  @@index([uses])
+  @@index([viralScore])
+}
+
+model TrendAnalysis {
+  id                   String   @id @default(cuid())
+  trendId              String?
+  hashtagId            String?
+  soundId              String?
+  trendScore           Float    @default(0)
+  velocity             Float    @default(0)
+  predictedEngagement  Int?
+  forecast7d           Float?
+  forecast30d          Float?
+  momentumDirection    String?  // "accelerating", "stable", "declining"
+  riskLevel            String?  // "low", "medium", "high"
+  opportunityWindow    String?
+  competitorSaturation Float?
+  lastUpdated          DateTime @updatedAt
+
+  @@index([trendScore])
+  @@index([velocity])
+  @@index([lastUpdated])
+}
+
+model ScrapeLog {
+  id        String   @id @default(cuid())
+  type      String
+  status    String
+  count     Int      @default(0)
+  error     String?
+  metadata  Json?
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+}
+
+// User Authentication Models
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  email         String   @unique
+  passwordHash  String
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  lastLogin     DateTime?
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  sessions          Session[]
+  emailVerifications EmailVerification[]
+  passwordResets    PasswordReset[]
+  watchlists        Watchlist[]
+  alerts            Alert[]
+  analyses          UserAnalysis[]
+
+  @@index([email])
+  @@index([username])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model EmailVerification {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  verifiedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+// Watchlist Model
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  trendId   String?
+  hashtagId String?
+  creatorId String?
+  videoId   String?
+  notes     String?
+  alertEnabled Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trend Trend? @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  hashtag Hashtag? @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  creator Creator? @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([trendId])
+  @@index([hashtagId])
+  @@index([creatorId])
+}
+
+// Enhanced Alert System
+model Alert {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // viral_spike, new_trend, momentum_change, threshold
+  targetType  String?  // trend, hashtag, creator, video
+  targetId    String?
+  threshold   Float?
+  isActive    Boolean  @default(true)
+  frequency   String   @default("daily") // daily, weekly, realtime
+  lastSent    DateTime?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+// User Analysis History
+model UserAnalysis {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // video, creator, hashtag
+  targetId    String
+  targetUrl   String?
+  data        Json?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UserAlert {
+  id          String   @id @default(cuid())
+  userId      String
+  trendId     String?
+  hashtagId   String?
+  creatorId   String?
+  alertType   String   // "viral_spike", "new_trend", "momentum_change"
+  threshold   Float?
+  isActive    Boolean  @default(true)
+  frequency   String   @default("daily") // "daily", "weekly", "realtime"
+  lastSent    DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([alertType])
+  @@index([isActive])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  type        String   // "viral", "trend", "creator", "competitor"
+  data        Json
+  isShareable Boolean  @default(true)
+  shareToken  String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([shareToken])
+  @@index([type])
+}
