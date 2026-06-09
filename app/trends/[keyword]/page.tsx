@@ -382,7 +382,24 @@ export default async function TrendPage({ params }: TrendPageProps) {
   // Filter videos relevant to this trend
   const relevantVideos = videos.filter((v: any) => {
     const text = `${v.snippet?.title || ''} ${v.snippet?.description || ''}`.toLowerCase()
-    return keyword.split('-').some((part: string) => text.includes(part))
+    const keywordParts = keyword.split('-')
+    const matchesKeyword = keywordParts.some((part: string) => text.includes(part))
+
+    // For gaming-related trends, ensure video is actually gaming content
+    if (keyword.includes('gaming') || keyword.includes('game')) {
+      const gamingKeywords = ['gaming', 'minecraft', 'gta', 'fortnite', 'game', 'speedrun', 'walkthrough', 'gameplay', 'valorant', 'roblox', 'call of duty', 'esports', 'nintendo', 'playstation', 'xbox', 'steam', 'twitch', 'mobile game', 'rpg', 'fps', 'mmo']
+      const isGamingContent = gamingKeywords.some((k: string) => text.includes(k))
+      return matchesKeyword && isGamingContent
+    }
+
+    // For AI-related trends, ensure video is actually AI content
+    if (keyword.includes('ai') || keyword.includes('chatgpt') || keyword.includes('artificial-intelligence') || keyword.includes('midjourney') || keyword.includes('openai')) {
+      const aiKeywords = ['ai', 'artificial intelligence', 'chatgpt', 'gpt', 'openai', 'claude', 'midjourney', 'dall-e', 'stable diffusion', 'llm', 'machine learning', 'neural network', 'automation', 'bard', 'copilot']
+      const isAiContent = aiKeywords.some((k: string) => text.includes(k))
+      return matchesKeyword && isAiContent
+    }
+
+    return matchesKeyword
   }).slice(0, 6)
 
   // Use top videos if no direct matches

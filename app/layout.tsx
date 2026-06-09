@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import RegionBar from "./components/RegionBar";
+import VideoAnalyzerBar from "./components/VideoAnalyzerBar";
 import { getRegion } from "@/lib/region-server";
 import { REGION_META } from "@/lib/region";
 
@@ -107,6 +108,7 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900">
         <RegionBar />
+        <VideoAnalyzerBar />
         {children}
       </body>
     </html>

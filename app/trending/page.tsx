@@ -129,6 +129,92 @@ export default async function TrendingPage() {
             </div>
           </div>
 
+          {/* Today's Keyword */}
+          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent mb-8 border-gradient-to-r from-purple-500 via-pink-500 to-red-500">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🔥</span>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">TODAY&apos;S KEYWORD</h3>
+                  <p className="text-xs text-gray-400">Trending search term with highest velocity</p>
+                </div>
+              </div>
+              <span className="text-xs text-gray-500 data-mono bg-gray-100 px-3 py-1 rounded-full">
+                Updated {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+
+            {(() => {
+              // Extract trending keywords from video titles
+              const keywordCounts = new Map<string, { count: number; totalViews: number; velocity: number }>()
+              const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'should', 'now'])
+
+              sorted.forEach((v: any) => {
+                const title = v.snippet?.title?.toLowerCase() || ''
+                const words = title.split(/\s+/).filter((w: string) => w.length > 3 && !stopWords.has(w) && !/^\d+$/.test(w))
+                const velocity = getViewVelocity(v)
+                const views = Number(v.statistics?.viewCount || 0)
+
+                words.forEach((word: string) => {
+                  const cleanWord = word.replace(/[^a-z]/g, '')
+                  if (cleanWord.length > 3) {
+                    const existing = keywordCounts.get(cleanWord)
+                    if (existing) {
+                      existing.count += 1
+                      existing.totalViews += views
+                      existing.velocity += velocity
+                    } else {
+                      keywordCounts.set(cleanWord, { count: 1, totalViews: views, velocity })
+                    }
+                  }
+                })
+              })
+
+              // Get top keyword by weighted score (velocity + count)
+              const topKeyword = Array.from(keywordCounts.entries())
+                .sort((a, b) => (b[1].velocity + b[1].count * 10000) - (a[1].velocity + a[1].count * 10000))
+                .slice(0, 1)[0]
+
+              if (!topKeyword) return <div className="text-gray-500 text-sm py-4 text-center">No trending keywords detected</div>
+
+              const [keyword, data] = topKeyword
+              const keywordVelocity = data.velocity / data.count
+
+              return (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <Link
+                      href={`/topic/${keyword}`}
+                      className="group inline-flex items-center gap-3 hover:opacity-80 transition"
+                    >
+                      <span className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:via-pink-500 group-hover:to-red-500">
+                        #{keyword.charAt(0).toUpperCase() + keyword.slice(1)}
+                      </span>
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-purple-600 text-sm">→</span>
+                    </Link>
+                    <div className="flex flex-wrap items-center gap-3 mt-2">
+                      <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full font-medium">
+                        🔍 {data.count} videos
+                      </span>
+                      <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium">
+                        👁️ {formatNumber(data.totalViews.toString())} total views
+                      </span>
+                      <span className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-full font-medium">
+                        ⚡ {keywordVelocity >= 1e6 ? (keywordVelocity / 1e6).toFixed(1) + 'M' : keywordVelocity >= 1e3 ? (keywordVelocity / 1e3).toFixed(1) + 'K' : Math.round(keywordVelocity)}/day velocity
+                      </span>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/topic/${keyword}`}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:from-purple-600 hover:to-pink-600 transition shadow-lg shadow-purple-200 whitespace-nowrap"
+                  >
+                    <span>🔍</span> Explore Trend
+                  </Link>
+                </div>
+              )
+            })()}
+          </div>
+
           {/* Category Distribution & Velocity Chart */}
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
             {/* Category Distribution */}
