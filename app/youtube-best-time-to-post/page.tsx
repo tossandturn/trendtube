@@ -3,11 +3,23 @@ import Link from 'next/link'
 import { BreadcrumbSchema, FAQPageSchema } from '@/app/components/JsonLd'
 
 export const metadata: Metadata = {
-  title: '⏰ YouTube Best Time to Post 2025 | Optimal Upload Schedule',
+  title: '⏰ YouTube Best Time to Post 2025 | Maximize Engagement | Tubefission',
   description: 'Find the best time to post on YouTube for maximum views. Data-driven optimal upload times by region and niche. No login required. Try it now!',
   keywords: 'best time to post on youtube, youtube upload time, optimal posting time, youtube schedule 2025, best time to upload',
   alternates: {
     canonical: 'https://tubefission.com/youtube-best-time-to-post',
+  },
+  openGraph: {
+    title: '⏰ YouTube Best Time to Post 2025 | Maximize Engagement | Tubefission',
+    description: 'Find the best time to post on YouTube for maximum views. Data-driven optimal upload times by region and niche.',
+    url: 'https://tubefission.com/youtube-best-time-to-post',
+    siteName: 'Tubefission',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '⏰ YouTube Best Time to Post 2025 | Maximize Engagement | Tubefission',
+    description: 'Find the best time to post on YouTube for maximum views. Data-driven optimal upload times by region and niche.',
   },
 }
 

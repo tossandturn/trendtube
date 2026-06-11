@@ -3,11 +3,23 @@ import Link from 'next/link'
 import { BreadcrumbSchema, FAQPageSchema } from '@/app/components/JsonLd'
 
 export const metadata: Metadata = {
-  title: '🔍 YouTube SEO Tool 2025 | Optimize Videos for More Views',
+  title: '🔍 YouTube SEO Tool 2025 | Optimize Videos | Tubefission',
   description: 'Optimize your YouTube videos with our free SEO Tool. Analyze titles, descriptions, tags, and thumbnails. Get AI-powered SEO recommendations. Try it now!',
   keywords: 'youtube seo tool, youtube video optimizer, youtube tag generator, youtube title optimizer, youtube seo 2025',
   alternates: {
     canonical: 'https://tubefission.com/youtube-seo-tool',
+  },
+  openGraph: {
+    title: '🔍 YouTube SEO Tool 2025 | Optimize Videos | Tubefission',
+    description: 'Optimize your YouTube videos with our free SEO Tool. Analyze titles, descriptions, tags, and thumbnails.',
+    url: 'https://tubefission.com/youtube-seo-tool',
+    siteName: 'Tubefission',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '🔍 YouTube SEO Tool 2025 | Optimize Videos | Tubefission',
+    description: 'Optimize your YouTube videos with our free SEO Tool. Analyze titles, descriptions, tags, and thumbnails.',
   },
 }
 

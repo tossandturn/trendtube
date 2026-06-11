@@ -3,11 +3,23 @@ import Link from 'next/link'
 import { BreadcrumbSchema, FAQPageSchema } from '@/app/components/JsonLd'
 
 export const metadata: Metadata = {
-  title: '💰 YouTube Money Calculator 2025 | Estimate Channel Earnings',
+  title: '💰 YouTube Money Calculator 2025 | Estimate Channel Earnings | Tubefission',
   description: 'Calculate your YouTube earnings with our free Money Calculator. Estimate revenue based on views, CPM, and engagement. No login required. Try it now!',
   keywords: 'youtube money calculator, youtube earnings estimator, youtube revenue calculator, cpm calculator, youtube income calculator 2025',
   alternates: {
     canonical: 'https://tubefission.com/youtube-money-calculator',
+  },
+  openGraph: {
+    title: '💰 YouTube Money Calculator 2025 | Estimate Channel Earnings | Tubefission',
+    description: 'Calculate your YouTube earnings with our free Money Calculator. Estimate revenue based on views, CPM, and engagement.',
+    url: 'https://tubefission.com/youtube-money-calculator',
+    siteName: 'Tubefission',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '💰 YouTube Money Calculator 2025 | Estimate Channel Earnings | Tubefission',
+    description: 'Calculate your YouTube earnings with our free Money Calculator. Estimate revenue based on views, CPM, and engagement.',
   },
 }
 
