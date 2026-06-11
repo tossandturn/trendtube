@@ -4,8 +4,18 @@ import { SoftwareApplicationSchema, FAQPageSchema, BreadcrumbSchema } from '@/ap
 import { AnalyzeHeroForm } from '@/app/components/AnalyzeHeroForm'
 
 export const metadata: Metadata = {
-  title: 'YouTube AI Analytics & Trend Intelligence Platform | Tubefission',
-  description: 'AI-powered YouTube analytics platform. Analyze channels, discover viral trends, track competitor performance, and get data-driven content insights with Tubefission.',
+  title: '🚀 Free YouTube Analytics Tool | AI-Powered Insights (2025)',
+  description: 'Analyze any YouTube channel for free with Tubefission. No login required. Get AI-powered insights, viral trend discovery, and competitor analysis. Try it now!',
+  keywords: [
+    'youtube analytics',
+    'youtube analytics tool free',
+    'youtube channel analyzer',
+    'viral trend discovery',
+    'competitor research',
+    'youtube growth tool',
+    'content strategy',
+    'youtube analytics 2025',
+  ],
   alternates: {
     canonical: 'https://tubefission.com',
   },

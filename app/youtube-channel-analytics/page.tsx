@@ -7,15 +7,16 @@ import { extractVideoId, isValidYouTubeUrl } from '@/lib/youtube-parser'
 import { AnalyzeHeroForm } from '@/app/components/AnalyzeHeroForm'
 
 export const metadata: Metadata = {
-  title: 'YouTube Channel Analytics Tool — Free Channel Stats & Insights',
-  description: 'Analyze any YouTube channel for free. View subscriber growth, engagement rates, top videos, and trending content. No login required.',
+  title: '📊 Free YouTube Channel Analytics Tool | Stats & Insights (2025)',
+  description: 'Analyze any YouTube channel for free. View subscriber growth, engagement rates, top videos, and trending content. No login required. Get insights now!',
   keywords: [
-    'YouTube analytics',
-    'YouTube channel analytics',
+    'youtube channel analytics',
+    'youtube analytics tool free',
     'channel stats',
-    'YouTube engagement rate',
+    'youtube engagement rate',
     'channel growth tracker',
     'video performance analysis',
+    'youtube analytics 2025',
   ],
   alternates: {
     canonical: 'https://tubefission.com/youtube-channel-analytics',

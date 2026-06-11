@@ -7,8 +7,16 @@ import { getRegionLabels } from '@/lib/region'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
 
 export const metadata: Metadata = {
-  title: 'Trending YouTube Videos Today | Real-Time Viral Tracker',
-  description: 'Track the most viral YouTube videos right now. Real-time trending analysis with velocity, engagement, and creator intelligence.',
+  title: '🔥 Trending YouTube Videos Today | Real-Time Viral Tracker (2025)',
+  description: 'Track the most viral YouTube videos right now in 2025. Real-time trending analysis with velocity scores, engagement metrics, and creator intelligence. Discover what is trending today!',
+  keywords: [
+    'trending youtube videos',
+    'viral videos today',
+    'youtube trends 2025',
+    'real-time trending',
+    'viral tracker',
+    'youtube analytics',
+  ],
 }
 
 function formatNumber(n: string | undefined) {
