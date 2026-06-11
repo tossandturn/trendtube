@@ -28,15 +28,8 @@ export const metadata: Metadata = {
     "youtube growth tool",
     "content strategy",
     "youtube analytics 2025",
-  ],
-  keywords: [
-    "YouTube analytics",
     "YouTube AI analysis",
     "channel analytics",
-    "viral trend discovery",
-    "competitor research",
-    "YouTube growth tool",
-    "content strategy",
   ],
   alternates: {
     canonical: "https://tubefission.com",
