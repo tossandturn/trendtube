@@ -3,14 +3,14 @@ import Link from 'next/link'
 import { BreadcrumbSchema, FAQPageSchema } from '@/app/components/JsonLd'
 
 export const metadata: Metadata = {
-  title: '💰 YouTube Money Calculator 2025 | Estimate Channel Earnings | Tubefission',
+  title: '💰 YouTube Money Calculator 2026 | Estimate Channel Earnings | Tubefission',
   description: 'Calculate your YouTube earnings with our free Money Calculator. Estimate revenue based on views, CPM, and engagement. No login required. Try it now!',
-  keywords: 'youtube money calculator, youtube earnings estimator, youtube revenue calculator, cpm calculator, youtube income calculator 2025',
+  keywords: 'youtube money calculator, youtube earnings estimator, youtube revenue calculator, cpm calculator, youtube income calculator 2026',
   alternates: {
     canonical: 'https://tubefission.com/youtube-money-calculator',
   },
   openGraph: {
-    title: '💰 YouTube Money Calculator 2025 | Estimate Channel Earnings | Tubefission',
+    title: '💰 YouTube Money Calculator 2026 | Estimate Channel Earnings | Tubefission',
     description: 'Calculate your YouTube earnings with our free Money Calculator. Estimate revenue based on views, CPM, and engagement.',
     url: 'https://tubefission.com/youtube-money-calculator',
     siteName: 'Tubefission',
@@ -20,13 +20,13 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: '💰 YouTube Money Calculator 2025 | Tubefission',
+        alt: '💰 YouTube Money Calculator 2026 | Tubefission',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '💰 YouTube Money Calculator 2025 | Estimate Channel Earnings | Tubefission',
+    title: '💰 YouTube Money Calculator 2026 | Estimate Channel Earnings | Tubefission',
     description: 'Calculate your YouTube earnings with our free Money Calculator. Estimate revenue based on views, CPM, and engagement.',
     images: ['/og-image.png'],
   },
@@ -64,7 +64,7 @@ export default function Page() {
       <section className="bg-gradient-to-b from-green-50 to-white pt-16 pb-20">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-            💰 YouTube Money Calculator 2025
+            💰 YouTube Money Calculator 2026
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-10">
             Estimate your YouTube earnings with our free calculator. Based on real CPM data 
@@ -233,8 +233,7 @@ export default function Page() {
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Want to Grow Your Channel?</h2>
           <p className="text-gray-600 mb-6">Use Tubefission's analytics tools to find high-CPM niches and trending topics.</p>
           <Link href="/trends" className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
-            Explore Trend Database →
-          </Link>
+            Explore Trend Database �?          </Link>
         </div>
       </article>
     </main>
