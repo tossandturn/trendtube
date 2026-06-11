@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     'msapplication-config': '/browserconfig.xml',
   },
   openGraph: {
-    title: "YouTube AI Analytics & Trend Intelligence Platform | Tubefission",
+    title: "🚀 Free YouTube Analytics Tool | AI-Powered Insights (2025) | Tubefission",
     description: "AI-powered YouTube analytics platform. Analyze channels, discover viral trends, track competitor performance.",
     url: "https://tubefission.com",
     siteName: "Tubefission",
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "YouTube AI Analytics & Trend Intelligence Platform | Tubefission",
+    title: "🚀 Free YouTube Analytics Tool | AI-Powered Insights (2025) | Tubefission",
     description: "AI-powered YouTube analytics platform. Analyze channels, discover viral trends, track competitor performance.",
     images: ['/og-image.png'],
   },
