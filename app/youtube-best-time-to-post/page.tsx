@@ -15,11 +15,20 @@ export const metadata: Metadata = {
     url: 'https://tubefission.com/youtube-best-time-to-post',
     siteName: 'Tubefission',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: '⏰ YouTube Best Time to Post 2025 | Tubefission',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: '⏰ YouTube Best Time to Post 2025 | Maximize Engagement | Tubefission',
     description: 'Find the best time to post on YouTube for maximum views. Data-driven optimal upload times by region and niche.',
+    images: ['/og-image.png'],
   },
 }
 

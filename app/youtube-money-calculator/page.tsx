@@ -15,11 +15,20 @@ export const metadata: Metadata = {
     url: 'https://tubefission.com/youtube-money-calculator',
     siteName: 'Tubefission',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: '💰 YouTube Money Calculator 2025 | Tubefission',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: '💰 YouTube Money Calculator 2025 | Estimate Channel Earnings | Tubefission',
     description: 'Calculate your YouTube earnings with our free Money Calculator. Estimate revenue based on views, CPM, and engagement.',
+    images: ['/og-image.png'],
   },
 }
 

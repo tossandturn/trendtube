@@ -54,7 +54,6 @@ export const metadata: Metadata = {
   openGraph: {
     title: "🚀 Free YouTube Analytics Tool | AI-Powered Insights (2025) | Tubefission",
     description: "AI-powered YouTube analytics platform. Analyze channels, discover viral trends, track competitor performance.",
-    url: "https://tubefission.com",
     siteName: "Tubefission",
     type: "website",
     images: [

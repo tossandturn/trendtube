@@ -15,11 +15,20 @@ export const metadata: Metadata = {
     url: 'https://tubefission.com/youtube-seo-tool',
     siteName: 'Tubefission',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: '🔍 YouTube SEO Tool 2025 | Tubefission',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: '🔍 YouTube SEO Tool 2025 | Optimize Videos | Tubefission',
     description: 'Optimize your YouTube videos with our free SEO Tool. Analyze titles, descriptions, tags, and thumbnails.',
+    images: ['/og-image.png'],
   },
 }
 
