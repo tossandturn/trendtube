@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+ï»¿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BreadcrumbSchema, FAQPageSchema } from '@/app/components/JsonLd'
 
@@ -233,7 +233,7 @@ export default function Page() {
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Want to Grow Your Channel?</h2>
           <p className="text-gray-600 mb-6">Use Tubefission's analytics tools to find high-CPM niches and trending topics.</p>
           <Link href="/trends" className="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
-            Explore Trend Database â†?          </Link>
+            Explore Trend Database ï¿½?          </Link>
         </div>
       </article>
     </main>

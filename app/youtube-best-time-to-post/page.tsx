@@ -1,16 +1,16 @@
-import type { Metadata } from 'next'
+Ôªøimport type { Metadata } from 'next'
 import Link from 'next/link'
 import { BreadcrumbSchema, FAQPageSchema } from '@/app/components/JsonLd'
 
 export const metadata: Metadata = {
-  title: '‚è?YouTube Best Time to Post 2026 | Maximize Engagement | Tubefission',
+  title: 'ÔøΩ?YouTube Best Time to Post 2026 | Maximize Engagement | Tubefission',
   description: 'Find the best time to post on YouTube for maximum views. Data-driven optimal upload times by region and niche. No login required. Try it now!',
   keywords: 'best time to post on youtube, youtube upload time, optimal posting time, youtube schedule 2026, best time to upload',
   alternates: {
     canonical: 'https://tubefission.com/youtube-best-time-to-post',
   },
   openGraph: {
-    title: '‚è?YouTube Best Time to Post 2026 | Maximize Engagement | Tubefission',
+    title: 'ÔøΩ?YouTube Best Time to Post 2026 | Maximize Engagement | Tubefission',
     description: 'Find the best time to post on YouTube for maximum views. Data-driven optimal upload times by region and niche.',
     url: 'https://tubefission.com/youtube-best-time-to-post',
     siteName: 'Tubefission',
@@ -20,13 +20,13 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: '‚è?YouTube Best Time to Post 2026 | Tubefission',
+        alt: 'ÔøΩ?YouTube Best Time to Post 2026 | Tubefission',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '‚è?YouTube Best Time to Post 2026 | Maximize Engagement | Tubefission',
+    title: 'ÔøΩ?YouTube Best Time to Post 2026 | Maximize Engagement | Tubefission',
     description: 'Find the best time to post on YouTube for maximum views. Data-driven optimal upload times by region and niche.',
     images: ['/og-image.png'],
   },
@@ -64,7 +64,7 @@ export default function Page() {
       <section className="bg-gradient-to-b from-purple-50 to-white pt-16 pb-20">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-            ‚è?Best Time to Post on YouTube 2026
+            ÔøΩ?Best Time to Post on YouTube 2026
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-10">
             Find the optimal upload times for maximum engagement. Based on real data from 
@@ -217,7 +217,7 @@ export default function Page() {
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">1</div>
             <div>
               <h3 className="font-semibold text-gray-900 mb-1">Check YouTube Analytics</h3>
-              <p className="text-gray-600 text-sm">Go to Analytics ‚Ü?Audience ‚Ü?"When your viewers are on YouTube" to see your specific audience's active hours.</p>
+              <p className="text-gray-600 text-sm">Go to Analytics ÔøΩ?Audience ÔøΩ?"When your viewers are on YouTube" to see your specific audience's active hours.</p>
             </div>
           </div>
           <div className="flex gap-4">
@@ -245,11 +245,11 @@ export default function Page() {
 
         <h2 className="text-3xl font-bold mb-6">Common Posting Time Mistakes</h2>
         <ul className="list-disc list-inside space-y-3 text-gray-700 mb-10">
-          <li><strong>Posting at midnight</strong> ‚Ä?Unless you have a global audience, this misses your peak hours</li>
-          <li><strong>Inconsistent schedule</strong> ‚Ä?Random posting times confuse the algorithm and your audience</li>
-          <li><strong>Ignoring analytics</strong> ‚Ä?Your audience data is more valuable than general guidelines</li>
-          <li><strong>Posting on weekends only</strong> ‚Ä?Weekdays often have less competition and more engaged viewers</li>
-          <li><strong>Rushing to post</strong> ‚Ä?Better to wait for optimal time than post at a bad time just to be consistent</li>
+          <li><strong>Posting at midnight</strong> ÔøΩ?Unless you have a global audience, this misses your peak hours</li>
+          <li><strong>Inconsistent schedule</strong> ÔøΩ?Random posting times confuse the algorithm and your audience</li>
+          <li><strong>Ignoring analytics</strong> ÔøΩ?Your audience data is more valuable than general guidelines</li>
+          <li><strong>Posting on weekends only</strong> ÔøΩ?Weekdays often have less competition and more engaged viewers</li>
+          <li><strong>Rushing to post</strong> ÔøΩ?Better to wait for optimal time than post at a bad time just to be consistent</li>
         </ul>
 
         <h2 className="text-3xl font-bold mb-6">Frequently Asked Questions</h2>
@@ -266,7 +266,7 @@ export default function Page() {
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Ready to Optimize Your Upload Schedule?</h2>
           <p className="text-gray-600 mb-6">Use Tubefission's trend analysis to find the best content opportunities for your posting schedule.</p>
           <Link href="/trends" className="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors">
-            Explore Trend Database ‚Ü?          </Link>
+            Explore Trend Database ÔøΩ?          </Link>
         </div>
       </article>
     </main>

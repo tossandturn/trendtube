@@ -7,6 +7,7 @@ import ChannelValueAnalysis from '@/app/components/ChannelValueAnalysis'
 import EnhancedChannelAnalytics from '@/app/components/EnhancedChannelAnalytics'
 import CreatorEcosystem from '@/app/components/CreatorEcosystem'
 import AudienceAnalytics from '@/app/components/AudienceAnalytics'
+import AudienceInterestsSection from '@/app/components/AudienceInterestsSection'
 import { fetchChannelById, fetchChannelVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { analyzeChannelIntelligence } from '@/lib/ai-insights'
@@ -974,6 +975,9 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
             Compare Competitors →
           </Link>
         </div>
+
+        {/* Audience Interests */}
+        <AudienceInterestsSection channelId={id} />
       </div>
     </main>
   )

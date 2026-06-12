@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+Ôªøimport type { Metadata } from 'next'
 import Link from 'next/link'
 import { BreadcrumbSchema, FAQPageSchema } from '@/app/components/JsonLd'
 
@@ -169,7 +169,7 @@ export default function Page() {
 
         <div className="space-y-4 mb-10">
           <div className="bg-green-50 rounded-lg p-5 border border-green-200">
-            <h3 className="font-semibold text-green-900 mb-2">‚ú?Best Practices</h3>
+            <h3 className="font-semibold text-green-900 mb-2">ÔøΩ?Best Practices</h3>
             <ul className="list-disc list-inside space-y-2 text-sm text-green-800">
               <li>Include target keyword in first 60 characters</li>
               <li>Use numbers (e.g., "7 Tips", "Step-by-Step")</li>
@@ -179,7 +179,7 @@ export default function Page() {
             </ul>
           </div>
           <div className="bg-red-50 rounded-lg p-5 border border-red-200">
-            <h3 className="font-semibold text-red-900 mb-2">‚ù?Common Mistakes</h3>
+            <h3 className="font-semibold text-red-900 mb-2">ÔøΩ?Common Mistakes</h3>
             <ul className="list-disc list-inside space-y-2 text-sm text-red-800">
               <li>Clickbait titles that do not match content</li>
               <li>All caps or excessive punctuation</li>
@@ -259,7 +259,7 @@ export default function Page() {
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Ready to Optimize Your Videos?</h2>
           <p className="text-gray-600 mb-6">Use Tubefission's trend analysis to find high-opportunity keywords for your niche.</p>
           <Link href="/trends" className="inline-flex items-center justify-center px-6 py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors">
-            Find Trending Keywords ‚Ü?          </Link>
+            Find Trending Keywords ÔøΩ?          </Link>
         </div>
       </article>
     </main>
