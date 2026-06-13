@@ -38,6 +38,140 @@ const FITNESS_KEYWORDS = [
   'nutrition', 'wellness', 'healthy', 'fit', 'sweat'
 ]
 
+// Schema Markup Components
+function ArticleSchema() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'Fitness YouTube Trends 2026 | Viral Fitness Videos',
+    description: 'Track the fastest-growing fitness content on YouTube. Workout routines, health tips, and wellness content with real-time creator intelligence.',
+    author: {
+      '@type': 'Organization',
+      name: 'Tubefission'
+    },
+    datePublished: '2026-06-14',
+    dateModified: '2026-06-14',
+    articleSection: 'Fitness',
+    publisher: {
+      '@type': 'Organization',
+      name: 'Tubefission',
+      url: 'https://tubefission.com'
+    }
+  }
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+function FAQPageSchema() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What fitness content is trending on YouTube?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Home workouts, core training, 30-day challenges, and nutrition tips are currently seeing high engagement across all regions.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'How do I grow my fitness channel?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Provide clear workout instructions, show real results, create structured programs, and engage with your community transformation stories.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'Is fitness content competitive on YouTube?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Fitness is highly competitive but specific niches like home workouts, beginner programs, and unique training methods offer opportunities.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'Who is the target audience for fitness content?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Fitness audiences span ages 18-40, with women comprising about 55% of viewers. Core audiences are in the US, UK, Canada, and Australia, seeking health improvement and sustainable fitness routines.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'What content formats work best for fitness?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Follow-along videos (15-30 min), exercise tutorials (5-10 min), fitness challenges (series), nutrition guides (8-15 min), and motivational content (10-20 min) perform best.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'How competitive is the fitness category?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'The fitness category is highly competitive (4/5 stars). Success requires niche specialization, consistent quality content, and building a supportive community around your training philosophy.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'What are common mistakes in fitness content?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Common mistakes include neglecting exercise safety, creating overly complex routines for beginners, ignoring nutrition/recovery, making unrealistic promises, lacking audience engagement, and omitting disclaimers.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'How can I monetize fitness content?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Monetization options include ad revenue ($6-15 CPM), course sales (training plans), membership subscriptions, brand partnerships, affiliate marketing for equipment, and app sales.'
+        }
+      }
+    ]
+  }
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+function BreadcrumbSchema() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://tubefission.com/'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Fitness',
+        item: 'https://tubefission.com/fitness'
+      }
+    ]
+  }
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
 export default async function FitnessTrendsPage() {
   const region = await getRegion()
   const videos = await fetchTrendingVideos(region, 50)
@@ -55,7 +189,18 @@ export default async function FitnessTrendsPage() {
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
+      <ArticleSchema />
+      <FAQPageSchema />
+      <BreadcrumbSchema />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        {/* Breadcrumb Navigation */}
+        <nav className="flex items-center gap-2 text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+          <Link href="/" className="hover:text-gray-900 transition-colors">Home</Link>
+          <span className="text-gray-400">/</span>
+          <span className="text-gray-900 font-medium">Fitness</span>
+        </nav>
+
         <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-6 sm:mb-8">
           <span className="text-lg">←</span>
           <span className="text-sm font-medium">Back to Home</span>
@@ -123,6 +268,107 @@ export default async function FitnessTrendsPage() {
                 <div className={`text-sm font-bold ${niche.color}`}>{niche.trend} this week</div>
               </Link>
             ))}
+          </div>
+        </div>
+
+        {/* Editorial Content - YouTube Fitness Trends 2026 */}
+        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm mb-8">
+          <h2 className="text-xl font-bold mb-4 text-gray-900">YouTube Fitness Content Trends 2026</h2>
+          
+          <div className="prose prose-sm max-w-none text-gray-600">
+            <p className="mb-4">
+              Fitness content is one of the most practical and engaging categories on YouTube. In 2026, fitness creators are not just providing workout instructions—they are becoming leaders in healthy lifestyle movements. As health awareness continues to rise globally, the demand for quality fitness content keeps growing.
+            </p>
+            
+            <h3 className="text-lg font-bold text-gray-900 mt-6 mb-3">2026 Fitness Category Hot Topics</h3>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <h4 className="font-bold text-gray-900">1. Home Workouts</h4>
+                <p>Home fitness content remains strong in 2026. Equipment-free training, small-space exercises, and home gym setup guides meet the growing need for convenient at-home fitness solutions.</p>
+              </div>
+              
+              <div>
+                <h4 className="font-bold text-gray-900">2. Short & Efficient Training</h4>
+                <p>15-30 minute high-efficiency workouts are popular among busy professionals. HIIT, quick fat-burning routines, and morning workout series are seeing rapid growth.</p>
+              </div>
+              
+              <div>
+                <h4 className="font-bold text-gray-900">3. Mental Health & Fitness</h4>
+                <p>The integration of fitness and mental wellness is a rising trend. Yoga, meditation, and mindful movement content addresses the need for mind-body balance.</p>
+              </div>
+              
+              <div>
+                <h4 className="font-bold text-gray-900">4. Personalization & Adaptability</h4>
+                <p>Personalized fitness content for different levels, goals, and physical conditions is in demand. Beginner-friendly, advanced challenges, and specialized content for groups like pregnant women and seniors are gaining attention.</p>
+              </div>
+              
+              <div>
+                <h4 className="font-bold text-gray-900">5. Nutrition-Fitness Integration</h4>
+                <p>Fitness diet, nutritional supplements, and meal planning content work closely with training programs to provide complete health solutions.</p>
+              </div>
+            </div>
+            
+            <h3 className="text-lg font-bold text-gray-900 mt-6 mb-3">Success Case Studies</h3>
+            
+            <div className="grid sm:grid-cols-2 gap-4 mb-6">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-bold text-gray-900">Chloe Ting</h4>
+                <p className="text-xs text-gray-500 mb-2">25M+ Subscribers</p>
+                <p className="text-sm">Strategy: Free fitness challenges + series courses + community-driven. Success factors: Free value + challenge format + community engagement. Key metrics: 2M+ average views, 600M+ challenge video views.</p>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-bold text-gray-900">Athlean-X (Jeff Cavaliere)</h4>
+                <p className="text-xs text-gray-500 mb-2">14M+ Subscribers</p>
+                <p className="text-sm">Strategy: Professional training + scientific principles + educational value. Success factors: Professional authority + educational depth + consistent updates. Key metrics: 500K+ average views, fitness education benchmark.</p>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-bold text-gray-900">Blogilates (Cassey Ho)</h4>
+                <p className="text-xs text-gray-500 mb-2">10M+ Subscribers</p>
+                <p className="text-sm">Strategy: Pilates + positive energy + community building. Success factors: Relatability + consistent series + brand extension. Key metrics: Strong community engagement, successful product lines.</p>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-bold text-gray-900">THENX (Chris Heria)</h4>
+                <p className="text-xs text-gray-500 mb-2">8M+ Subscribers</p>
+                <p className="text-sm">Strategy: Street workout + extreme moves + motivation. Success factors: Visual impact + skill demonstration + inspirational value. Key metrics: 500K+ average views, street fitness culture representative.</p>
+              </div>
+            </div>
+            
+            <h3 className="text-lg font-bold text-gray-900 mt-6 mb-3">Content Strategy Recommendations</h3>
+            
+            <ul className="list-disc pl-5 space-y-2 mb-4">
+              <li><strong>Provide Clear Guidance:</strong> Fitness content needs clear instructions and demonstrations. Every movement angle, breathing technique, and safety note should be explained in detail.</li>
+              <li><strong>Build Progressive Systems:</strong> Successful fitness channels offer progressive training systems from beginner to advanced levels, allowing viewers to continuously improve.</li>
+              <li><strong>Invest in Production Quality:</strong> Production quality directly impacts professional image. Good lighting, clear footage, and appropriate music are essential.</li>
+              <li><strong>Build Community Culture:</strong> Fitness is a long-term journey. Build supportive communities through challenges, interactions, and progress sharing.</li>
+            </ul>
+            
+            <h3 className="text-lg font-bold text-gray-900 mt-6 mb-3">How to Succeed in Fitness Category</h3>
+            
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="border-l-4 border-orange-500 pl-4">
+                <h4 className="font-bold text-gray-900">Find Your Fitness Niche</h4>
+                <p className="text-sm">The fitness category is extremely broad. Choose a specific area to focus on—whether it's strength training, yoga, cardio, or a specific sport.</p>
+              </div>
+              
+              <div className="border-l-4 border-orange-500 pl-4">
+                <h4 className="font-bold text-gray-900">Provide Free Value</h4>
+                <p className="text-sm">Successful fitness channels typically offer substantial free content to build trust, then monetize through premium courses and memberships.</p>
+              </div>
+              
+              <div className="border-l-4 border-orange-500 pl-4">
+                <h4 className="font-bold text-gray-900">Leverage Challenge Formats</h4>
+                <p className="text-sm">Fitness challenges (30-day abs, 7-day yoga series) are effective content organization tools and community builders.</p>
+              </div>
+              
+              <div className="border-l-4 border-orange-500 pl-4">
+                <h4 className="font-bold text-gray-900">Optimize for SEO</h4>
+                <p className="text-sm">SEO is crucial for fitness content. Use keywords like "Workout," "Routine," "Challenge," "For Beginners" in your titles and descriptions.</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -224,7 +470,7 @@ export default async function FitnessTrendsPage() {
           </div>
         </div>
 
-        {/* FAQ */}
+        {/* FAQ - 8 Questions */}
         <div className="mb-8">
           <h2 className="text-lg font-bold mb-4 text-gray-900">Frequently Asked Questions</h2>
           <div className="space-y-3">
@@ -232,6 +478,11 @@ export default async function FitnessTrendsPage() {
               { q: 'What fitness content is trending on YouTube?', a: 'Home workouts, core training, 30-day challenges, and nutrition tips are currently seeing high engagement across all regions.' },
               { q: 'How do I grow my fitness channel?', a: 'Provide clear workout instructions, show real results, create structured programs, and engage with your community transformation stories.' },
               { q: 'Is fitness content competitive on YouTube?', a: 'Fitness is highly competitive but specific niches like home workouts, beginner programs, and unique training methods offer opportunities.' },
+              { q: 'Who is the target audience for fitness content?', a: 'Fitness audiences span ages 18-40, with women comprising about 55% of viewers. Core audiences are in the US, UK, Canada, and Australia, seeking health improvement and sustainable fitness routines.' },
+              { q: 'What content formats work best for fitness?', a: 'Follow-along videos (15-30 min), exercise tutorials (5-10 min), fitness challenges (series), nutrition guides (8-15 min), and motivational content (10-20 min) perform best.' },
+              { q: 'How competitive is the fitness category?', a: 'The fitness category is highly competitive (4/5 stars). Success requires niche specialization, consistent quality content, and building a supportive community around your training philosophy.' },
+              { q: 'What are common mistakes in fitness content?', a: 'Common mistakes include neglecting exercise safety, creating overly complex routines for beginners, ignoring nutrition/recovery, making unrealistic promises, lacking audience engagement, and omitting disclaimers.' },
+              { q: 'How can I monetize fitness content?', a: 'Monetization options include ad revenue ($6-15 CPM), course sales (training plans), membership subscriptions, brand partnerships, affiliate marketing for equipment, and app sales.' },
             ].map((item, i) => (
               <div key={i} className="bg-white rounded-xl p-4 border border-gray-200">
                 <div className="font-bold text-sm mb-1 text-gray-900">{item.q}</div>
@@ -241,25 +492,29 @@ export default async function FitnessTrendsPage() {
           </div>
         </div>
 
-        {/* Related Tools */}
+        {/* Related Tools - Optimized Internal Links */}
         <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm mb-8">
           <h2 className="text-lg font-bold mb-4 text-gray-900">Related Tools</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Link href="/youtube-video-analyzer" className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
               <div className="text-2xl mb-2">📊</div>
               <div className="text-sm font-medium text-gray-900">Video Analyzer</div>
+              <div className="text-xs text-gray-500 mt-1">Analyze fitness videos</div>
             </Link>
             <Link href="/youtube-channel-analytics" className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
               <div className="text-2xl mb-2">📈</div>
               <div className="text-sm font-medium text-gray-900">Channel Analytics</div>
+              <div className="text-xs text-gray-500 mt-1">Track fitness channels</div>
             </Link>
             <Link href="/trends" className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
               <div className="text-2xl mb-2">🔥</div>
               <div className="text-sm font-medium text-gray-900">Trend Database</div>
+              <div className="text-xs text-gray-500 mt-1">All trending content</div>
             </Link>
             <Link href="/ai-assistant" className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
               <div className="text-2xl mb-2">🤖</div>
               <div className="text-sm font-medium text-gray-900">AI Assistant</div>
+              <div className="text-xs text-gray-500 mt-1">Get content ideas</div>
             </Link>
           </div>
         </div>

@@ -37,6 +37,110 @@ const COMEDY_KEYWORDS = [
   'stand up', 'comic', 'satire', 'comedic', 'lol'
 ]
 
+// Schema markup data
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  'headline': 'Comedy YouTube Trends 2026',
+  'description': 'Discover the latest trends in YouTube comedy content including Shorts comedy, sketches, reaction videos, and viral funny content strategies.',
+  'author': {
+    '@type': 'Organization',
+    'name': 'Tubefission'
+  },
+  'datePublished': '2026-06-14',
+  'articleSection': 'Comedy'
+}
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  'mainEntity': [
+    {
+      '@type': 'Question',
+      'name': 'What comedy content is trending on YouTube?',
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': 'Sketch comedy, reaction videos, meme-based content, and parody videos are currently seeing high engagement across all regions. Shorts comedy with 15-60 second formats is experiencing explosive growth in 2026.'
+      }
+    },
+    {
+      '@type': 'Question',
+      'name': 'How do I make my comedy videos go viral?',
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': 'Focus on relatable situations, perfect timing, shareable moments, and staying current with cultural trends and memes. The first 30 seconds are crucial for hooking viewers.'
+      }
+    },
+    {
+      '@type': 'Question',
+      'name': 'Is comedy content competitive on YouTube?',
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': 'Comedy is extremely competitive with high barriers to entry. Success requires unique humor, consistent style, and viral distribution strategies to build loyal audiences.'
+      }
+    },
+    {
+      '@type': 'Question',
+      'name': 'Who is the target audience for comedy content?',
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': 'Comedy audiences are primarily young viewers aged 13-30, with a slight male skew (55% vs 45%). Major markets include the US, UK, Canada, and Australia. These viewers seek entertainment and relaxation while actively sharing funny content.'
+      }
+    },
+    {
+      '@type': 'Question',
+      'name': 'What content formats work best for comedy?',
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': 'Top formats include: Shorts (15-60s) for viral potential, sketches (5-15 min) as the mainstream format, reaction videos (10-20 min) for steady traffic, parodies (5-12 min) with viral potential, and commentary comedy (10-20 min) for deeper engagement.'
+      }
+    },
+    {
+      '@type': 'Question',
+      'name': 'How competitive is the comedy category?',
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': 'The comedy category has extremely high competition (5/5 stars). Entry difficulty is very high due to established creators and viral content dominance. Success requires unique positioning, consistent innovation, and strong community building.'
+      }
+    },
+    {
+      '@type': 'Question',
+      'name': 'What are common mistakes in comedy content?',
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': 'Common mistakes include: blindly following trends without originality, poor comedic timing and pacing, weak opening 30 seconds, over-reliance on sensitive topics, neglecting audience interaction, prioritizing quantity over quality, and failing to build community engagement.'
+      }
+    },
+    {
+      '@type': 'Question',
+      'name': 'How can I monetize comedy content?',
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': 'Monetization strategies include: AdSense revenue (CPM $4-10), brand partnerships with entertainment and gaming brands, merchandise sales featuring comedy catchphrases, live performance income, channel memberships for exclusive content, and content licensing deals.'
+      }
+    }
+  ]
+}
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    {
+      '@type': 'ListItem',
+      'position': 1,
+      'name': 'Home',
+      'item': 'https://tubefission.com/'
+    },
+    {
+      '@type': 'ListItem',
+      'position': 2,
+      'name': 'Comedy',
+      'item': 'https://tubefission.com/comedy'
+    }
+  ]
+}
+
 export default async function ComedyTrendsPage() {
   const region = await getRegion()
   const videos = await fetchTrendingVideos(region, 50)
@@ -54,7 +158,28 @@ export default async function ComedyTrendsPage() {
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
+      {/* Schema Markup */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+          <Link href="/" className="hover:text-gray-900 transition-colors">Home</Link>
+          <span>/</span>
+          <span className="text-gray-900 font-medium">Comedy</span>
+        </nav>
+
         <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-6 sm:mb-8">
           <span className="text-lg">←</span>
           <span className="text-sm font-medium">Back to Home</span>
@@ -198,6 +323,193 @@ export default async function ComedyTrendsPage() {
           </div>
         </div>
 
+        {/* Editorial Content - YouTube Comedy Trends 2026 */}
+        <article className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm mb-8">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">YouTube Comedy Content Trends 2026</h2>
+          
+          <div className="prose prose-sm max-w-none text-gray-600">
+            <p className="mb-4 leading-relaxed">
+              Comedy is one of the most entertaining and viral-potential categories on YouTube. In 2026, comedy content has evolved from traditional funny videos into diverse entertainment formats, including skits, parodies, reaction videos, and comedic commentary. Successful comedy creators don't just make people laugh—they build unique personal brands that resonate with millions.
+            </p>
+
+            <h3 className="text-lg font-bold mt-6 mb-3 text-gray-900">2026 Comedy Category Hot Topics Analysis</h3>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-1">1. Shorts Comedy Explosion</h4>
+                <p className="text-gray-600">
+                  15-60 second funny short videos have exploded in growth in 2026. Quick punchlines, visual gags, and unexpected twists in short formats have become major traffic drivers.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-1">2. Skits and Scripted Comedy</h4>
+                <p className="text-gray-600">
+                  Scripted short-form content continues to thrive in 2026. From everyday humor to social satire, skit formats provide greater creative space for storytellers.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-1">3. Reaction and Commentary Comedy</h4>
+                <p className="text-gray-600">
+                  Commenting on trending topics with humor, video reactions, and funny commentary combines timeliness with entertainment value.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-1">4. Parody and Spoof</h4>
+                <p className="text-gray-600">
+                  Parodying popular content, impersonating celebrities, and funny dubbing have viral spread potential.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-1">5. Dark Humor and Satire</h4>
+                <p className="text-gray-600">
+                  Dark humor, social satire, and political satire for adult audiences attract highly engaged viewers.
+                </p>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-bold mt-6 mb-3 text-gray-900">Success Case Studies</h3>
+            
+            <div className="grid sm:grid-cols-2 gap-4 mb-6">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-bold text-gray-900 mb-2">PewDiePie</h4>
+                <ul className="text-xs text-gray-600 space-y-1">
+                  <li>• Subscribers: 110M+</li>
+                  <li>• Strategy: Gaming + Comedy + Reactions</li>
+                  <li>• Success: Early entry + Distinct personality</li>
+                  <li>• Avg views: 5M+ per video</li>
+                </ul>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-bold text-gray-900 mb-2">MrBeast</h4>
+                <ul className="text-xs text-gray-600 space-y-1">
+                  <li>• Subscribers: 300M+</li>
+                  <li>• Strategy: Challenges + Charity + Comedy</li>
+                  <li>• Success: Unlimited creativity + Production quality</li>
+                  <li>• Avg views: 100M+ per video</li>
+                </ul>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-bold text-gray-900 mb-2">Smosh</h4>
+                <ul className="text-xs text-gray-600 space-y-1">
+                  <li>• Subscribers: 26M+</li>
+                  <li>• Strategy: Skits + Parodies + Series</li>
+                  <li>• Success: Early accumulation + Team creation</li>
+                  <li>• Avg views: 500K+ per video</li>
+                </ul>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-bold text-gray-900 mb-2">Danny Gonzalez</h4>
+                <ul className="text-xs text-gray-600 space-y-1">
+                  <li>• Subscribers: 6M+</li>
+                  <li>• Strategy: Commentary + Satire + Music</li>
+                  <li>• Success: Unique perspective + Musical talent</li>
+                  <li>• Avg views: 1M+ per video</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-bold mt-6 mb-3 text-gray-900">Content Strategy Recommendations</h3>
+            
+            <div className="space-y-3 mb-6">
+              <div className="flex gap-3">
+                <span className="text-rose-600 font-bold">1.</span>
+                <div>
+                  <span className="font-semibold text-gray-900">Find Your Comedy Voice:</span>
+                  <span className="text-gray-600"> Comedy is deeply personal. Discover your unique humor style—whether satirical, absurd, observational, or physical comedy.</span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-rose-600 font-bold">2.</span>
+                <div>
+                  <span className="font-semibold text-gray-900">Master Timing and Pacing:</span>
+                  <span className="text-gray-600"> Comedy is the art of timing. Learn comedic rhythm—punchline setup, pauses, and twists.</span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-rose-600 font-bold">3.</span>
+                <div>
+                  <span className="font-semibold text-gray-900">Know Your Audience:</span>
+                  <span className="text-gray-600"> Different audiences have different humor preferences. Understand your target viewers and create content that resonates with them.</span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-rose-600 font-bold">4.</span>
+                <div>
+                  <span className="font-semibold text-gray-900">Stay Original:</span>
+                  <span className="text-gray-600"> While you can reference trends, originality is key to comedy success. Avoid excessive imitation—create unique content.</span>
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-bold mt-6 mb-3 text-gray-900">How to Succeed in the Comedy Category</h3>
+            
+            <div className="bg-rose-50 rounded-lg p-4 mb-4">
+              <ul className="space-y-2 text-gray-700">
+                <li className="flex gap-2">
+                  <span className="text-rose-600">✓</span>
+                  <span><strong>Capture the First 30 Seconds:</strong> The opening is critical. Quickly establish humor or suspense to hook viewers.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-rose-600">✓</span>
+                  <span><strong>Use Shorts for Traffic:</strong> Clip highlights from long videos into Shorts to drive traffic to full content.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-rose-600">✓</span>
+                  <span><strong>Build Series Content:</strong> Series comedy (recurring characters, formats) builds audience anticipation and subscription conversion.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-rose-600">✓</span>
+                  <span><strong>Engage with Your Audience:</strong> Comedy viewers love participation. Build connections through comments, community posts, and viewer submissions.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-rose-600">✓</span>
+                  <span><strong>Maintain Consistent Publishing:</strong> Comedy needs fresh content. Establish a sustainable publishing schedule.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Data Insights */}
+            <h3 className="text-lg font-bold mt-6 mb-3 text-gray-900">Category Performance Metrics</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs mb-4">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="text-left p-2 font-semibold">Metric</th>
+                    <th className="text-left p-2 font-semibold">Value</th>
+                    <th className="text-left p-2 font-semibold">Industry Comparison</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  <tr>
+                    <td className="p-2">Average Views</td>
+                    <td className="p-2 font-medium">800K-3M</td>
+                    <td className="p-2 text-green-600">+200% above platform average</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2">Engagement Rate</td>
+                    <td className="p-2 font-medium">6.0%-9.0%</td>
+                    <td className="p-2 text-green-600">+150% above platform average</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2">Avg Watch Time</td>
+                    <td className="p-2 font-medium">6-12 min</td>
+                    <td className="p-2 text-gray-500">On par with platform average</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2">Subscription Conversion</td>
+                    <td className="p-2 font-medium">2.5%-4.5%</td>
+                    <td className="p-2 text-green-600">+120% above platform average</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p className="text-sm text-gray-500 mt-4">
+              <strong>Best Publishing Times:</strong> Friday-Sunday, 6:00 PM - 10:00 PM. Weekend traffic significantly exceeds weekdays.
+            </p>
+          </div>
+        </article>
+
         {/* Creator Tips */}
         <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm mb-8">
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900">
@@ -223,14 +535,19 @@ export default async function ComedyTrendsPage() {
           </div>
         </div>
 
-        {/* FAQ */}
+        {/* FAQ - 8 Questions */}
         <div className="mb-8">
           <h2 className="text-lg font-bold mb-4 text-gray-900">Frequently Asked Questions</h2>
           <div className="space-y-3">
             {[
-              { q: 'What comedy content is trending on YouTube?', a: 'Sketch comedy, reaction videos, meme-based content, and parody videos are currently seeing high engagement across all regions.' },
-              { q: 'How do I make my comedy videos go viral?', a: 'Focus on relatable situations, perfect timing, shareable moments, and staying current with cultural trends and memes.' },
-              { q: 'Is comedy content competitive on YouTube?', a: 'Comedy is extremely competitive but unique perspectives and consistent style help creators build loyal audiences.' },
+              { q: 'What comedy content is trending on YouTube?', a: 'Sketch comedy, reaction videos, meme-based content, and parody videos are currently seeing high engagement across all regions. Shorts comedy with 15-60 second formats is experiencing explosive growth in 2026.' },
+              { q: 'How do I make my comedy videos go viral?', a: 'Focus on relatable situations, perfect timing, shareable moments, and staying current with cultural trends and memes. The first 30 seconds are crucial for hooking viewers.' },
+              { q: 'Is comedy content competitive on YouTube?', a: 'Comedy is extremely competitive with high barriers to entry. Success requires unique humor, consistent style, and viral distribution strategies to build loyal audiences.' },
+              { q: 'Who is the target audience for comedy content?', a: 'Comedy audiences are primarily young viewers aged 13-30, with a slight male skew (55% vs 45%). Major markets include the US, UK, Canada, and Australia. These viewers seek entertainment and relaxation while actively sharing funny content.' },
+              { q: 'What content formats work best for comedy?', a: 'Top formats include: Shorts (15-60s) for viral potential, sketches (5-15 min) as the mainstream format, reaction videos (10-20 min) for steady traffic, parodies (5-12 min) with viral potential, and commentary comedy (10-20 min) for deeper engagement.' },
+              { q: 'How competitive is the comedy category?', a: 'The comedy category has extremely high competition (5/5 stars). Entry difficulty is very high due to established creators and viral content dominance. Success requires unique positioning, consistent innovation, and strong community building.' },
+              { q: 'What are common mistakes in comedy content?', a: 'Common mistakes include: blindly following trends without originality, poor comedic timing and pacing, weak opening 30 seconds, over-reliance on sensitive topics, neglecting audience interaction, prioritizing quantity over quality, and failing to build community engagement.' },
+              { q: 'How can I monetize comedy content?', a: 'Monetization strategies include: AdSense revenue (CPM $4-10), brand partnerships with entertainment and gaming brands, merchandise sales featuring comedy catchphrases, live performance income, channel memberships for exclusive content, and content licensing deals.' },
             ].map((item, i) => (
               <div key={i} className="bg-white rounded-xl p-4 border border-gray-200">
                 <div className="font-bold text-sm mb-1 text-gray-900">{item.q}</div>
@@ -240,7 +557,7 @@ export default async function ComedyTrendsPage() {
           </div>
         </div>
 
-        {/* Related Tools */}
+        {/* Related Tools - Optimized Internal Links */}
         <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm mb-8">
           <h2 className="text-lg font-bold mb-4 text-gray-900">Related Tools</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

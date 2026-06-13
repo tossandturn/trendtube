@@ -45,6 +45,136 @@ const TECH_KEYWORDS = [
   'cybersecurity', 'privacy', 'security', 'hack', 'protection'
 ]
 
+// Schema Markup Components
+function ArticleSchema() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'Technology YouTube Trends 2026',
+    description: 'Discover the latest trends in YouTube technology content including AI tools, gadget reviews, software tutorials, and tech news with creator intelligence.',
+    author: {
+      '@type': 'Organization',
+      name: 'Tubefission'
+    },
+    datePublished: '2026-06-14',
+    dateModified: '2026-06-14',
+    articleSection: 'Technology',
+    keywords: 'technology trends, tech reviews, youtube tech, gadget trends, AI trends, software tutorials, tech news'
+  }
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+function FAQPageSchema() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What technology content is trending on YouTube?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'AI tool tutorials, gadget reviews, coding tutorials, and tech news are currently seeing high engagement across all regions. AI content in particular is experiencing explosive growth with +45% trend increase.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'How do I find viral tech video ideas?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Monitor product launches, software updates, and emerging technologies. Upload within hours of announcements for maximum visibility. Follow tech events like CES, WWDC, and product release cycles.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'Is technology content competitive on YouTube?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Tech is highly competitive but specific niches like niche programming languages, emerging AI tools, or specialized gadget categories offer opportunities for new creators to establish authority.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'Who is the target audience for technology content?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Technology content appeals to a wide demographic, primarily ages 18-45. The audience includes early adopters, professionals seeking productivity tools, students learning technical skills, and consumers researching purchases before buying.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'What content formats work best for technology?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Product reviews, comparison videos, tutorial content, and tech news updates perform best. Reviews and comparisons drive purchase decisions, while tutorials capture search traffic from users solving specific problems.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'How competitive is the technology category?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'The technology category is highly competitive with established creators dominating mainstream topics. However, emerging sub-niches like AI tools, specialized programming tutorials, and niche hardware reviews offer growth opportunities.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'What are common mistakes in technology content?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Common mistakes include reviewing products without hands-on experience, publishing outdated information, lacking technical depth, poor video/audio quality for a tech-savvy audience, and failing to disclose sponsorships or affiliate relationships.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'How can I monetize technology content?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Tech channels monetize through AdSense (high CPM in tech niche), affiliate marketing for gadgets and software, sponsored reviews and integrations, channel memberships for exclusive tech content, and consulting or freelance services.'
+        }
+      }
+    ]
+  }
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+function BreadcrumbSchema() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://tubefission.com/'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Technology',
+        item: 'https://tubefission.com/technology'
+      }
+    ]
+  }
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
 export default async function TechnologyTrendsPage() {
   const region = await getRegion()
   const videos = await fetchTrendingVideos(region, 50)
@@ -62,6 +192,10 @@ export default async function TechnologyTrendsPage() {
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
+      <ArticleSchema />
+      <FAQPageSchema />
+      <BreadcrumbSchema />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-6 sm:mb-8">
           <span className="text-lg">←</span>
@@ -207,6 +341,247 @@ export default async function TechnologyTrendsPage() {
           </div>
         </div>
 
+        {/* Editorial Content Section */}
+        <section className="mb-8 sm:mb-12">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">YouTube Technology Content Trends 2026</h2>
+          
+          <div className="prose prose-gray max-w-none">
+            <p className="text-gray-600 leading-relaxed mb-6">
+              Technology content is one of the most valuable and influential categories on YouTube. In 2026, tech creators 
+              are not just influencing consumer purchasing decisions—they have become the primary marketing channel for tech 
+              brands worldwide. With the explosive growth of AI technologies and accelerated hardware release cycles, 
+              technology content is experiencing unprecedented expansion and opportunity.
+            </p>
+
+            <p className="text-gray-600 leading-relaxed mb-6">
+              The technology category on YouTube has evolved far beyond simple unboxing videos. Today's successful tech creators 
+              combine journalistic integrity, entertainment value, and educational content to build massive audiences. The 
+              category attracts viewers across all demographics, from teenagers seeking gaming hardware recommendations to 
+              professionals evaluating productivity tools and enterprise software. This diverse audience creates multiple 
+              monetization opportunities through advertising, sponsorships, affiliate marketing, and premium content subscriptions.
+            </p>
+
+            <p className="text-gray-600 leading-relaxed mb-6">
+              What makes technology content particularly valuable is its evergreen nature combined with constant innovation. 
+              While a viral entertainment video may have a short shelf life, a comprehensive smartphone review or software 
+              tutorial can continue generating views and affiliate revenue for years. Additionally, the rapid pace of 
+              technological advancement ensures a never-ending stream of new products, updates, and trends to cover, 
+              providing content creators with an infinite well of topics to explore.
+            </p>
+
+            <h3 className="text-xl font-bold mb-4 text-gray-900">2026 Technology Category Hot Topics</h3>
+            
+            <div className="grid sm:grid-cols-2 gap-6 mb-8">
+              <div className="bg-blue-50 rounded-xl p-5">
+                <h4 className="font-bold text-blue-900 mb-2">🤖 AI Tools & Reviews</h4>
+                <p className="text-blue-800 text-sm leading-relaxed">
+                  AI tool reviews dominate the tech landscape in 2026. From ChatGPT to Midjourney, from AI video generation 
+                  to AI coding assistants, audiences crave authentic assessments of these tools' real capabilities and use cases.
+                </p>
+              </div>
+              <div className="bg-green-50 rounded-xl p-5">
+                <h4 className="font-bold text-green-900 mb-2">📱 Smartphones & Devices</h4>
+                <p className="text-green-800 text-sm leading-relaxed">
+                  Smartphone reviews remain the cornerstone of tech content. Foldable phones, AI-powered devices, and AR/VR 
+                  hardware are the hottest review categories. Deep reviews, long-term usage experiences, and comparison 
+                  tests attract the most viewer attention.
+                </p>
+              </div>
+              <div className="bg-purple-50 rounded-xl p-5">
+                <h4 className="font-bold text-purple-900 mb-2">🎥 Creator Tools & Productivity</h4>
+                <p className="text-purple-800 text-sm leading-relaxed">
+                  Reviews of products targeting content creators continue to grow. Cameras, microphones, lighting, editing 
+                  software, and other creator tools have a dedicated audience base and high commercial value.
+                </p>
+              </div>
+              <div className="bg-orange-50 rounded-xl p-5">
+                <h4 className="font-bold text-orange-900 mb-2">📰 Tech News & Analysis</h4>
+                <p className="text-orange-800 text-sm leading-relaxed">
+                  Tech news interpretation, industry trend analysis, and company earnings reports attract high-value audiences. 
+                  While production barriers are higher, competition is relatively lower in this space.
+                </p>
+              </div>
+              <div className="bg-pink-50 rounded-xl p-5 sm:col-span-2">
+                <h4 className="font-bold text-pink-900 mb-2">🎮 Gaming Hardware & Peripherals</h4>
+                <p className="text-pink-800 text-sm leading-relaxed">
+                  Gaming-focused technology content bridges the gap between pure tech and gaming categories. High-performance 
+                  graphics cards, mechanical keyboards, gaming monitors, and streaming equipment reviews attract dedicated 
+                  enthusiast audiences willing to invest premium prices in their setups. This sub-niche offers excellent 
+                  monetization through affiliate programs with gaming retailers and peripheral manufacturers.
+                </p>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-bold mb-4 text-gray-900">Success Case Studies</h3>
+            
+            <div className="space-y-6 mb-8">
+              <div className="bg-white rounded-xl p-6 border border-gray-200">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-xl font-bold text-red-600">M</div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-gray-900">Marques Brownlee (MKBHD)</h4>
+                    <p className="text-gray-500 text-sm mb-2">19M+ Subscribers | Avg 2M+ views per video</p>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      <strong>Strategy:</strong> Premium tech reviews with in-depth analysis and high production quality. 
+                      MKBHD built authority through early adoption of 4K video, professional cinematography, and honest, 
+                      detailed evaluations. His success comes from balancing technical depth with accessibility.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 border border-gray-200">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-xl font-bold text-orange-600">L</div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-gray-900">Linus Tech Tips</h4>
+                    <p className="text-gray-500 text-sm mb-2">16M+ Subscribers | $25M+ Annual Revenue</p>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      <strong>Strategy:</strong> PC hardware focus combined with tech news and experimental projects. 
+                      LTT's success stems from content depth, a large production team, and strong community building through 
+                      the LTT Store and forum engagement.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 border border-gray-200">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-xl font-bold text-gray-700">U</div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-gray-900">Unbox Therapy</h4>
+                    <p className="text-gray-500 text-sm mb-2">18M+ Subscribers | Viral Video Specialist</p>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      <strong>Strategy:</strong> Unboxing format with novel products and entertainment-focused presentation. 
+                      Unbox Therapy carved a unique niche by making unboxing theatrical and exciting, creating viral moments 
+                      through continuous innovation in format and product selection.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 border border-gray-200">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-xl font-bold text-indigo-600">M</div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-gray-900">Mrwhosetheboss</h4>
+                    <p className="text-gray-500 text-sm mb-2">19M+ Subscribers | Avg 3M+ views per video</p>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      <strong>Strategy:</strong> Smartphone reviews with comparison tests and deep analysis. Arun's success 
+                      comes from research depth, exceptional visual presentation, and an international perspective that 
+                      appeals to global audiences beyond just Western markets.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-bold mb-4 text-gray-900">Content Strategy Recommendations</h3>
+            
+            <div className="bg-gray-50 rounded-xl p-6 mb-8">
+              <ul className="space-y-4 text-gray-700">
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-600 font-bold">1.</span>
+                  <span><strong>Build Professional Authority:</strong> Tech audiences demand high expertise. Deep product research, 
+                  actual testing, and objective evaluations are essential for building trust.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-600 font-bold">2.</span>
+                  <span><strong>Invest in Production Quality:</strong> Production quality directly impacts viewer trust in tech content. 
+                  High-quality video, clear audio, and professional lighting are baseline requirements.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-600 font-bold">3.</span>
+                  <span><strong>Balance Depth with Accessibility:</strong> Tech content must find the sweet spot between technical depth 
+                  and mass accessibility. Too technical limits audience; too shallow loses core value.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-600 font-bold">4.</span>
+                  <span><strong>Establish Review Standards:</strong> Create consistent evaluation criteria and methodology. Viewers need 
+                  to understand your benchmarks—this builds long-term trust and credibility.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-600 font-bold">5.</span>
+                  <span><strong>Stay Current with Industry Trends:</strong> Technology moves rapidly. Successful creators dedicate 
+                  time to continuous learning, attending industry events, and maintaining relationships with PR teams to stay 
+                  ahead of product announcements and emerging technologies.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-600 font-bold">6.</span>
+                  <span><strong>Develop a Distinctive Voice:</strong> With thousands of tech channels competing for attention, 
+                  developing a unique personality and presentation style helps differentiate your content. Whether through 
+                  humor, technical depth, or visual storytelling, find your unique angle.</span>
+                </li>
+              </ul>
+            </div>
+
+            <h3 className="text-xl font-bold mb-4 text-gray-900">How to Succeed in Technology Content</h3>
+            
+            <div className="grid sm:grid-cols-2 gap-4 mb-8">
+              <div className="bg-white rounded-xl p-5 border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-2">🎯 Capture Product Cycles</h4>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Tech products follow predictable release patterns (iPhone in fall, CES in January). Prepare content in advance 
+                  and publish reviews on launch day or within 24 hours for maximum visibility.
+                </p>
+              </div>
+              <div className="bg-white rounded-xl p-5 border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-2">🤝 Build Industry Relationships</h4>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Good relationships with tech brands unlock early review access. Attend product launches, cultivate media contacts, 
+                  and maintain professional standards to secure embargoed review units.
+                </p>
+              </div>
+              <div className="bg-white rounded-xl p-5 border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-2">💡 Offer Unique Perspectives</h4>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  In a crowded field, unique angles differentiate you. Consider deep technical testing, long-term usage studies, 
+                  specific use-case scenarios, or underserved product categories.
+                </p>
+              </div>
+              <div className="bg-white rounded-xl p-5 border border-gray-200">
+                <h4 className="font-bold text-gray-900 mb-2">🔍 Optimize for Search</h4>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  SEO is critical for tech content. Include product names, model numbers, and keywords like "review," "vs," 
+                  and "comparison" to capture high-intent search traffic.
+                </p>
+              </div>
+              <div className="bg-white rounded-xl p-5 border border-gray-200 sm:col-span-2">
+                <h4 className="font-bold text-gray-900 mb-2">🛡️ Build Community Trust</h4>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Tech audiences deeply value creator integrity. Maintain objectivity, disclose sponsorships and affiliate relationships, 
+                  and acknowledge mistakes when they occur. Trust is your most valuable asset in this category.
+                </p>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-bold mb-4 text-gray-900">The Future of Technology Content</h3>
+            
+            <p className="text-gray-600 leading-relaxed mb-6">
+              Looking ahead, technology content on YouTube is poised for continued growth and evolution. The integration of AI 
+              into content creation workflows is already transforming how tech videos are produced, from automated editing to 
+              AI-assisted script writing. However, this technological shift also raises the bar for creators—audiences increasingly 
+              expect not just information, but genuine insight and authentic experience that cannot be replicated by AI.
+            </p>
+
+            <p className="text-gray-600 leading-relaxed mb-6">
+              Emerging technologies like spatial computing, augmented reality, and the evolving metaverse present new frontiers 
+              for content creators. Early adopters who can demystify these complex technologies and make them accessible to 
+              mainstream audiences will likely capture significant viewership. Additionally, as sustainability becomes a growing 
+              concern, content focused on eco-friendly technology, repairability, and the environmental impact of consumer 
+              electronics is gaining traction among environmentally conscious viewers.
+            </p>
+
+            <p className="text-gray-600 leading-relaxed mb-6">
+              The democratization of high-quality production equipment means that barriers to entry in tech content creation 
+              are lower than ever. However, this also means increased competition. Success in 2026 and beyond will require 
+              creators to develop genuine expertise, cultivate unique perspectives, and build authentic relationships with their 
+              communities. The creators who thrive will be those who view their channels not just as content platforms, but as 
+              communities of shared interest and mutual learning.
+            </p>
+          </div>
+        </section>
+
         {/* Creator Tips */}
         <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm mb-8">
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900">
@@ -232,14 +607,43 @@ export default async function TechnologyTrendsPage() {
           </div>
         </div>
 
-        {/* FAQ for SEO */}
+        {/* FAQ Section - 8 Questions */}
         <div className="mb-8">
           <h2 className="text-lg font-bold mb-4 text-gray-900">Frequently Asked Questions</h2>
           <div className="space-y-3">
             {[
-              { q: 'What technology content is trending on YouTube?', a: 'AI tool tutorials, gadget reviews, coding tutorials, and tech news are currently seeing high engagement across all regions.' },
-              { q: 'How do I find viral tech video ideas?', a: 'Monitor product launches, software updates, and emerging technologies. Upload within hours of announcements for maximum visibility.' },
-              { q: 'Is technology content competitive on YouTube?', a: 'Tech is highly competitive but specific niches like niche programming languages or emerging AI tools offer opportunities.' },
+              { 
+                q: 'What technology content is trending on YouTube?', 
+                a: 'AI tool tutorials, gadget reviews, coding tutorials, and tech news are currently seeing high engagement across all regions. AI content in particular is experiencing explosive growth with +45% trend increase.' 
+              },
+              { 
+                q: 'How do I find viral tech video ideas?', 
+                a: 'Monitor product launches, software updates, and emerging technologies. Upload within hours of announcements for maximum visibility. Follow tech events like CES, WWDC, and product release cycles.' 
+              },
+              { 
+                q: 'Is technology content competitive on YouTube?', 
+                a: 'Tech is highly competitive but specific niches like niche programming languages, emerging AI tools, or specialized gadget categories offer opportunities for new creators to establish authority.' 
+              },
+              { 
+                q: 'Who is the target audience for technology content?', 
+                a: 'Technology content appeals to a wide demographic, primarily ages 18-45. The audience includes early adopters, professionals seeking productivity tools, students learning technical skills, and consumers researching purchases before buying.' 
+              },
+              { 
+                q: 'What content formats work best for technology?', 
+                a: 'Product reviews, comparison videos, tutorial content, and tech news updates perform best. Reviews and comparisons drive purchase decisions, while tutorials capture search traffic from users solving specific problems.' 
+              },
+              { 
+                q: 'How competitive is the technology category?', 
+                a: 'The technology category is highly competitive with established creators dominating mainstream topics. However, emerging sub-niches like AI tools, specialized programming tutorials, and niche hardware reviews offer growth opportunities.' 
+              },
+              { 
+                q: 'What are common mistakes in technology content?', 
+                a: 'Common mistakes include reviewing products without hands-on experience, publishing outdated information, lacking technical depth, poor video/audio quality for a tech-savvy audience, and failing to disclose sponsorships or affiliate relationships.' 
+              },
+              { 
+                q: 'How can I monetize technology content?', 
+                a: 'Tech channels monetize through AdSense (high CPM in tech niche), affiliate marketing for gadgets and software, sponsored reviews and integrations, channel memberships for exclusive tech content, and consulting or freelance services.' 
+              },
             ].map((item, i) => (
               <div key={i} className="bg-white rounded-xl p-4 border border-gray-200">
                 <div className="font-bold text-sm mb-1 text-gray-900">{item.q}</div>
@@ -249,25 +653,25 @@ export default async function TechnologyTrendsPage() {
           </div>
         </div>
 
-        {/* Related Tools */}
+        {/* Related Tools - Optimized Internal Links */}
         <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-sm mb-8">
           <h2 className="text-lg font-bold mb-4 text-gray-900">Related Tools</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Link href="/youtube-ai-trends" className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-              <div className="text-2xl mb-2">🤖</div>
-              <div className="text-sm font-medium text-gray-900">AI Trends</div>
-            </Link>
             <Link href="/youtube-video-analyzer" className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
               <div className="text-2xl mb-2">📊</div>
               <div className="text-sm font-medium text-gray-900">Video Analyzer</div>
             </Link>
-            <Link href="/trends" className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-              <div className="text-2xl mb-2">🔥</div>
-              <div className="text-sm font-medium text-gray-900">Trend Database</div>
+            <Link href="/youtube-channel-analytics" className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+              <div className="text-2xl mb-2">📈</div>
+              <div className="text-sm font-medium text-gray-900">Channel Analytics</div>
             </Link>
             <Link href="/ai-assistant" className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
               <div className="text-2xl mb-2">🤖</div>
               <div className="text-sm font-medium text-gray-900">AI Assistant</div>
+            </Link>
+            <Link href="/trends" className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+              <div className="text-2xl mb-2">🔥</div>
+              <div className="text-sm font-medium text-gray-900">Trend Database</div>
             </Link>
           </div>
         </div>
