@@ -51,7 +51,7 @@ const CATEGORY_DEMOGRAPHICS: Record<string, { male: number; age: string; regions
 
 // Extended interest keywords database with relevance scores and routes
 const EXTENDED_KEYWORDS: Record<string, { relevance: number; route: string }> = {
-  'Gaming': { relevance: 100, route: '/gaming-youtube-trends' },
+  'Gaming': { relevance: 100, route: '/gaming' },
   'Technology': { relevance: 98, route: '/technology' },
   'Tutorial': { relevance: 95, route: '/tutorial' },
   'Entertainment': { relevance: 92, route: '/entertainment' },
@@ -70,16 +70,16 @@ const EXTENDED_KEYWORDS: Record<string, { relevance: number; route: string }> = 
   'Science': { relevance: 60, route: '/science' },
   'News': { relevance: 58, route: '/news' },
   'Animation': { relevance: 55, route: '/entertainment' },
-  'Documentary': { relevance: 52, route: '/youtube-trends' },
+  'Documentary': { relevance: 52, route: '/education' },
   'Tech Review': { relevance: 95, route: '/youtube-ai-trends' },
   'Unboxing': { relevance: 88, route: '/youtube-video-analyzer' },
   'Challenge': { relevance: 85, route: '/viral-video-ideas' },
   'Reaction': { relevance: 82, route: '/entertainment' },
-  'Podcast': { relevance: 78, route: '/youtube-trends' },
+  'Podcast': { relevance: 78, route: '/entertainment' },
   'Shorts': { relevance: 95, route: '/youtube-shorts-trends' },
   'Livestream': { relevance: 72, route: '/gaming-youtube-trends' },
   'ASMR': { relevance: 70, route: '/entertainment' },
-  'Cooking': { relevance: 75, route: '/youtube-trends' },
+  'Cooking': { relevance: 75, route: '/food' },
   'Mukbang': { relevance: 72, route: '/youtube-trends' },
   'Prank': { relevance: 78, route: '/viral-video-ideas' },
   'Magic': { relevance: 65, route: '/entertainment' },
