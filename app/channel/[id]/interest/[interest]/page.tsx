@@ -12,6 +12,7 @@ import { analyzeVideoIntelligence } from '@/lib/ai-insights'
  * Shows channel videos filtered by a specific audience interest.
  * Each video card shows analysis strongly correlated to the interest.
  */
+import InterestVideoList from '@/app/components/InterestVideoList'
 
 const INTEREST_CONFIG: Record<string, {
   icon: string; color: string; bg: string; border: string; text: string
@@ -244,7 +245,7 @@ export default async function InterestPage({ params }: InterestPageProps) {
         </div>
       </section>
 
-      {/* Video List */}
+      {/* Video List with Filters */}
       <section className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-xl font-bold mb-6">📊 {totalVideos} {interest}-Related Videos — Ranked by Relevance</h2>
@@ -256,11 +257,12 @@ export default async function InterestPage({ params }: InterestPageProps) {
               <Link href={`/channel/${id}`} className="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">← Back to Channel</Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              {scoredVideos.map((video: any, i: number) => (
-                <VideoCard key={video.id || i} video={video} index={i + 1} config={config} />
-              ))}
-            </div>
+            <InterestVideoList
+              videos={scoredVideos}
+              interestKey={interestKey}
+              interestIcon={config.icon}
+              config={config}
+            />
           )}
         </div>
       </section>
@@ -286,66 +288,6 @@ export default async function InterestPage({ params }: InterestPageProps) {
         </div>
       </footer>
     </main>
-  )
-}
-
-function VideoCard({ video, index, config }: { video: any; index: number; config: any }) {
-  const eng = calcEngagement(video)
-  const scoreColor = (s: number) => s >= 80 ? 'text-green-600' : s >= 60 ? 'text-yellow-600' : s >= 40 ? 'text-orange-600' : 'text-red-600'
-  const matchBadge = (s: number) => {
-    if (s >= 80) return { label: 'Strong Match', cls: 'bg-green-100 text-green-700 border-green-200' }
-    if (s >= 50) return { label: 'Good Match', cls: 'bg-yellow-100 text-yellow-700 border-yellow-200' }
-    if (s >= 25) return { label: 'Partial Match', cls: 'bg-orange-100 text-orange-700 border-orange-200' }
-    return { label: 'Weak Match', cls: 'bg-gray-100 text-gray-500 border-gray-200' }
-  }
-  const badge = matchBadge(video.interestScore)
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 hover:border-gray-300 transition-all overflow-hidden">
-      <div className="flex flex-col sm:flex-row">
-        <div className="relative sm:w-64 flex-shrink-0">
-          <div className="aspect-video bg-gray-100">
-            {video.snippet?.thumbnails?.medium?.url ? (
-              <img src={video.snippet.thumbnails.medium.url} alt={video.snippet.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-4xl">🎬</div>
-            )}
-          </div>
-          <div className="absolute top-2 left-2 bg-black/80 text-white rounded-lg px-2 py-1 text-xs font-bold">#{index}</div>
-        </div>
-        <div className="flex-1 p-4 sm:p-5">
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base sm:text-lg line-clamp-2 mb-1">
-                <a href={`https://youtube.com/watch?v=${video.id}`} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">{video.snippet?.title}</a>
-              </h3>
-              <p className="text-xs text-gray-400">{formatDate(video.snippet?.publishedAt)}</p>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <div className={`text-2xl font-extrabold ${scoreColor(video.interestScore)}`}>{video.interestScore}</div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.label}</span>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500 mb-3">
-            <span>👁️ {formatNumber(video.statistics?.viewCount)} views</span>
-            <span>👍 {formatNumber(video.statistics?.likeCount)} likes</span>
-            <span>💬 {formatNumber(video.statistics?.commentCount)} comments</span>
-            <span>📊 {eng.toFixed(1)}% engagement</span>
-          </div>
-          {video.intelligence?.successFactors?.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {video.intelligence.successFactors.slice(0, 3).map((f: any, i: number) => (
-                <span key={i} className={`text-[10px] px-2 py-1 rounded-full border ${
-                  f.impact === 'high' ? 'bg-green-50 text-green-700 border-green-200'
-                  : f.impact === 'medium' ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                  : 'bg-gray-50 text-gray-500 border-gray-200'
-                }`}>{f.factor}</span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
   )
 }
 
