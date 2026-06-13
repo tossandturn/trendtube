@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import RegionSelectorBar from '@/app/components/RegionSelectorBar'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 
-export const dynamic = 'force-static'
 
 export const metadata: Metadata = {
   title: 'Music YouTube Trends 2026 | Viral Music Videos & Artist Trends',
@@ -189,6 +189,12 @@ export default async function MusicTrendsPage() {
             <li className="text-gray-900 font-medium">Music</li>
           </ol>
         </nav>
+
+        {/* Region Filter */}
+        <div className="flex items-center justify-between mb-6">
+          <span className="text-sm text-gray-500 font-medium">Select Region:</span>
+          <RegionSelectorBar currentRegion={region} />
+        </div>
 
         <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-6 sm:mb-8">
           <span className="text-lg">←</span>
