@@ -756,20 +756,12 @@ function getPerformanceForViews(actual, benchmark) {
   return 'well_below';
 }
 
-// Static config
-export async function generateStaticParams() {
-  return [{ videoId: 'dQw4w9WgXcQ' }];
-}
-
-export const revalidate = 86400;
-
-export async function generateMetadata({ params }) {
-  try {
-    const data = await getVideoAnalysis(params.videoId);
-    return generateVideoSEO(data);
-  } catch {
-    return { title: 'Video Analysis | Tubefission', description: 'Analyze any YouTube video with our free tool.' };
-  }
+// Static config for Pages Router
+export async function getStaticPaths() {
+  return {
+    paths: [],
+    fallback: 'blocking'
+  };
 }
 
 export async function getStaticProps({ params }) {
