@@ -5,6 +5,9 @@ const nextConfig = {
   images: {
     domains: ['images.unsplash.com', 'i.ytimg.com'],
   },
+  // 静态导出配置
+  output: 'export',
+  distDir: 'dist',
   // 确保所有页面都被静态生成
   trailingSlash: false,
 }
