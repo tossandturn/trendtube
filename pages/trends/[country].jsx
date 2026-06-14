@@ -273,3 +273,32 @@ function getCountryName(code) {
   };
   return countries[code] || code.toUpperCase();
 }
+
+// 静态路径配置
+export async function getStaticPaths() {
+  const countries = ['us', 'jp', 'kr', 'gb', 'hk', 'tw', 'ca', 'au', 'de', 'fr'];
+  const paths = countries.map(country => ({ params: { country } }));
+  
+  return {
+    paths,
+    fallback: 'blocking'
+  };
+}
+
+// 获取数据
+export async function getStaticProps({ params }) {
+  try {
+    const trendsData = await getTrendsByCountry(params.country);
+    return {
+      props: {
+        country: params.country,
+        trendsData
+      },
+      revalidate: 3600
+    };
+  } catch (error) {
+    return {
+      notFound: true
+    };
+  }
+}
