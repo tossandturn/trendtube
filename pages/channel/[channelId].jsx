@@ -537,25 +537,22 @@ function AudienceInterestsSection({ channelId, channelData, analysis }) {
   );
 }
 
-// Static config
-export async function generateStaticParams() {
-  return [{ channelId: 'UCBcRF18a7Qf58cCRy5xuWwQ' }];
-}
-
-export const revalidate = 86400;
-
-export async function generateMetadata({ params }) {
-  try {
-    const data = await getChannelAnalysis(params.channelId);
-    return generateChannelSEO(data);
-  } catch {
-    return { title: 'Channel Analytics | Tubefission', description: 'Analyze any YouTube channel.' };
-  }
+// Static config for Pages Router
+export async function getStaticPaths() {
+  return {
+    paths: [{ params: { channelId: 'UCBcRF18a7Qf58cCRy5xuWwQ' } }],
+    fallback: 'blocking',
+  };
 }
 
 export async function getStaticProps({ params }) {
   try {
     const channelData = await getChannelAnalysis(params.channelId);
-    return { props: { channelId: params.channelId, channelData }, revalidate: 86400 };
-  } catch { return { notFound: true }; }
+    return { 
+      props: { channelId: params.channelId, channelData },
+      revalidate: 86400
+    };
+  } catch { 
+    return { notFound: true }; 
+  }
 }
