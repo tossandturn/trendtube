@@ -323,44 +323,6 @@ export default function TopicPage({ keyword, topicData }) {
   );
 }
 
-// 静态生成配置
-export async function generateStaticParams() {
-  // 预渲染热门关键词
-  const popularKeywords = [
-    'youtube seo',
-    'video marketing',
-    'content strategy',
-    'audience growth',
-    'engagement tips',
-    'thumbnail design',
-    'title optimization',
-    'tag research',
-    'competitor analysis',
-    'trend discovery'
-  ];
-  
-  return popularKeywords.map(keyword => ({
-    keyword: encodeURIComponent(keyword)
-  }));
-}
-
-// 重新验证时间（秒）
-export const revalidate = 43200; // 每12小时
-
-// 生成元数据
-export async function generateMetadata({ params }) {
-  try {
-    const keyword = decodeURIComponent(params.keyword);
-    const data = await getTopicData(keyword);
-    return generateTopicSEO(keyword, data);
-  } catch (error) {
-    return {
-      title: `${decodeURIComponent(params.keyword)} | Topic Analysis | Tubefission`,
-      description: `Explore ${decodeURIComponent(params.keyword)} trends and content opportunities on YouTube.`
-    };
-  }
-}
-
 // 静态路径配置 - 全部动态生成
 export async function getStaticPaths() {
   return {
