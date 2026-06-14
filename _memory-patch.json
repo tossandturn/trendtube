@@ -1,0 +1,14 @@
+{
+  "agents": {
+    "defaults": {
+      "memorySearch": {
+        "provider": "openai-compatible",
+        "remote": {
+          "baseUrl": "https://api.tokenhub.market/v1",
+          "apiKey": "${MOONSHOT_API_KEY}"
+        },
+        "fallback": "none"
+      }
+    }
+  }
+}

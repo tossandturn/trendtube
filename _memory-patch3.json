@@ -1,0 +1,10 @@
+{
+  "agents": {
+    "defaults": {
+      "memorySearch": {
+        "provider": "github-copilot",
+        "fallback": "none"
+      }
+    }
+  }
+}

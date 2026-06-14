@@ -1,0 +1,10 @@
+{
+  "agents": {
+    "defaults": {
+      "memorySearch": {
+        "provider": "local",
+        "fallback": "none"
+      }
+    }
+  }
+}
