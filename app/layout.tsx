@@ -99,10 +99,10 @@ export default async function RootLayout({
       <head>
         <script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6772936350717773"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2329966945529740"
           crossOrigin="anonymous"
         ></script>
-        <meta name="google-adsense-account" content="ca-pub-6772936350717773" />
+        <meta name="google-adsense-account" content="ca-pub-2329966945529740" />
         {/* Plausible Analytics */}
         <script defer data-domain="tubefission.com" src="https://plausible.io/js/script.js" />
       </head>

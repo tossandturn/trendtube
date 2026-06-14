@@ -184,7 +184,7 @@ export default async function TrendingPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex-1">
                     <Link
-                      href={`/topic/${keyword}`}
+                      href={`/trends/${keyword}`}
                       className="group inline-flex items-center gap-3 hover:opacity-80 transition"
                     >
                       <span className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:via-pink-500 group-hover:to-red-500">
@@ -205,7 +205,7 @@ export default async function TrendingPage() {
                     </div>
                   </div>
                   <Link
-                    href={`/topic/${keyword}`}
+                    href={`/trends/${keyword}`}
                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:from-purple-600 hover:to-pink-600 transition shadow-lg shadow-purple-200 whitespace-nowrap"
                   >
                     <span>🔍</span> Explore Trend

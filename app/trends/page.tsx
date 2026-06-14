@@ -5,6 +5,7 @@ import { fetchTrendingVideos } from '@/lib/api-client'
 import { extractTrendsFromRegion, type RealTrend } from '@/lib/trend-extractor'
 import { Breadcrumbs } from '@/app/components/Breadcrumbs'
 import { TrendDiscovery } from '@/app/components/TrendDiscovery'
+import { REGIONS, REGION_META } from '@/lib/region'
 
 export const metadata: Metadata = {
   title: 'Trend Discovery | TubeFission',
@@ -49,6 +50,34 @@ export default async function TrendsPage() {
             </p>
           </div>
 
+          {/* Region Selector - Mobile: Horizontal Scroll */}
+          <div className="mt-6 flex justify-center">
+            <div className="inline-flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 shadow-sm max-w-full">
+              <span className="text-sm text-gray-500 px-2 hidden sm:inline">Region:</span>
+              <div className="flex gap-1 overflow-x-auto max-w-[280px] sm:max-w-none scrollbar-hide">
+                {REGIONS.map((r) => (
+                  <Link
+                    key={r}
+                    href={`/api/switch-region?region=${r}&redirect=/trends`}
+                    className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                      region === r
+                        ? 'bg-red-600 text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                    title={REGION_META[r].label}
+                  >
+                    <img
+                      src={`https://flagcdn.com/w40/${REGION_META[r].flag}.png`}
+                      alt={REGION_META[r].label}
+                      className="w-4 h-3 rounded-sm object-cover"
+                    />
+                    <span>{r}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <p className="text-sm text-gray-500">Trends Detected</p>
@@ -73,6 +102,45 @@ export default async function TrendsPage() {
       {/* Trend Discovery Component */}
       <section className="pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Featured Categories - Mobile: 2 cols, Desktop: 4 cols */}
+          <div className="mb-8">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Featured Categories</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <Link
+                href="/gaming"
+                className="group block bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border border-purple-200 hover:border-purple-400 hover:shadow-md transition-all active:scale-95"
+              >
+                <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🎮</div>
+                <h3 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-purple-600 transition-colors">Gaming</h3>
+                <p className="text-xs text-gray-500 mt-0.5 sm:mt-1">Minecraft, GTA, Fortnite & more</p>
+              </Link>
+              <Link
+                href="/trends/ai-shorts"
+                className="group block bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 sm:p-4 border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all active:scale-95"
+              >
+                <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🤖</div>
+                <h3 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-blue-600 transition-colors">AI</h3>
+                <p className="text-xs text-gray-500 mt-0.5 sm:mt-1">AI tools, tutorials & trends</p>
+              </Link>
+              <Link
+                href="/trends/mrbeast-style"
+                className="group block bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-3 sm:p-4 border border-yellow-200 hover:border-yellow-400 hover:shadow-md transition-all active:scale-95"
+              >
+                <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🎬</div>
+                <h3 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-orange-600 transition-colors">Challenges</h3>
+                <p className="text-xs text-gray-500 mt-0.5 sm:mt-1">High-stakes challenge content</p>
+              </Link>
+              <Link
+                href="/trends/youtube-automation"
+                className="group block bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 sm:p-4 border border-green-200 hover:border-green-400 hover:shadow-md transition-all active:scale-95"
+              >
+                <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🚀</div>
+                <h3 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-green-600 transition-colors">Automation</h3>
+                <p className="text-xs text-gray-500 mt-0.5 sm:mt-1">Faceless channel strategies</p>
+              </Link>
+            </div>
+          </div>
+
           <TrendDiscovery
             trends={trends.map(t => ({
               ...t,

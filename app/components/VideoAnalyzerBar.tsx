@@ -35,7 +35,7 @@ export default function VideoAnalyzerBar() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-red-50 to-pink-50 border-b border-red-100">
+    <div className="sticky top-[57px] z-40 bg-gradient-to-r from-red-50 to-pink-50 border-b border-red-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
         <form onSubmit={handleAnalyze} className="flex items-center gap-3">
           <div className="flex-1 flex items-center gap-2">

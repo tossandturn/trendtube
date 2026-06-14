@@ -6,10 +6,11 @@
    Server-only helpers live in ./region-server.ts
 ========================================================= */
 
-export const REGIONS = ['US', 'JP', 'KR', 'GB', 'HK', 'TW'] as const
+export const REGIONS = ['GLOBAL', 'US', 'JP', 'KR', 'GB', 'HK', 'TW'] as const
 export type Region = (typeof REGIONS)[number]
 
 export const REGION_META: Record<Region, { label: string; flag: string; lang: string }> = {
+  GLOBAL: { label: 'Global', flag: 'un', lang: 'en' },
   US: { label: 'United States', flag: 'us', lang: 'en' },
   JP: { label: 'Japan', flag: 'jp', lang: 'ja' },
   KR: { label: 'Korea', flag: 'kr', lang: 'ko' },
@@ -32,6 +33,20 @@ export const REGION_LABELS: Record<Region, {
   competition: string
   backToTrends: string
 }> = {
+  GLOBAL: {
+    full: 'Global',
+    trending: 'Trending',
+    shorts: 'Shorts',
+    emerging: 'Emerging',
+    aiTrends: 'AI Trends',
+    viralShorts: 'Viral Shorts',
+    views: 'Views',
+    velocity: 'Velocity',
+    engagement: 'Engagement',
+    opportunity: 'Opportunity',
+    competition: 'Competition',
+    backToTrends: 'Back to Trends',
+  },
   US: {
     full: 'United States',
     trending: 'Trending',

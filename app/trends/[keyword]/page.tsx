@@ -5,6 +5,7 @@ import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate, getTagColor, getTagEmoji } from '@/lib/analytics'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
+import TrendVideosGrid from '@/app/components/TrendVideosGrid'
 
 interface TrendPageProps {
   params: Promise<{
@@ -307,11 +308,6 @@ export const TREND_KEYWORDS = [
   'true-crime', 'unsolved', 'documentary', 'expose', 'investigation',
 ]
 
-// Static generation for all keywords at build time
-export async function generateStaticParams() {
-  return TREND_KEYWORDS.map(keyword => ({ keyword }))
-}
-
 // Default trend data generator
 function generateTrendData(keyword: string) {
   const normalized = keyword.replace(/-/g, ' ')
@@ -400,10 +396,10 @@ export default async function TrendPage({ params }: TrendPageProps) {
     }
 
     return matchesKeyword
-  }).slice(0, 6)
+  }).slice(0, 24)
 
   // Use top videos if no direct matches
-  const displayVideos = relevantVideos.length > 0 ? relevantVideos : videos.slice(0, 6)
+  const displayVideos = relevantVideos.length > 0 ? relevantVideos : videos.slice(0, 24)
 
   // Generate daily recommendations for this trend
   const dailyRecommendations = generateDailyRecommendations(displayVideos, region, 3)
@@ -452,6 +448,87 @@ export default async function TrendPage({ params }: TrendPageProps) {
           <h1 className="text-3xl sm:text-5xl font-bold mb-4">{trendData.title}</h1>
           <p className="text-gray-600 text-lg max-w-3xl">{trendData.description}</p>
         </div>
+
+        {/* Today's Top Video */}
+        {displayVideos.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1 h-6 rounded-full bg-gradient-to-b from-red-400 to-red-600" />
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+                <span className="text-red-600">🔥</span> Today's Top Video
+                <span className="text-sm font-normal text-gray-500">— Highest performing in this trend</span>
+              </h2>
+            </div>
+            {(() => {
+              const topVideo = displayVideos[0]
+              const topVelocity = getViewVelocity(topVideo)
+              const topEngagement = getEngagementRate(topVideo)
+              const topViews = Number(topVideo.statistics?.viewCount || 0)
+              return (
+                <Link
+                  href={`/video/${topVideo.id}`}
+                  className="group block bg-gradient-to-br from-red-50 to-white rounded-2xl overflow-hidden border border-red-200 hover:border-red-400 hover:shadow-xl transition-all duration-300"
+                >
+                  <div className="grid md:grid-cols-2 gap-0">
+                    {/* Thumbnail Side */}
+                    <div className="relative aspect-video md:aspect-auto md:min-h-[300px] overflow-hidden">
+                      <img
+                        src={topVideo.snippet?.thumbnails?.high?.url || topVideo.snippet?.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${topVideo.id}/maxresdefault.jpg`}
+                        alt={topVideo.snippet?.title || 'Top video thumbnail'}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {/* Rank Badge */}
+                      <div className="absolute top-4 left-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-4 py-2 rounded-xl font-black text-xl shadow-lg flex items-center gap-2">
+                        <span className="text-2xl">🏆</span>
+                        <span>#1 RANK</span>
+                      </div>
+                      {/* Views Overlay */}
+                      <div className="absolute bottom-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-bold backdrop-blur-sm">
+                        {formatNumber(topViews.toString())} views
+                      </div>
+                    </div>
+                    {/* Info Side */}
+                    <div className="p-6 md:p-8 flex flex-col justify-center">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">TRENDING NOW</span>
+                        <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">{region}</span>
+                      </div>
+                      <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 group-hover:text-red-600 transition-colors line-clamp-2">
+                        {topVideo.snippet?.title || 'Untitled Video'}
+                      </h3>
+                      <p className="text-gray-600 mb-4">{topVideo.snippet?.channelTitle || 'Unknown Channel'}</p>
+                      {/* Stats */}
+                      <div className="grid grid-cols-3 gap-4 mb-6">
+                        <div className="bg-white rounded-xl p-3 border border-gray-200 text-center">
+                          <div className="text-2xl font-bold text-gray-900">{formatNumber(topViews.toString())}</div>
+                          <div className="text-xs text-gray-500">Views</div>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-200 text-center">
+                          <div className={`text-2xl font-bold ${topEngagement >= 5 ? 'text-green-600' : 'text-yellow-600'}`}>
+                            {topEngagement.toFixed(2)}%
+                          </div>
+                          <div className="text-xs text-gray-500">Engagement</div>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 border border-gray-200 text-center">
+                          <div className="text-2xl font-bold text-red-600">
+                            {topVelocity >= 1e6 ? (topVelocity / 1e6).toFixed(1) + 'M' : topVelocity >= 1e3 ? (topVelocity / 1e3).toFixed(1) + 'K' : Math.round(topVelocity)}
+                          </div>
+                          <div className="text-xs text-gray-500">Views/Day</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-red-600 font-medium">
+                        <span>Watch Video</span>
+                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })()}
+          </section>
+        )}
 
         {/* Professional Analytics Dashboard */}
         <section className="mb-12">
@@ -857,35 +934,14 @@ export default async function TrendPage({ params }: TrendPageProps) {
           </div>
         </div>
 
-        {/* Top Videos */}
+        {/* Top Videos - Dynamic Grid with Filters */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Top Videos in This Trend</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {displayVideos.map((video: any) => (
-              <Link key={video.id} href={`/video/${video.id}`} className="group block">
-                <div className="bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-red-300 transition">
-                  <div className="relative aspect-video">
-                    <img
-                      src={video.snippet?.thumbnails?.medium?.url}
-                      alt={video.snippet?.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition"
-                    />
-                    <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                      {formatNumber(video.statistics?.viewCount)} views
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-medium text-sm line-clamp-2 group-hover:text-red-600 transition">{video.snippet?.title}</h3>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                      <span>⚡ {getViewVelocity(video) >= 1000000 ? (getViewVelocity(video) / 1000000).toFixed(1) + 'M' : (getViewVelocity(video) / 1000).toFixed(0) + 'K'}/day</span>
-                      <span>•</span>
-                      <span>{getEngagementRate(video).toFixed(2)}% engagement</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <TrendVideosGrid
+            videos={displayVideos}
+            keyword={keyword}
+            initialRegion={region}
+            showRanks={true}
+          />
         </div>
 
         {/* FAQ Section */}
