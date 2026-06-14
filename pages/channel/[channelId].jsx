@@ -537,10 +537,10 @@ function AudienceInterestsSection({ channelId, channelData, analysis }) {
   );
 }
 
-// Static config for Pages Router
+// Static config for Pages Router - 全部动态生成
 export async function getStaticPaths() {
   return {
-    paths: [{ params: { channelId: 'UCBcRF18a7Qf58cCRy5xuWwQ' } }],
+    paths: [], // 不预生成任何页面
     fallback: 'blocking',
   };
 }

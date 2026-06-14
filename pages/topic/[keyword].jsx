@@ -361,15 +361,11 @@ export async function generateMetadata({ params }) {
   }
 }
 
-// 静态路径配置
+// 静态路径配置 - 全部动态生成
 export async function getStaticPaths() {
-  // 预生成一些热门话题
-  const keywords = ['gaming', 'technology', 'music', 'entertainment', 'education', 'sports'];
-  const paths = keywords.map(keyword => ({ params: { keyword } }));
-  
   return {
-    paths,
-    fallback: 'blocking' // 支持 ISR，动态生成其他话题
+    paths: [], // 不预生成任何页面
+    fallback: 'blocking' // 全部动态生成
   };
 }
 

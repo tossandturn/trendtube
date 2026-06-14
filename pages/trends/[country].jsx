@@ -274,13 +274,10 @@ function getCountryName(code) {
   return countries[code] || code.toUpperCase();
 }
 
-// 静态路径配置
+// 静态路径配置 - 全部动态生成
 export async function getStaticPaths() {
-  const countries = ['us', 'jp', 'kr', 'gb', 'hk', 'tw', 'ca', 'au', 'de', 'fr'];
-  const paths = countries.map(country => ({ params: { country } }));
-  
   return {
-    paths,
+    paths: [], // 不预生成任何页面
     fallback: 'blocking'
   };
 }
