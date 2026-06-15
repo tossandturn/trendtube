@@ -22,8 +22,8 @@ import {
 import { getCountryTrendContent, COUNTRIES } from '@/lib/recommendations'
 import { DatasetSchema } from '@/app/components/DatasetSchema'
 import { BreadcrumbSchema } from '@/app/components/ArticleSchema'
-import { TrendVideosGrid } '@/app/components/TrendVideosGrid'
-import { getTrendingVideos } from '@/lib/db'
+import TrendVideosGrid from '@/app/components/TrendVideosGrid'
+import { fetchTrendingVideos } from '@/lib/api-client'
 
 // Valid countries
 const VALID_COUNTRIES = ['US', 'JP', 'KR', 'GB', 'HK', 'TW', 'GLOBAL']
@@ -35,6 +35,15 @@ interface PageProps {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { country } = await params
+
+  // Handle undefined country
+  if (!country) {
+    return {
+      title: 'Country Trends | TubeFission',
+      description: 'Explore YouTube trends by country on TubeFission.'
+    }
+  }
+
   const upperCountry = country.toUpperCase()
 
   if (!VALID_COUNTRIES.includes(upperCountry)) {
@@ -97,15 +106,24 @@ export function generateStaticParams() {
 // Main page component
 export default async function CountryTrendPage({ params }: PageProps) {
   const { country } = await params
+
+  // Validate param exists
+  if (!country) {
+    notFound()
+    return
+  }
+
   const upperCountry = country.toUpperCase()
 
   if (!VALID_COUNTRIES.includes(upperCountry)) {
     notFound()
+    return
   }
 
   const content = getCountryTrendContent(upperCountry)
   if (!content) {
     notFound()
+    return
   }
 
   const today = new Date().toLocaleDateString('en-US', {
@@ -116,7 +134,7 @@ export default async function CountryTrendPage({ params }: PageProps) {
   })
 
   // Get trending videos for this country (in production, fetch from API)
-  const trendingVideos = await getTrendingVideos(upperCountry, 12)
+  const trendingVideos = await fetchTrendingVideos(upperCountry, 12)
 
   // Breadcrumb items
   const breadcrumbItems = [
@@ -418,8 +436,8 @@ export default async function CountryTrendPage({ params }: PageProps) {
           {/* Video Grid Component */}
           <TrendVideosGrid
             videos={trendingVideos}
-            country={upperCountry}
-            emptyMessage={`No trending videos found for ${content.name}. Check back soon for updates.`}
+            keyword={content.name}
+            initialRegion={upperCountry}
           />
         </div>
       </section>

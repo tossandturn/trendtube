@@ -23,8 +23,8 @@ import {
 import { getCountryTrendContent, getVerticalContent, COUNTRIES, VERTICALS } from '@/lib/recommendations'
 import { DatasetSchema } from '@/app/components/DatasetSchema'
 import { BreadcrumbSchema } from '@/app/components/ArticleSchema'
-import { TrendVideosGrid } from '@/app/components/TrendVideosGrid'
-import { getTrendingVideos } from '@/lib/db'
+import TrendVideosGrid from '@/app/components/TrendVideosGrid'
+import { fetchTrendingVideos } from '@/lib/api-client'
 
 // Valid countries and verticals
 const VALID_COUNTRIES = ['US', 'JP', 'KR', 'GB', 'HK', 'TW', 'GLOBAL']
@@ -103,11 +103,19 @@ export function generateStaticParams() {
 // Main page component
 export default async function VerticalTrendPage({ params }: PageProps) {
   const { country, vertical } = await params
+
+  // Validate params exist
+  if (!country || !vertical) {
+    notFound()
+    return
+  }
+
   const upperCountry = country.toUpperCase()
   const lowerVertical = vertical.toLowerCase()
 
   if (!VALID_COUNTRIES.includes(upperCountry) || !VALID_VERTICALS.includes(lowerVertical)) {
     notFound()
+    return
   }
 
   const countryContent = getCountryTrendContent(upperCountry)
@@ -115,6 +123,7 @@ export default async function VerticalTrendPage({ params }: PageProps) {
 
   if (!countryContent || !verticalContent) {
     notFound()
+    return
   }
 
   const today = new Date().toLocaleDateString('en-US', {
@@ -125,7 +134,7 @@ export default async function VerticalTrendPage({ params }: PageProps) {
   })
 
   // Get trending videos filtered by vertical/category (in production)
-  const trendingVideos = await getTrendingVideos(upperCountry, 12)
+  const trendingVideos = await fetchTrendingVideos(upperCountry, 12)
 
   // Breadcrumb items
   const breadcrumbItems = [
@@ -431,8 +440,8 @@ export default async function VerticalTrendPage({ params }: PageProps) {
 
           <TrendVideosGrid
             videos={trendingVideos}
-            country={upperCountry}
-            emptyMessage={`No ${verticalContent.name.toLowerCase()} videos found for ${countryContent.name}. Check back soon for updates.`}
+            keyword={verticalContent.name}
+            initialRegion={upperCountry}
           />
         </div>
       </section>

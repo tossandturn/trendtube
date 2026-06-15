@@ -23,8 +23,8 @@ import {
 } from 'lucide-react'
 import { DatasetSchema } from '@/app/components/DatasetSchema'
 import { BreadcrumbSchema } from '@/app/components/ArticleSchema'
-import { TrendVideosGrid } from '@/app/components/TrendVideosGrid'
-import { getTrendingVideos } from '@/lib/db'
+import TrendVideosGrid from '@/app/components/TrendVideosGrid'
+import { fetchTrendingVideos } from '@/lib/api-client'
 
 interface PageProps {
   params: Promise<{ keyword: string }>
@@ -105,7 +105,7 @@ export default async function BreakoutKeywordPage({ params }: PageProps) {
   }
 
   // Get trending videos for this keyword
-  const trendingVideos = await getTrendingVideos('GLOBAL', 12)
+  const trendingVideos = await fetchTrendingVideos('GLOBAL', 12)
 
   // Breadcrumb items
   const breadcrumbItems = [
@@ -489,8 +489,8 @@ export default async function BreakoutKeywordPage({ params }: PageProps) {
 
           <TrendVideosGrid
             videos={trendingVideos}
-            country="GLOBAL"
-            emptyMessage={`No videos found for "${decodedKeyword}". This trend may be emerging in search before video content.`}
+            keyword={decodedKeyword}
+            initialRegion="GLOBAL"
           />
         </div>
       </section>
