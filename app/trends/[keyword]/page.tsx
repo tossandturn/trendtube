@@ -439,19 +439,43 @@ export default async function TrendPage({ params }: TrendPageProps) {
   // Generate word cloud data from video titles (server-side)
   const wordCloudData = (() => {
     const wordCounts: Record<string, number> = {}
-    const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'me', 'him', 'them', 'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'now'])
+    // Extended stop words including URL components, platform names, and common noise
+    const stopWords = new Set([
+      // Basic stop words
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'me', 'him', 'them', 'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'now', 'also', 'get', 'like', 'one', 'two', 'new', 'use', 'way', 'make', 'see', 'know', 'take', 'come', 'think', 'look', 'time', 'day', 'year', 'work', 'well', 'even', 'back', 'after', 'use', 'her', 'here', 'him', 'his', 'how', 'its', 'our', 'out', 'day', 'did', 'many', 'may', 'over', 'say', 'she', 'try', 'way', 'who', 'boy', 'did', 'man', 'men', 'run', 'she', 'sun', 'way', 'ago', 'cut', 'did', 'dry', 'far', 'ill', 'old', 'sit', 'ago',
+      // URL components
+      'http', 'https', 'www', 'com', 'org', 'net', 'io', 'co', 'be', 'ly', 'watch', 'youtu',
+      // Platform names
+      'youtube', 'facebook', 'twitter', 'instagram', 'tiktok', 'snapchat', 'linkedin', 'reddit', 'tumblr', 'pinterest', 'twitch', 'discord', 'whatsapp', 'telegram', 'vimeo', 'dailymotion',
+      // Video metadata terms
+      'video', 'videos', 'watch', 'watched', 'views', 'view', 'like', 'likes', 'subscribe', 'subscribed', 'channel', 'channels', 'upload', 'uploaded', 'download', 'clip', 'clips', 'trailer', 'trailers', 'full', 'complete', 'hd', 'high', 'quality', 'version', 'official', 'unofficial', 'fan', 'fans', 'made',
+      // Generic content words
+      'content', 'creator', 'creators', 'production', 'produced', 'produce', 'director', 'directed', 'producer', 'music', 'song', 'songs', 'lyric', 'lyrics', 'audio', 'sound', 'album', 'track', 'artist', 'artists', 'art', 'arts', 'film', 'films', 'movie', 'movies', 'series', 'episode', 'episodes', 'season', 'tv', 'show', 'shows', 'live', 'stream', 'streaming',
+      // Common names (Indian, Korean, etc.)
+      'kumar', 'singh', 'sharma', 'verma', 'gupta', 'patel', 'shah', 'lee', 'kim', 'park', 'choi', 'jung', 'kang', 'yoon', 'song', 'sung', 'hong', 'shin', 'khan', 'ahmed', 'ali', 'hassan', 'hussain', 'mohammed', 'muhammad', 'ahmad',
+      // Common words in titles
+      'team', 'want', 'best', 'follow', 'following', 'link', 'click', 'bio', 'description', 'comment', 'comments', 'share', 'viral', 'trending', 'trend', 'trends', 'popular', 'latest', 'recent', 'updated', 'update', 'news', 'info', 'information',
+      // Numbers and misc
+      'ft', 'feat', 'featuring', 'vs', 'versus', 'part', 'vol', 'volume', 'ep', 'edition', 'version', 'remix', 'cover', 'remake', 'original', 'copy', 'first', 'last', 'final', 'next', 'prev', 'previous'
+    ])
 
     displayVideos.forEach((v: any) => {
       const title = v.snippet?.title || ''
       const description = v.snippet?.description || ''
       const text = `${title} ${description}`.toLowerCase()
 
-      // Extract words (including hashtags)
-      const words = text.match(/#[\w]+|\b[a-z]{3,}\b/g) || []
+      // Extract words (including hashtags), but filter out URLs first
+      const textWithoutUrls = text.replace(/https?:\/\/[^\s]+|www\.[^\s]+/g, ' ')
+      const words = textWithoutUrls.match(/#[\w]+|\b[a-z]{3,}\b/g) || []
 
       words.forEach((word: string) => {
         const cleanWord = word.replace(/^#/, '')
-        if (!stopWords.has(cleanWord) && cleanWord.length > 2) {
+        // Skip stop words, pure numbers, and very short words
+        if (!stopWords.has(cleanWord) &&
+            cleanWord.length > 2 &&
+            !/^\d+$/.test(cleanWord) &&
+            !cleanWord.includes('http') &&
+            !cleanWord.includes('www')) {
           wordCounts[cleanWord] = (wordCounts[cleanWord] || 0) + 1
         }
       })
@@ -460,7 +484,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
     return Object.entries(wordCounts)
       .map(([text, value]) => ({ text, value }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 50)
+      .slice(0, 40)
   })()
 
   return (
