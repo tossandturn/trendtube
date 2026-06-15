@@ -5,7 +5,9 @@ import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate, getTagColor, getTagEmoji } from '@/lib/analytics'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
+import { REGION_META } from '@/lib/region'
 import TrendVideosGrid from '@/app/components/TrendVideosGrid'
+import { WordCloud } from '@/app/components/WordCloud'
 
 interface TrendPageProps {
   params: Promise<{
@@ -347,13 +349,16 @@ Content in this category is resonating with audiences due to its relevance and t
 export async function generateMetadata({ params }: TrendPageProps): Promise<Metadata> {
   const { keyword } = await params
   const trendData = TREND_KNOWLEDGE[keyword] || generateTrendData(keyword)
+  const region = await getRegion()
+  const regionLabel = REGION_META[region]?.label || region
+  const today = new Date().toISOString().split('T')[0].replace(/-/g, '.')
 
   return {
-    title: `${trendData.title} | TubeFission`,
-    description: trendData.description,
+    title: `${trendData.title} ${today} ${regionLabel} | TubeFission`,
+    description: `${trendData.description} Trending in ${regionLabel} on ${today}.`,
     keywords: `${keyword} trends, youtube ${keyword}, viral ${keyword} content, ${keyword} creators`,
     openGraph: {
-      title: trendData.title,
+      title: `${trendData.title} - ${regionLabel} ${today}`,
       description: trendData.description,
       type: 'article',
     },
@@ -430,6 +435,33 @@ export default async function TrendPage({ params }: TrendPageProps) {
     engagement: getEngagementRate(v),
     title: v.snippet?.title || '',
   })).filter((d: any) => d.views > 0)
+
+  // Generate word cloud data from video titles (server-side)
+  const wordCloudData = (() => {
+    const wordCounts: Record<string, number> = {}
+    const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'me', 'him', 'them', 'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'now'])
+
+    displayVideos.forEach((v: any) => {
+      const title = v.snippet?.title || ''
+      const description = v.snippet?.description || ''
+      const text = `${title} ${description}`.toLowerCase()
+
+      // Extract words (including hashtags)
+      const words = text.match(/#[\w]+|\b[a-z]{3,}\b/g) || []
+
+      words.forEach((word: string) => {
+        const cleanWord = word.replace(/^#/, '')
+        if (!stopWords.has(cleanWord) && cleanWord.length > 2) {
+          wordCounts[cleanWord] = (wordCounts[cleanWord] || 0) + 1
+        }
+      })
+    })
+
+    return Object.entries(wordCounts)
+      .map(([text, value]) => ({ text, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 50)
+  })()
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
@@ -773,86 +805,114 @@ export default async function TrendPage({ params }: TrendPageProps) {
 
           {/* Recommendations Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {dailyRecommendations.map((rec, idx) => (
-              <div key={rec.id} className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`text-xs font-bold px-2 py-1 rounded ${
-                    rec.potentialViews === 'viral' ? 'bg-red-100 text-red-600' :
-                    rec.potentialViews === 'high' ? 'bg-orange-100 text-orange-600' :
-                    rec.potentialViews === 'medium' ? 'bg-yellow-100 text-yellow-600' :
-                    'bg-green-100 text-green-600'
-                  }`}>
-                    {rec.potentialViews === 'viral' ? '🔥 VIRAL' :
-                     rec.potentialViews === 'high' ? '⚡ HIGH' :
-                     rec.potentialViews === 'medium' ? '💡 MEDIUM' : '📈 STEADY'}
-                  </span>
-                  <span className="text-xs text-gray-400 data-mono">#{idx + 1}</span>
-                </div>
+            {dailyRecommendations.map((rec, idx) => {
+              // Generate trend URL from title
+              const trendKeyword = rec.title.toLowerCase()
+                .replace(/[^a-z0-9\s]/g, '')
+                .split(' ')
+                .slice(0, 3)
+                .join('-')
 
-                {/* Title */}
-                <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
-                  {rec.title}
-                </h3>
-
-                {/* Category */}
-                <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
-                  <span>🏷️</span> {rec.category}
-                </div>
-
-                {/* Metrics */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">Confidence</span>
-                    <span className="font-bold data-mono">{rec.confidence}%</span>
-                  </div>
-                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full" style={{ width: `${rec.confidence}%` }} />
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">Difficulty</span>
-                    <span className={`font-bold ${
-                      rec.difficulty === 'easy' ? 'text-green-600' :
-                      rec.difficulty === 'medium' ? 'text-yellow-600' : 'text-red-600'
+              return (
+                <Link
+                  key={rec.id}
+                  href={`/trends/${trendKeyword}`}
+                  className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group block hover:border-purple-300 transition-all"
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`text-xs font-bold px-2 py-1 rounded ${
+                      rec.potentialViews === 'viral' ? 'bg-red-100 text-red-600' :
+                      rec.potentialViews === 'high' ? 'bg-orange-100 text-orange-600' :
+                      rec.potentialViews === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+                      'bg-green-100 text-green-600'
                     }`}>
-                      {rec.difficulty === 'easy' ? '🟢 Easy' :
-                       rec.difficulty === 'medium' ? '🟡 Medium' : '🔴 Hard'}
+                      {rec.potentialViews === 'viral' ? '🔥 VIRAL' :
+                       rec.potentialViews === 'high' ? '⚡ HIGH' :
+                       rec.potentialViews === 'medium' ? '💡 MEDIUM' : '📈 STEADY'}
                     </span>
+                    <span className="text-xs text-gray-400 data-mono">#{idx + 1}</span>
                   </div>
-                </div>
 
-                {/* Why Trending */}
-                <div className="bg-gray-50 rounded-xl p-3 mb-4">
-                  <div className="text-xs font-bold text-gray-700 mb-1">🧠 Why This Works</div>
-                  <p className="text-xs text-gray-500 leading-relaxed">{rec.whyTrending}</p>
-                </div>
+                  {/* Title */}
+                  <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
+                    {rec.title}
+                  </h3>
 
-                {/* Similar Videos */}
-                {rec.similarVideos.length > 0 && (
-                  <div className="mb-4">
-                    <div className="text-xs font-bold text-gray-700 mb-2">📺 Similar Videos</div>
-                    <div className="space-y-1">
-                      {rec.similarVideos.slice(0, 2).map((v, i) => (
-                        <Link key={i} href={`/video/${v.id}`} className="block text-xs text-gray-500 hover:text-purple-600 transition truncate">
-                          • {v.title.slice(0, 35)}{v.title.length > 35 ? '...' : ''}
-                        </Link>
-                      ))}
+                  {/* Category */}
+                  <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
+                    <span>🏷️</span> {rec.category}
+                  </div>
+
+                  {/* Metrics */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">Confidence</span>
+                      <span className="font-bold data-mono">{rec.confidence}%</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full" style={{ width: `${rec.confidence}%` }} />
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">Difficulty</span>
+                      <span className={`font-bold ${
+                        rec.difficulty === 'easy' ? 'text-green-600' :
+                        rec.difficulty === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {rec.difficulty === 'easy' ? '🟢 Easy' :
+                         rec.difficulty === 'medium' ? '🟡 Medium' : '🔴 Hard'}
+                      </span>
                     </div>
                   </div>
-                )}
 
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1">
-                  {rec.suggestedTags.slice(0, 3).map((tag, i) => (
-                    <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
+                  {/* Why Trending */}
+                  <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                    <div className="text-xs font-bold text-gray-700 mb-1">🧠 Why This Works</div>
+                    <p className="text-xs text-gray-500 leading-relaxed">{rec.whyTrending}</p>
+                  </div>
+
+                  {/* Similar Videos */}
+                  {rec.similarVideos.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-xs font-bold text-gray-700 mb-2">📺 Similar Videos</div>
+                      <div className="space-y-1">
+                        {rec.similarVideos.slice(0, 2).map((v, i) => (
+                          <span key={i} className="block text-xs text-gray-500 truncate">
+                            • {v.title.slice(0, 35)}{v.title.length > 35 ? '...' : ''}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1">
+                    {rec.suggestedTags.slice(0, 3).map((tag, i) => (
+                      <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         </section>
+
+        {/* Trending Keywords Word Cloud */}
+        {wordCloudData.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1 h-6 rounded-full bg-gradient-to-b from-green-400 to-green-600" />
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+                <span className="text-green-600">☁️</span> Trending Keywords
+              </h2>
+            </div>
+            <div className="glass-panel neon-border rounded-2xl p-6 sm:p-8 glow-hover">
+              <WordCloud words={wordCloudData} maxWords={40} />
+            </div>
+          </section>
+        )}
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-8 mb-12">

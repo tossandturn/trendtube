@@ -33,6 +33,11 @@ export async function fetchTrendingVideos(region = 'US', maxResults = 50): Promi
     return []
   }
 
+  // Handle GLOBAL region - fetch from multiple major regions and merge
+  if (region === 'GLOBAL') {
+    return fetchGlobalTrendingVideos(maxResults)
+  }
+
   const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=${maxResults}&regionCode=${region}&key=${API_KEY}`
 
   try {
@@ -72,6 +77,54 @@ export async function fetchTrendingVideos(region = 'US', maxResults = 50): Promi
     })
     return await loadFallbackVideos(region)
   }
+}
+
+/* ---- Fetch global trending videos from multiple regions ---- */
+async function fetchGlobalTrendingVideos(maxResults = 50): Promise<YouTubeVideo[]> {
+  // Fetch from major regions and merge results
+  const majorRegions = ['US', 'GB', 'JP', 'KR', 'DE', 'FR', 'IN', 'BR']
+  const allVideos: YouTubeVideo[] = []
+  const seenIds = new Set<string>()
+
+  // Fetch from each region (limit to avoid quota issues)
+  const fetchPromises = majorRegions.slice(0, 4).map(async (region) => {
+    try {
+      const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=25&regionCode=${region}&key=${API_KEY}`
+      const res = await monitoredFetch(url, {
+        next: { revalidate: 3600 },
+        quotaUnits: 1,
+        retries: 1,
+      })
+
+      if (!res.ok) return []
+
+      const data = await res.json()
+      return data.items || []
+    } catch {
+      return []
+    }
+  })
+
+  const results = await Promise.all(fetchPromises)
+
+  // Merge and deduplicate by video ID
+  for (const videos of results) {
+    for (const video of videos) {
+      if (!seenIds.has(video.id)) {
+        seenIds.add(video.id)
+        allVideos.push(video)
+      }
+    }
+  }
+
+  // Sort by view count for global ranking
+  allVideos.sort((a, b) => {
+    const viewsA = Number(a.statistics?.viewCount || 0)
+    const viewsB = Number(b.statistics?.viewCount || 0)
+    return viewsB - viewsA
+  })
+
+  return allVideos.slice(0, maxResults)
 }
 
 /* ---- Fetch single video by ID ---- */

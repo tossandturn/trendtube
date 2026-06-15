@@ -7,13 +7,25 @@ import { Breadcrumbs } from '@/app/components/Breadcrumbs'
 import { TrendDiscovery } from '@/app/components/TrendDiscovery'
 import { REGIONS, REGION_META } from '@/lib/region'
 
-export const metadata: Metadata = {
-  title: 'Trend Discovery | TubeFission',
-  description: 'Discover viral YouTube trends in real-time. Analyze velocity, breakout potential, and creator opportunities across content categories.',
+function getTodayString() {
+  const today = new Date()
+  return today.toISOString().split('T')[0].replace(/-/g, '.')
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getRegion()
+  const regionLabel = REGION_META[region].label
+  const today = getTodayString()
+
+  return {
+    title: `${regionLabel} Video Trends ${today} | TubeFission`,
+    description: `Discover viral YouTube trends in ${regionLabel} for ${today}. Real-time analytics across trending videos.`,
+  }
 }
 
 export default async function TrendsPage() {
   const region = await getRegion()
+  const today = getTodayString()
   const videos = await fetchTrendingVideos(region, 50)
   const trends = videos.length > 0 ? await extractTrendsFromRegion(region, 50) : []
 
@@ -43,10 +55,12 @@ export default async function TrendsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Real Trend Intelligence
+              {region === 'GLOBAL' ? 'Global' : REGION_META[region].label} Video Trends {today}
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Trends extracted from actual viral videos in {region}. Zero fake data.
+              {region === 'GLOBAL'
+                ? `Global trending videos from major regions worldwide for ${today}. Zero fake data.`
+                : `Trends extracted from actual viral videos in ${region} for ${today}. Zero fake data.`}
             </p>
           </div>
 

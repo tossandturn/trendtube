@@ -432,8 +432,22 @@ export default async function TrendingPage() {
 
           {/* Recommendations Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {dailyRecommendations.map((rec, idx) => (
-              <div key={rec.id} className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group">
+            {dailyRecommendations.map((rec, idx) => {
+              // Generate trend URL from title
+              const trendKeyword = rec.title.toLowerCase()
+                .replace(/[^a-z0-9\s]/g, '')
+                .split(' ')
+                .slice(0, 3)
+                .join('-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '') || 'trend'
+
+              return (
+              <Link
+                key={rec.id}
+                href={`/trends/${trendKeyword}`}
+                className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group block hover:no-underline"
+              >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
                   <span className={`text-xs font-bold px-2 py-1 rounded ${
@@ -508,8 +522,9 @@ export default async function TrendingPage() {
                     </span>
                   ))}
                 </div>
-              </div>
-            ))}
+              </Link>
+              )
+            })}
           </div>
 
           {/* CTA */}
