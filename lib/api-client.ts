@@ -82,40 +82,60 @@ export async function fetchTrendingVideos(region = 'US', maxResults = 50): Promi
 /* ---- Fetch global trending videos from multiple regions ---- */
 async function fetchGlobalTrendingVideos(maxResults = 50): Promise<YouTubeVideo[]> {
   // Fetch from major regions and merge results
-  const majorRegions = ['US', 'GB', 'JP', 'KR', 'DE', 'FR', 'IN', 'BR']
+  const majorRegions = ['US', 'GB', 'JP', 'KR', 'DE', 'FR', 'IN', 'BR', 'AU', 'CA', 'MX', 'ES', 'IT', 'NL', 'SE']
   const allVideos: YouTubeVideo[] = []
   const seenIds = new Set<string>()
 
-  // Fetch from each region (limit to avoid quota issues)
-  const fetchPromises = majorRegions.slice(0, 4).map(async (region) => {
-    try {
-      const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=25&regionCode=${region}&key=${API_KEY}`
-      const res = await monitoredFetch(url, {
-        next: { revalidate: 3600 },
-        quotaUnits: 1,
-        retries: 1,
-      })
+  // Track which regions contributed data
+  const successfulRegions: string[] = []
+  const failedRegions: string[] = []
 
-      if (!res.ok) return []
+  // Fetch from all regions with concurrency limit
+  const concurrencyLimit = 5
+  for (let i = 0; i < majorRegions.length; i += concurrencyLimit) {
+    const batch = majorRegions.slice(i, i + concurrencyLimit)
+    const batchPromises = batch.map(async (region) => {
+      try {
+        const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=${Math.ceil(maxResults / 3)}&regionCode=${region}&key=${API_KEY}`
+        const res = await monitoredFetch(url, {
+          next: { revalidate: 3600 },
+          quotaUnits: 1,
+          retries: 1,
+        })
 
-      const data = await res.json()
-      return data.items || []
-    } catch {
-      return []
-    }
-  })
+        if (!res.ok) {
+          failedRegions.push(region)
+          return []
+        }
 
-  const results = await Promise.all(fetchPromises)
+        const data = await res.json()
+        successfulRegions.push(region)
+        return data.items || []
+      } catch {
+        failedRegions.push(region)
+        return []
+      }
+    })
 
-  // Merge and deduplicate by video ID
-  for (const videos of results) {
-    for (const video of videos) {
-      if (!seenIds.has(video.id)) {
-        seenIds.add(video.id)
-        allVideos.push(video)
+    const batchResults = await Promise.all(batchPromises)
+
+    // Merge results from this batch
+    for (const videos of batchResults) {
+      for (const video of videos) {
+        if (!seenIds.has(video.id)) {
+          seenIds.add(video.id)
+          allVideos.push(video)
+        }
       }
     }
   }
+
+  // Log for debugging
+  console.log(`[GLOBAL] Successfully fetched from ${successfulRegions.length} regions: ${successfulRegions.join(', ')}`)
+  if (failedRegions.length > 0) {
+    console.log(`[GLOBAL] Failed regions: ${failedRegions.join(', ')}`)
+  }
+  console.log(`[GLOBAL] Total unique videos: ${allVideos.length}`)
 
   // Sort by view count for global ranking
   allVideos.sort((a, b) => {
