@@ -1,12 +1,19 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getRegion } from '@/lib/region-server'
+import { REGION_META } from '@/lib/region'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
+import { getTodayString } from '@/lib/recommendations'
 
-export const metadata: Metadata = {
-  title: 'YouTube Gaming Trends | TubeFission',
-  description: 'Discover trending gaming content across Minecraft, GTA, Fortnite, Valorant and more. Real-time analytics for YouTube gaming creators.',
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getRegion()
+  const regionLabel = REGION_META[region]?.label || region
+  const today = getTodayString()
+  return {
+    title: `${regionLabel} YouTube Gaming Trends ${today} | TubeFission`,
+    description: `Discover ${regionLabel} trending gaming content for ${today} across Minecraft, GTA, Fortnite, Valorant and more. Real-time analytics for YouTube gaming creators.`,
+  }
 }
 
 // Gaming categories with their configurations

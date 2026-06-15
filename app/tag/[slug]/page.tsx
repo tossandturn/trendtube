@@ -5,6 +5,7 @@ import AdBanner from '@/app/components/AdBanner'
 import { getEngagementRate, getViewVelocity, getTagColor, getTagEmoji } from '@/lib/analytics'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
+import { REGION_META } from '@/lib/region'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
 
 const TAG_KEYWORDS: Record<string, string[]> = {
@@ -78,10 +79,13 @@ function formatNumber(n: string | undefined) {
 
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
   const { slug } = await params
+  const region = await getRegion()
+  const regionLabel = REGION_META[region]?.label || region
+  const today = getTodayString()
   const name = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
   return {
-    title: `${name} YouTube Potential Today | Viral ${name} Videos & Shorts`,
-    description: `Track the fastest-growing ${name} YouTube potential, viral videos, and Shorts opportunities with real-time creator intelligence.`,
+    title: `${regionLabel} ${name} YouTube Trends ${today} | Viral ${name} Videos`,
+    description: `Track the fastest-growing ${name} YouTube trends in ${regionLabel} for ${today}. Viral videos, Shorts opportunities and real-time creator intelligence.`,
   }
 }
 

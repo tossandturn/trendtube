@@ -2,9 +2,11 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getRegion } from '@/lib/region-server'
+import { REGION_META } from '@/lib/region'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { extractTrendsFromRegion, getTrendsByCategoryFromReal } from '@/lib/trend-extractor'
 import { Breadcrumbs } from '@/app/components/Breadcrumbs'
+import { getTodayString } from '@/lib/recommendations'
 
 interface CategoryPageProps {
   params: Promise<{
@@ -14,10 +16,13 @@ interface CategoryPageProps {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params
+  const region = await getRegion()
+  const regionLabel = REGION_META[region]?.label || region
+  const today = getTodayString()
   const normalized = category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   return {
-    title: `${normalized} Trends | TubeFission`,
-    description: `Real ${normalized} trends extracted from viral YouTube videos. Live data with velocity and breakout analysis.`,
+    title: `${regionLabel} ${normalized} Trends ${today} | TubeFission`,
+    description: `Real ${normalized} trends in ${regionLabel} for ${today} extracted from viral YouTube videos. Live data with velocity and breakout analysis.`,
   }
 }
 

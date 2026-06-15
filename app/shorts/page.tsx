@@ -3,10 +3,17 @@ import Link from 'next/link'
 import { getViewVelocity, getTagEmoji } from '@/lib/analytics'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
+import { REGION_META } from '@/lib/region'
+import { getTodayString } from '@/lib/recommendations'
 
-export const metadata: Metadata = {
-  title: 'Trending YouTube Shorts Today | Viral Shorts Radar',
-  description: 'Explore the latest viral YouTube Shorts, analyze rapid growth videos, and identify creator opportunities before everyone else.',
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getRegion()
+  const regionLabel = REGION_META[region]?.label || region
+  const today = getTodayString()
+  return {
+    title: `${regionLabel} Trending YouTube Shorts ${today} | Viral Shorts Radar`,
+    description: `Explore ${regionLabel} viral YouTube Shorts for ${today}, analyze rapid growth videos, and identify creator opportunities before everyone else.`,
+  }
 }
 
 function formatNumber(n: string | undefined) {

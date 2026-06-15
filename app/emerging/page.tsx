@@ -3,10 +3,17 @@ import Link from 'next/link'
 import { getViewVelocity, getEngagementRate, getTagColor } from '@/lib/analytics'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
+import { REGION_META } from '@/lib/region'
+import { getTodayString } from '@/lib/recommendations'
 
-export const metadata: Metadata = {
-  title: 'Emerging YouTube Trends | Early Momentum Videos',
-  description: 'Discover YouTube videos with early momentum — low views but explosive growth velocity. Catch trends before they go viral.',
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getRegion()
+  const regionLabel = REGION_META[region]?.label || region
+  const today = getTodayString()
+  return {
+    title: `${regionLabel} Emerging YouTube Trends ${today} | Early Momentum Videos`,
+    description: `Discover ${regionLabel} YouTube videos with early momentum for ${today} — low views but explosive growth velocity. Catch trends before they go viral.`,
+  }
 }
 
 function formatNumber(n: string | undefined) {

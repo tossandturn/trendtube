@@ -3,12 +3,18 @@ import Link from 'next/link'
 import { getViewVelocity, getEngagementRate, getTagEmoji } from '@/lib/analytics'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
-import { getRegionLabels } from '@/lib/region'
+import { getRegionLabels, REGION_META } from '@/lib/region'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
 
-export const metadata: Metadata = {
-  title: 'Trending YouTube Videos Today | Real-Time Viral Tracker',
-  description: 'Track the most viral YouTube videos right now. Real-time trending analysis with velocity, engagement, and creator intelligence.',
+export async function generateMetadata(): Promise<Metadata> {
+  const region = await getRegion()
+  const regionLabel = REGION_META[region]?.label || region
+  const today = getTodayString()
+
+  return {
+    title: `${regionLabel} Trending Videos ${today} | Real-Time Viral Tracker`,
+    description: `Track the most viral YouTube videos in ${regionLabel} right now for ${today}. Real-time trending analysis with velocity, engagement, and creator intelligence.`,
+  }
 }
 
 function formatNumber(n: string | undefined) {
@@ -87,9 +93,11 @@ export default async function TrendingPage() {
 
         <div className="mb-8 sm:mb-10">
           <div className="text-gray-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">🔥 TRENDING NOW</div>
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">Trending YouTube Videos</h1>
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">
+            {labels.full} Trending Videos {getTodayString()}
+          </h1>
           <p className="text-gray-500 text-sm sm:text-base max-w-2xl leading-relaxed">
-            The most viral YouTube videos right now, ranked by real-time view count with
+            The most viral YouTube videos in {labels.full} right now, ranked by real-time view count with
             velocity and engagement analysis.
           </p>
         </div>
