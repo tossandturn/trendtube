@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import Link from 'next/link'
 
 interface WordCloudProps {
   words: { text: string; value: number }[]
@@ -45,13 +46,18 @@ export function WordCloud({ words, maxWords = 30 }: WordCloudProps) {
     return [...sortedWords].sort(() => Math.random() - 0.5)
   }, [sortedWords])
 
+  const toSlug = (text: string) => {
+    return text.toLowerCase().replace(/\s+/g, '-')
+  }
+
   return (
     <div className="w-full">
       <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 leading-tight">
         {shuffledWords.map((word, index) => (
-          <span
+          <Link
             key={word.text}
-            className={`inline-block ${getColor(index)} hover:scale-110 transition-transform cursor-pointer`}
+            href={`/trends/${toSlug(word.text)}`}
+            className={`inline-block ${getColor(index)} hover:scale-110 transition-transform`}
             style={{
               fontSize: `${getSize(word.value)}px`,
               fontWeight: word.value > (maxValue * 0.7) ? 700 : word.value > (maxValue * 0.4) ? 600 : 400,
@@ -59,7 +65,7 @@ export function WordCloud({ words, maxWords = 30 }: WordCloudProps) {
             title={`Frequency: ${word.value}`}
           >
             {word.text}
-          </span>
+          </Link>
         ))}
       </div>
     </div>

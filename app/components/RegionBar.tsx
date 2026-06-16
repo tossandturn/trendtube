@@ -77,7 +77,8 @@ export default function RegionBar() {
 
   useEffect(() => {
     setMounted(true)
-    const match = document.cookie.match(/region=([A-Z]{2})/)
+    // Match both 2-letter codes (US, JP) and GLOBAL
+    const match = document.cookie.match(/region=([A-Z]{2,6})/)
     if (match && REGIONS.includes(match[1] as Region)) {
       setRegion(match[1] as Region)
     }
