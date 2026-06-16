@@ -10,7 +10,9 @@ import SmartRecommendations from '@/app/components/SmartRecommendations'
 import CommentAnalysis from '@/app/components/CommentAnalysis'
 import ContentVelocity from '@/app/components/ContentVelocity'
 import VideoExport from '@/app/components/VideoExport'
-import AudienceAnalytics from '@/app/components/AudienceAnalytics'
+import ContentRhythmAnalytics from '@/app/components/ContentRhythmAnalytics'
+import TrafficSourceChart from '@/app/components/TrafficSourceChart'
+import AudienceDemographics from '@/app/components/AudienceDemographics'
 import { fetchVideoById, fetchRelatedVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
@@ -671,16 +673,20 @@ export default async function VideoPage({ params }: VideoPageProps) {
           />
         </div>
 
-        {/* Audience Demographics */}
+        {/* Advanced Video Analytics */}
         <div className="mb-8 sm:mb-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-cyan-400 to-cyan-600" />
+            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-pink-400 to-pink-600" />
             <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-              <span className="text-cyan-600">👥</span> Audience Demographics
+              <span className="text-pink-600">📊</span> Advanced Video Analytics
             </h2>
           </div>
-          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
-            <AudienceAnalytics video={video} />
+          <div className="space-y-6">
+            <ContentRhythmAnalytics />
+            <div className="grid lg:grid-cols-2 gap-6">
+              <TrafficSourceChart />
+              <AudienceDemographics />
+            </div>
           </div>
         </div>
 
