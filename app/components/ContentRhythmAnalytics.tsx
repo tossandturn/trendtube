@@ -330,7 +330,7 @@ export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalytics
             <span className="text-xs font-semibold text-rose-600">Optimization Tips</span>
           </div>
           <p className="text-xs text-rose-800">
-            Completion rate of {data.completionRate}% is performing well.
+            Completion rate of {data.completionRate.toFixed(1)}% is performing well.
             To improve further, consider adding end-screen CTAs or suspense in the final 20%.
           </p>
         </div>
