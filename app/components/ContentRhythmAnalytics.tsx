@@ -217,7 +217,7 @@ export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalytics
         <div className="relative">
           {/* Y-axis labels */}
           <div className="flex">
-            <div className="flex flex-col justify-between h-64 pr-2 text-xs text-gray-400 w-10">
+            <div className="flex flex-col justify-between h-48 sm:h-56 pr-2 text-xs text-gray-400 w-10">
               <span>50%</span>
               <span>40%</span>
               <span>30%</span>
