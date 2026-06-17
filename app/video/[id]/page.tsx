@@ -682,10 +682,10 @@ export default async function VideoPage({ params }: VideoPageProps) {
             </h2>
           </div>
           <div className="space-y-6">
-            <ContentRhythmAnalytics />
+            <ContentRhythmAnalytics video={video} />
             <div className="grid lg:grid-cols-2 gap-6">
-              <TrafficSourceChart />
-              <AudienceDemographics />
+              <TrafficSourceChart video={video} />
+              <AudienceDemographics video={video} />
             </div>
           </div>
         </div>

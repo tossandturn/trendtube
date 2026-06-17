@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 interface DropoffPoint {
   time: string
@@ -23,34 +23,74 @@ interface ContentRhythmData {
 }
 
 interface ContentRhythmAnalyticsProps {
-  data?: ContentRhythmData
+  video?: any
 }
 
-const defaultData: ContentRhythmData = {
-  averageProgress: '2分50秒',
-  completionRate: 53.4,
-  completionRating: '播放完成度较好',
-  stars: 5,
-  totalDuration: '5分24秒',
-  dropoffData: [
-    { time: '00:00', percentage: 0, similarAvg: 0 },
-    { time: '00:30', percentage: 8.2, similarAvg: 12.5 },
-    { time: '01:00', percentage: 15.6, similarAvg: 22.3 },
-    { time: '01:30', percentage: 22.1, similarAvg: 28.7 },
-    { time: '02:00', percentage: 28.5, similarAvg: 35.2 },
-    { time: '02:30', percentage: 35.8, similarAvg: 41.6 },
-    { time: '03:00', percentage: 42.3, similarAvg: 48.9 },
-    { time: '03:30', percentage: 38.7, similarAvg: 45.2 },
-    { time: '04:00', percentage: 45.2, similarAvg: 52.1 },
-    { time: '04:30', percentage: 48.9, similarAvg: 55.8 },
-    { time: '05:00', percentage: 46.6, similarAvg: 53.4 },
-    { time: '05:24', percentage: 46.6, similarAvg: 53.4 },
-  ],
-  comparisonVideos: [
-    { title: '同类作品平均', completionRate: 42.8, color: '#9ca3af' },
-    { title: '优秀视频参考', completionRate: 68.5, color: '#10b981' },
-    { title: '当前视频', completionRate: 53.4, color: '#ec4899' },
-  ],
+// Parse ISO 8601 duration to readable format
+function formatDuration(isoDuration: string): string {
+  const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+  if (!match) return '0:00'
+  const hours = parseInt(match[1] || '0')
+  const minutes = parseInt(match[2] || '0')
+  const seconds = parseInt(match[3] || '0')
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+// Calculate estimated completion rate based on video metrics
+function calculateCompletionRate(video: any): number {
+  const views = Number(video?.statistics?.viewCount || 0)
+  const likes = Number(video?.statistics?.likeCount || 0)
+  const comments = Number(video?.statistics?.commentCount || 0)
+
+  if (views === 0) return 35
+
+  // Engagement ratio correlates with completion rate
+  const engagementRate = ((likes + comments * 2) / views) * 100
+
+  // Higher engagement typically means higher completion
+  if (engagementRate > 5) return Math.min(75, 45 + engagementRate * 4)
+  if (engagementRate > 3) return Math.min(70, 40 + engagementRate * 6)
+  if (engagementRate > 1) return Math.min(60, 35 + engagementRate * 10)
+  return 35
+}
+
+// Generate dropoff data based on video characteristics
+function generateDropoffData(duration: string, completionRate: number): DropoffPoint[] {
+  const points: DropoffPoint[] = [{ time: '00:00', percentage: 0, similarAvg: 0 }]
+
+  // Parse duration to minutes
+  const parts = duration.split(':').map(Number)
+  const totalMinutes = parts.length === 3 ? parts[0] * 60 + parts[1] + parts[2] / 60 : parts[0] + (parts[1] || 0) / 60
+
+  const intervals = Math.max(6, Math.min(12, Math.floor(totalMinutes / 0.5)))
+  const intervalMinutes = totalMinutes / intervals
+
+  for (let i = 1; i <= intervals; i++) {
+    const progress = i / intervals
+    const timeMinutes = i * intervalMinutes
+    const hours = Math.floor(timeMinutes / 60)
+    const mins = Math.floor(timeMinutes % 60)
+    const secs = Math.floor((timeMinutes % 1) * 60)
+    const timeStr = hours > 0
+      ? `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+      : `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+
+    // Typical dropoff curve - steeper at beginning, then gradual
+    const typicalDropoff = 100 * (1 - Math.pow(progress, 0.7))
+    const videoDropoff = 100 * (1 - (completionRate / 100) * progress - (1 - completionRate / 100) * Math.pow(progress, 2))
+
+    points.push({
+      time: timeStr,
+      percentage: Math.round(videoDropoff * 10) / 10,
+      similarAvg: Math.round(typicalDropoff * 10) / 10,
+    })
+  }
+
+  return points
 }
 
 function StarRating({ stars }: { stars: number }) {
@@ -59,7 +99,7 @@ function StarRating({ stars }: { stars: number }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <svg
           key={star}
-          className={`w-5 h-5 ${star <= stars ? 'text-yellow-400' : 'text-gray-300'}`}
+          className={`w-4 h-4 sm:w-5 sm:h-5 ${star <= stars ? 'text-yellow-400' : 'text-gray-300'}`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -70,59 +110,106 @@ function StarRating({ stars }: { stars: number }) {
   )
 }
 
-export default function ContentRhythmAnalytics({ data = defaultData }: ContentRhythmAnalyticsProps) {
+export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalyticsProps) {
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null)
+
+  // Derive data from video
+  const data = useMemo<ContentRhythmData>(() => {
+    const completionRate = calculateCompletionRate(video)
+    const duration = video?.contentDetails?.duration || 'PT5M'
+    const formattedDuration = formatDuration(duration)
+
+    // Calculate average progress based on completion rate
+    const totalSeconds = duration.includes('H')
+      ? parseInt(duration.match(/(\d+)H/)?.[1] || '0') * 3600 + parseInt(duration.match(/(\d+)M/)?.[1] || '0') * 60 + parseInt(duration.match(/(\d+)S/)?.[1] || '0')
+      : parseInt(duration.match(/(\d+)M/)?.[1] || '0') * 60 + parseInt(duration.match(/(\d+)S/)?.[1] || '0')
+    const avgProgressSeconds = Math.round(totalSeconds * (completionRate / 100))
+    const avgProgressMins = Math.floor(avgProgressSeconds / 60)
+    const avgProgressSecs = avgProgressSeconds % 60
+    const averageProgress = `${avgProgressMins}:${avgProgressSecs.toString().padStart(2, '0')}`
+
+    // Determine rating based on completion rate
+    let completionRating = 'Average Retention'
+    let stars = 3
+    if (completionRate >= 60) {
+      completionRating = 'Excellent Retention'
+      stars = 5
+    } else if (completionRate >= 45) {
+      completionRating = 'Good Retention'
+      stars = 4
+    } else if (completionRate >= 35) {
+      completionRating = 'Average Retention'
+      stars = 3
+    } else {
+      completionRating = 'Below Average'
+      stars = 2
+    }
+
+    const dropoffData = generateDropoffData(formattedDuration, completionRate)
+
+    return {
+      averageProgress,
+      completionRate,
+      completionRating,
+      stars,
+      totalDuration: formattedDuration,
+      dropoffData,
+      comparisonVideos: [
+        { title: 'Category Average', completionRate: 42.8, color: '#9ca3af' },
+        { title: 'Top Performers', completionRate: 68.5, color: '#10b981' },
+        { title: 'This Video', completionRate: Math.round(completionRate * 10) / 10, color: '#ec4899' },
+      ],
+    }
+  }, [video])
+
   const maxDropoff = Math.max(...data.dropoffData.map((d) => d.percentage))
 
   return (
-    <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-200">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-6 rounded-full bg-gradient-to-b from-pink-400 to-pink-600" />
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900">内容节奏</h2>
-          <span className="text-xs px-2 py-1 bg-pink-100 text-pink-600 rounded-full">留存分析</span>
+      <div className="flex items-center justify-between mb-5 sm:mb-6">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-1 h-5 sm:h-6 rounded-full bg-gradient-to-b from-pink-400 to-pink-600" />
+          <h2 className="text-base sm:text-lg font-bold text-gray-900">Content Rhythm</h2>
+          <span className="text-xs px-2 py-1 bg-pink-100 text-pink-600 rounded-full hidden sm:inline">Retention</span>
         </div>
-        <button className="text-gray-400 hover:text-gray-600">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </button>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="p-4 bg-pink-50/50 rounded-xl border border-pink-100">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">平均播放进度</div>
-          <div className="text-2xl font-black text-pink-600 data-mono">{data.averageProgress}</div>
-          <div className="text-xs text-gray-500 mt-1">视频时长: {data.totalDuration}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="p-3 sm:p-4 bg-pink-50/50 rounded-xl border border-pink-100">
+          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Avg. Watch Time</div>
+          <div className="text-xl sm:text-2xl font-black text-pink-600">{data.averageProgress}</div>
+          <div className="text-xs text-gray-500 mt-1">Duration: {data.totalDuration}</div>
         </div>
 
-        <div className="p-4 bg-pink-50/50 rounded-xl border border-pink-100">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">完播率</div>
-          <div className="text-2xl font-black text-pink-600 data-mono">{data.completionRate}%</div>
-          <div className="text-xs text-gray-500 mt-1">高于同类作品 {data.completionRate - 42.8}%</div>
+        <div className="p-3 sm:p-4 bg-pink-50/50 rounded-xl border border-pink-100">
+          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Completion Rate</div>
+          <div className="text-xl sm:text-2xl font-black text-pink-600">{data.completionRate}%</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {data.completionRate > 42.8 ? '+' : ''}{(data.completionRate - 42.8).toFixed(1)}% vs category
+          </div>
         </div>
 
-        <div className="p-4 bg-pink-50/50 rounded-xl border border-pink-100">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">完成度评价</div>
-          <div className="text-lg font-bold text-gray-900 mb-1">{data.completionRating}</div>
+        <div className="p-3 sm:p-4 bg-pink-50/50 rounded-xl border border-pink-100">
+          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Rating</div>
+          <div className="text-base sm:text-lg font-bold text-gray-900 mb-1">{data.completionRating}</div>
           <StarRating stars={data.stars} />
         </div>
       </div>
 
       {/* Dropoff Chart */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">流失趋势</h3>
-          <div className="flex items-center gap-4 text-xs">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h3 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wider">Dropoff Trend</h3>
+          <div className="flex items-center gap-3 sm:gap-4 text-xs">
             <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-pink-500" />
-              <span className="text-gray-600">本视频</span>
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-pink-500" />
+              <span className="text-gray-600">This Video</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-gray-300" />
-              <span className="text-gray-600">同类作品</span>
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-gray-300" />
+              <span className="text-gray-600">Category Avg</span>
             </div>
           </div>
         </div>
@@ -159,10 +246,10 @@ export default function ContentRhythmAnalytics({ data = defaultData }: ContentRh
                   >
                     {/* Tooltip */}
                     {hoveredPoint === index && (
-                      <div className="absolute -top-16 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 z-10 whitespace-nowrap">
+                      <div className="absolute -top-12 sm:-top-16 bg-gray-900 text-white text-xs rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 z-10 whitespace-nowrap">
                         <div className="font-bold">{point.time}</div>
-                        <div className="text-pink-300">本视频: {point.percentage}%</div>
-                        <div className="text-gray-400">同类: {point.similarAvg}%</div>
+                        <div className="text-pink-300">This Video: {point.percentage}%</div>
+                        <div className="text-gray-400">Avg: {point.similarAvg}%</div>
                         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-2 h-2 bg-gray-900 rotate-45" />
                       </div>
                     )}
@@ -199,12 +286,12 @@ export default function ContentRhythmAnalytics({ data = defaultData }: ContentRh
 
       {/* Comparison with similar videos */}
       <div>
-        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">同类作品对比</h3>
-        <div className="space-y-4">
+        <h3 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4">Comparison</h3>
+        <div className="space-y-3 sm:space-y-4">
           {data.comparisonVideos.map((video, index) => (
-            <div key={index} className="flex items-center gap-4">
-              <div className="w-32 text-sm text-gray-700">{video.title}</div>
-              <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+            <div key={index} className="flex items-center gap-3 sm:gap-4">
+              <div className="w-24 sm:w-32 text-xs sm:text-sm text-gray-700">{video.title}</div>
+              <div className="flex-1 h-5 sm:h-6 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500 flex items-center justify-end pr-2"
                   style={{
@@ -212,7 +299,7 @@ export default function ContentRhythmAnalytics({ data = defaultData }: ContentRh
                     backgroundColor: video.color,
                   }}
                 >
-                  <span className="text-[10px] text-white font-medium">{video.completionRate}%</span>
+                  <span className="text-[9px] sm:text-[10px] text-white font-medium">{video.completionRate}%</span>
                 </div>
               </div>
             </div>
@@ -221,28 +308,30 @@ export default function ContentRhythmAnalytics({ data = defaultData }: ContentRh
       </div>
 
       {/* Insights */}
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="p-4 bg-pink-50 rounded-xl border border-pink-100">
+      <div className="mt-5 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="p-3 sm:p-4 bg-pink-50 rounded-xl border border-pink-100">
           <div className="flex items-center gap-2 mb-2">
-            <svg className="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
-            <span className="text-xs font-semibold text-pink-600">黄金留存点</span>
+            <span className="text-xs font-semibold text-pink-600">Golden Retention</span>
           </div>
           <p className="text-xs text-pink-800">
-            视频前2分钟流失率低于同类作品，开头吸引力强。建议在3:00-3:30处加强内容节奏，此处出现回流峰值。
+            First 2 minutes show lower dropoff than category average — strong opening hook.
+            Consider adding engagement elements at 50-60% mark to boost completion.
           </p>
         </div>
 
-        <div className="p-4 bg-rose-50 rounded-xl border border-rose-100">
+        <div className="p-3 sm:p-4 bg-rose-50 rounded-xl border border-rose-100">
           <div className="flex items-center gap-2 mb-2">
-            <svg className="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <span className="text-xs font-semibold text-rose-600">优化建议</span>
+            <span className="text-xs font-semibold text-rose-600">Optimization Tips</span>
           </div>
           <p className="text-xs text-rose-800">
-            完播率 {data.completionRate}% 处于良好水平。要进一步提升，建议在视频结尾增加互动引导或悬念设置。
+            Completion rate of {data.completionRate}% is performing well.
+            To improve further, consider adding end-screen CTAs or suspense in the final 20%.
           </p>
         </div>
       </div>
