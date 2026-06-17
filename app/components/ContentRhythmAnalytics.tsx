@@ -185,7 +185,7 @@ export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalytics
 
         <div className="p-3 sm:p-4 bg-pink-50/50 rounded-xl border border-pink-100">
           <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Completion Rate</div>
-          <div className="text-xl sm:text-2xl font-black text-pink-600">{data.completionRate}%</div>
+          <div className="text-xl sm:text-2xl font-black text-pink-600">{data.completionRate.toFixed(1)}%</div>
           <div className="text-xs text-gray-500 mt-1">
             {data.completionRate > 42.8 ? '+' : ''}{(data.completionRate - 42.8).toFixed(1)}% vs category
           </div>
@@ -299,7 +299,7 @@ export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalytics
                     backgroundColor: video.color,
                   }}
                 >
-                  <span className="text-[9px] sm:text-[10px] text-white font-medium">{video.completionRate}%</span>
+                  <span className="text-[9px] sm:text-[10px] text-white font-medium">{video.completionRate.toFixed(1)}%</span>
                 </div>
               </div>
             </div>
