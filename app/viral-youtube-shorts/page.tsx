@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
-import { fetchTrendingVideos } from '@/lib/api-client'
+import { searchYouTubeMulti } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 
 export const metadata: Metadata = {
@@ -19,13 +19,13 @@ function formatNumber(n: string | undefined) {
 
 export default async function ViralShortsPage() {
   const region = await getRegion()
-  const videos = await fetchTrendingVideos(region, 50)
+  const videos = await searchYouTubeMulti(
+    ['youtube shorts trending', 'viral shorts'],
+    25,
+    'viewCount'
+  )
 
-  const shorts = videos.filter((v: any) => {
-    const title = v.snippet?.title?.toLowerCase() || ''
-    return title.includes('shorts') || title.includes('#shorts') || title.includes('short')
-  })
-  const finalShorts = shorts.length > 0 ? shorts : videos.slice(0, 15)
+  const finalShorts = videos.slice(0, 15)
 
   return (
     <main className="min-h-screen bg-[#070707] text-white terminal-grid relative overflow-hidden">

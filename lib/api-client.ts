@@ -349,6 +349,70 @@ export async function fetchVideoComments(videoId: string, maxResults = 100): Pro
   }
 }
 
+/* ---- Search YouTube by keyword ---- */
+export async function searchYouTube(query: string, maxResults = 25, order: 'relevance' | 'viewCount' | 'date' = 'relevance'): Promise<YouTubeVideo[]> {
+  if (!API_KEY) return []
+
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=${maxResults}&order=${order}&key=${API_KEY}`
+
+  try {
+    const res = await monitoredFetch(url, {
+      next: { revalidate: 1800 },
+      quotaUnits: 100, // search.list costs 100 units
+      retries: 2,
+    })
+
+    if (!res.ok) return []
+    const data = await res.json()
+    const items = data.items || []
+
+    if (items.length === 0) return []
+
+    // Fetch statistics for found videos
+    const videoIds = items.map((item: any) => item.id?.videoId).filter(Boolean)
+    if (videoIds.length === 0) return []
+
+    const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds.join(',')}&key=${API_KEY}`
+    const statsRes = await monitoredFetch(statsUrl, {
+      next: { revalidate: 1800 },
+      quotaUnits: 1,
+      retries: 2,
+    })
+
+    if (!statsRes.ok) {
+      // Return search results without stats
+      return items.map((item: any) => ({
+        id: item.id?.videoId || '',
+        snippet: item.snippet,
+        statistics: {},
+      }))
+    }
+
+    const statsData = await statsRes.json()
+    return statsData.items || []
+  } catch {
+    return []
+  }
+}
+
+/* ---- Batch search multiple keywords and deduplicate ---- */
+export async function searchYouTubeMulti(queries: string[], maxPerQuery = 25, order: 'relevance' | 'viewCount' | 'date' = 'relevance'): Promise<YouTubeVideo[]> {
+  const seen = new Set<string>()
+  const results: YouTubeVideo[] = []
+
+  for (const query of queries) {
+    const videos = await searchYouTube(query, maxPerQuery, order)
+    for (const video of videos) {
+      if (!seen.has(video.id)) {
+        seen.add(video.id)
+        results.push(video)
+      }
+    }
+  }
+
+  return results
+}
+
 /* ---- Batch fetch for multiple regions ---- */
 export async function fetchMultiRegion(regions: string[]): Promise<Record<string, YouTubeVideo[]>> {
   const result: Record<string, YouTubeVideo[]> = {}

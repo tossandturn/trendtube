@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
-import { fetchTrendingVideos } from '@/lib/api-client'
+import { searchYouTubeMulti } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 
 export const metadata: Metadata = {
@@ -31,14 +31,13 @@ function getMusicInsights(title: string): string {
 
 export default async function MusicTrendsPage() {
   const region = await getRegion()
-  const videos = await fetchTrendingVideos(region, 50)
+  const videos = await searchYouTubeMulti(
+    ['trending music', 'viral songs', 'music covers'],
+    25,
+    'viewCount'
+  )
 
-  const musicVideos = videos.filter((v: any) => {
-    const text = `${v.snippet?.title || ''} ${v.snippet?.description || ''}`.toLowerCase()
-    return ['music', 'song', 'cover', 'remix', 'beat', 'production', 'reaction', 'mashup', 'acoustic'].some((k) => text.includes(k))
-  })
-
-  const sorted = [...musicVideos].sort((a: any, b: any) => {
+  const sorted = [...videos].sort((a: any, b: any) => {
     const velA = getViewVelocity(a)
     const velB = getViewVelocity(b)
     return velB - velA

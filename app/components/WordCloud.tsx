@@ -8,6 +8,20 @@ interface WordCloudProps {
   maxWords?: number
 }
 
+// Deterministic shuffle using string hash (replaces Math.random)
+function deterministicShuffle<T>(array: T[]): T[] {
+  const result = [...array]
+  // Use a simple hash-based shuffle for determinism
+  for (let i = result.length - 1; i > 0; i--) {
+    // Generate pseudo-random index based on item properties
+    const item = result[i]
+    const hash = String(item).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    const j = hash % (i + 1)
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+
 export function WordCloud({ words, maxWords = 30 }: WordCloudProps) {
   const sortedWords = useMemo(() => {
     return words
@@ -41,9 +55,9 @@ export function WordCloud({ words, maxWords = 30 }: WordCloudProps) {
     return colors[index % colors.length]
   }
 
-  // Shuffle words for better layout
+  // Use deterministic shuffle instead of Math.random
   const shuffledWords = useMemo(() => {
-    return [...sortedWords].sort(() => Math.random() - 0.5)
+    return deterministicShuffle(sortedWords)
   }, [sortedWords])
 
   const toSlug = (text: string) => {

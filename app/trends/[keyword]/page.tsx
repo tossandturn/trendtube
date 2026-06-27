@@ -587,6 +587,18 @@ export default async function TrendPage({ params }: TrendPageProps) {
           </section>
         )}
 
+        {/* Top Videos in This Trend - Dynamic Grid with Filters */}
+        {displayVideos.length > 0 && (
+          <div className="mb-12">
+            <TrendVideosGrid
+              videos={displayVideos}
+              keyword={keyword}
+              initialRegion={region}
+              showRanks={true}
+            />
+          </div>
+        )}
+
         {/* Professional Analytics Dashboard */}
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-6">
@@ -1022,16 +1034,6 @@ export default async function TrendPage({ params }: TrendPageProps) {
               </Link>
             </div>
           </div>
-        </div>
-
-        {/* Top Videos - Dynamic Grid with Filters */}
-        <div className="mb-12">
-          <TrendVideosGrid
-            videos={displayVideos}
-            keyword={keyword}
-            initialRegion={region}
-            showRanks={true}
-          />
         </div>
 
         {/* FAQ Section */}

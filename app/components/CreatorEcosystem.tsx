@@ -4,14 +4,28 @@ import { useState, useEffect } from 'react'
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer } from 'recharts'
 
 interface Creator {
-  name: string
   id: string
-  avatar: string
+  name: string
   score: number
   growth: number
   niche: string
   tags: string[]
   potential: 'high' | 'medium' | 'emerging'
+  totalViews: number
+  avgEngagement: string
+}
+
+interface RadarDataPoint {
+  subject: string
+  A: number
+  fullMark: number
+}
+
+interface EcosystemStats {
+  activeCreators: number
+  newCreatorGrowth: number
+  avgContentPerWeek: string
+  transitionSuccess: number
 }
 
 interface CreatorEcosystemProps {
@@ -20,86 +34,67 @@ interface CreatorEcosystemProps {
 
 export default function CreatorEcosystem({ category }: CreatorEcosystemProps) {
   const [creators, setCreators] = useState<Creator[]>([])
+  const [radarData, setRadarData] = useState<RadarDataPoint[]>([])
+  const [stats, setStats] = useState<EcosystemStats>({
+    activeCreators: 0,
+    newCreatorGrowth: 0,
+    avgContentPerWeek: '0',
+    transitionSuccess: 0,
+  })
   const [trendDirection, setTrendDirection] = useState<string>('')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    setLoading(true)
-    setTimeout(() => {
-      const mockCreators: Creator[] = [
-        {
-          name: 'Tech Frontier',
-          id: 'creator1',
-          avatar: '',
-          score: 92,
-          growth: 45,
-          niche: 'AI Tech',
-          tags: ['AI', 'Tech', 'Tutorial'],
-          potential: 'high',
-        },
-        {
-          name: 'Geek Park',
-          id: 'creator2',
-          avatar: '',
-          score: 88,
-          growth: 38,
-          niche: 'Tech Reviews',
-          tags: ['Review', 'Tech', 'Hardware'],
-          potential: 'high',
-        },
-        {
-          name: 'Future Classroom',
-          id: 'creator3',
-          avatar: '',
-          score: 75,
-          growth: 68,
-          niche: 'Online Education',
-          tags: ['Education', 'Knowledge', 'Course'],
-          potential: 'emerging',
-        },
-        {
-          name: 'Code Poet',
-          id: 'creator4',
-          avatar: '',
-          score: 82,
-          growth: 52,
-          niche: 'Programming',
-          tags: ['Coding', 'Tutorial', 'Tech'],
-          potential: 'high',
-        },
-        {
-          name: 'Design Mind',
-          id: 'creator5',
-          avatar: '',
-          score: 78,
-          growth: 35,
-          niche: 'UI Design',
-          tags: ['Design', 'UI', 'Creative'],
-          potential: 'medium',
-        },
-      ]
-      setCreators(mockCreators)
-      setTrendDirection('Transitioning from tech reviews to AI content, education trending upward')
-      setLoading(false)
-    }, 800)
+    async function fetchEcosystemData() {
+      setLoading(true)
+      setError('')
+
+      try {
+        const response = await fetch('/api/creator-ecosystem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch ecosystem data')
+        }
+
+        const data = await response.json()
+        setCreators(data.creators || [])
+        setRadarData(data.radarData || [])
+        setStats(data.stats || { activeCreators: 0, newCreatorGrowth: 0, avgContentPerWeek: '0', transitionSuccess: 0 })
+        setTrendDirection(data.trendDirection || '')
+      } catch (err) {
+        setError('Failed to load creator ecosystem data')
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEcosystemData()
   }, [category])
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl p-6 animate-pulse">
-        <div className="h-64 bg-gray-100 rounded-lg"></div>
+      <div className="bg-white rounded-xl p-6">
+        <div className="h-64 bg-gray-100 rounded-lg animate-pulse"></div>
+        <div className="mt-4 h-4 bg-gray-100 rounded w-3/4 animate-pulse"></div>
+        <div className="mt-2 h-4 bg-gray-100 rounded w-1/2 animate-pulse"></div>
       </div>
     )
   }
 
-  const radarData = [
-    { subject: 'Content Quality', A: 85, fullMark: 100 },
-    { subject: 'Growth Rate', A: 72, fullMark: 100 },
-    { subject: 'Fan Loyalty', A: 78, fullMark: 100 },
-    { subject: 'Engagement', A: 68, fullMark: 100 },
-    { subject: 'Business Potential', A: 82, fullMark: 100 },
-    { subject: 'Innovation', A: 75, fullMark: 100 },
-  ]
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl p-6 text-center">
+        <p className="text-red-600 mb-2">{error}</p>
+        <p className="text-sm text-gray-500">Showing {category} category ecosystem data</p>
+      </div>
+    )
+  }
 
   const getPotentialBadge = (potential: string) => {
     switch (potential) {
@@ -129,7 +124,7 @@ export default function CreatorEcosystem({ category }: CreatorEcosystemProps) {
         <h4 className="font-semibold text-indigo-900 mb-1 flex items-center gap-2">
           <span>🔄</span> Trend Direction
         </h4>
-        <p className="text-sm text-indigo-700">{trendDirection}</p>
+        <p className="text-sm text-indigo-700">{trendDirection || `Analyzing ${category} creator trends...`}</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -137,26 +132,35 @@ export default function CreatorEcosystem({ category }: CreatorEcosystemProps) {
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="text-sm font-semibold text-gray-600 mb-3 text-center">Creator Capability Model</h4>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} />
-                <Radar
-                  name="Average"
-                  dataKey="A"
-                  stroke="#6366f1"
-                  fill="#6366f1"
-                  fillOpacity={0.3}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
+            {radarData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} />
+                  <Radar
+                    name="Average"
+                    dataKey="A"
+                    stroke="#6366f1"
+                    fill="#6366f1"
+                    fillOpacity={0.3}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                No data available
+              </div>
+            )}
           </div>
         </div>
 
         {/* Creator List */}
         <div className="space-y-3">
           <h4 className="text-sm font-semibold text-gray-600 mb-3">Rising Creators</h4>
+          {creators.length === 0 && (
+            <p className="text-sm text-gray-500 text-center py-4">No creators found for this category</p>
+          )}
           {creators.map((creator) => {
             const badge = getPotentialBadge(creator.potential)
             return (
@@ -168,16 +172,16 @@ export default function CreatorEcosystem({ category }: CreatorEcosystemProps) {
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold">
                     {creator.name[0]}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-900">{creator.name}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${badge.color}`}>
+                      <span className="font-semibold text-gray-900 truncate">{creator.name}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${badge.color} whitespace-nowrap`}>
                         {badge.icon} {badge.label}
                       </span>
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5">{creator.niche}</div>
                     <div className="flex gap-1 mt-1">
-                      {creator.tags.map((tag) => (
+                      {creator.tags.slice(0, 3).map((tag) => (
                         <span
                           key={tag}
                           className="text-xs px-1.5 py-0.5 bg-white rounded border border-gray-200 text-gray-600"
@@ -187,7 +191,7 @@ export default function CreatorEcosystem({ category }: CreatorEcosystemProps) {
                       ))}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right whitespace-nowrap">
                     <div className="text-lg font-bold text-indigo-600">{creator.score}</div>
                     <div className="text-xs text-green-600">+{creator.growth}%</div>
                   </div>
@@ -201,21 +205,25 @@ export default function CreatorEcosystem({ category }: CreatorEcosystemProps) {
       {/* Ecosystem Insights */}
       <div className="mt-6 grid grid-cols-4 gap-3">
         <div className="bg-blue-50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-blue-600">1,247</div>
+          <div className="text-2xl font-bold text-blue-600">{stats.activeCreators.toLocaleString()}</div>
           <div className="text-xs text-blue-700">Active Creators</div>
         </div>
         <div className="bg-green-50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-green-600">23%</div>
+          <div className="text-2xl font-bold text-green-600">{stats.newCreatorGrowth}%</div>
           <div className="text-xs text-green-700">New Creator Growth</div>
         </div>
         <div className="bg-purple-50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-purple-600">5.2</div>
+          <div className="text-2xl font-bold text-purple-600">{stats.avgContentPerWeek}</div>
           <div className="text-xs text-purple-700">Avg Content/Week</div>
         </div>
         <div className="bg-amber-50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-amber-600">68%</div>
+          <div className="text-2xl font-bold text-amber-600">{stats.transitionSuccess}%</div>
           <div className="text-xs text-amber-700">Transition Success</div>
         </div>
+      </div>
+
+      <div className="mt-4 text-xs text-gray-400 text-center">
+        📊 Data sourced from real YouTube channels in this category
       </div>
     </div>
   )

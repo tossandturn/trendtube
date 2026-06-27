@@ -4,65 +4,55 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 interface AIOutput {
-  type: string
+  type: 'title' | 'hook' | 'thumbnail' | 'script'
   content: string
-  loading?: boolean
+  source: string
 }
 
 export default function AIAssistantPage() {
   const [topic, setTopic] = useState('')
   const [outputs, setOutputs] = useState<AIOutput[]>([])
   const [activeTool, setActiveTool] = useState<'title' | 'hook' | 'thumbnail' | 'script'>('title')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const generateContent = async () => {
     if (!topic) return
 
-    setOutputs(prev => [...prev, { type: activeTool, content: '', loading: true }])
+    setLoading(true)
+    setError('')
+    setOutputs(prev => [...prev, { type: activeTool, content: '', source: '' }])
 
-    // Simulate AI generation
-    setTimeout(() => {
-      const mockOutputs: Record<string, string[]> = {
-        title: [
-          `I Tried ${topic} for 30 Days (Results)`,
-          `The ${topic} Secret No One Talks About`,
-          `${topic} Changed Everything for My Channel`,
-          `Stop Making These ${topic} Mistakes`,
-          `Why ${topic} is Going Viral Right Now`,
-        ],
-        hook: [
-          `Wait until you see what happened when I tried ${topic}...`,
-          `This ${topic} hack saved my channel.`,
-          `I spent 100 hours testing ${topic} so you don't have to.`,
-          `${topic} experts hate this trick.`,
-          `The truth about ${topic} that nobody wants to admit.`,
-        ],
-        thumbnail: [
-          '🎨 Shock expression + split screen showing before/after',
-          '🎨 Arrow pointing to surprising result with bold text',
-          '🎨 You-style face reaction + topic visual',
-          '🎨 Question mark + mysterious element from topic',
-          '🎨 Results number prominently displayed with reaction',
-        ],
-        script: [
-          `[Hook] - Start with the most surprising result\n[Problem] - Explain why most people fail at ${topic}\n[Solution] - Share your unique approach\n[Proof] - Show actual results/data\n[CTA] - Encourage viewers to try it`,
-        ],
+    try {
+      const response = await fetch('/api/ai-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, type: activeTool }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate content')
       }
 
-      const options = mockOutputs[activeTool]
-      const content = options[Math.floor(Math.random() * options.length)]
+      const data = await response.json()
 
       setOutputs(prev => [
         ...prev.slice(0, -1),
-        { type: activeTool, content }
+        { type: data.type, content: data.content, source: data.source }
       ])
-    }, 1500)
+    } catch (err) {
+      setError('Failed to generate content. Please try again.')
+      setOutputs(prev => prev.slice(0, -1))
+    } finally {
+      setLoading(false)
+    }
   }
 
   const tools = [
-    { id: 'title' as const, name: 'Title Generator', icon: '✍️', desc: 'Generate high-CTR video titles' },
-    { id: 'hook' as const, name: 'Hook Generator', icon: '🎣', desc: 'Create engaging first 5 seconds' },
-    { id: 'thumbnail' as const, name: 'Thumbnail Ideas', icon: '🖼️', desc: 'AI thumbnail concepts' },
-    { id: 'script' as const, name: 'Script Outlines', icon: '📝', desc: 'Video structure templates' },
+    { id: 'title' as const, name: 'Title Generator', icon: '✍️', desc: 'Generate high-CTR video titles based on trending patterns' },
+    { id: 'hook' as const, name: 'Hook Generator', icon: '🎣', desc: 'Create engaging hooks from top-performing videos' },
+    { id: 'thumbnail' as const, name: 'Thumbnail Ideas', icon: '🖼️', desc: 'AI thumbnail concepts from viral patterns' },
+    { id: 'script' as const, name: 'Script Outlines', icon: '📝', desc: 'Video structure templates from proven content' },
   ]
 
   return (
@@ -71,7 +61,7 @@ export default function AIAssistantPage() {
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold mb-2">AI Creator Assistant</h1>
-          <p className="text-gray-600">Generate titles, hooks, thumbnails, and scripts powered by trend data</p>
+          <p className="text-gray-600">Generate titles, hooks, thumbnails, and scripts powered by real YouTube trend data</p>
         </div>
 
         {/* Tool Selection */}
@@ -108,14 +98,17 @@ export default function AIAssistantPage() {
             />
             <button
               onClick={generateContent}
-              disabled={!topic || outputs.some(o => o.loading)}
+              disabled={!topic || loading}
               className="px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition disabled:opacity-50"
             >
-              {outputs.some(o => o.loading) ? 'Generating...' : 'Generate'}
+              {loading ? 'Analyzing...' : 'Generate'}
             </button>
           </div>
+          {error && (
+            <p className="text-sm text-red-600 mt-2">{error}</p>
+          )}
           <p className="text-sm text-gray-500 mt-2">
-            💡 Tip: Include specific details like niche, target audience, or content type for better results
+            💡 Powered by real YouTube data: We analyze top-performing videos in your niche to generate proven suggestions
           </p>
         </div>
 
@@ -125,10 +118,10 @@ export default function AIAssistantPage() {
             <h2 className="font-bold text-lg">Generated {tools.find(t => t.id === activeTool)?.name}s</h2>
             {outputs.map((output, i) => (
               <div key={i} className="bg-white rounded-xl p-4 border border-gray-200">
-                {output.loading ? (
+                {output.content === '' ? (
                   <div className="flex items-center gap-3 text-gray-500">
                     <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                    Generating {tools.find(t => t.id === output.type)?.name.toLowerCase()}...
+                    Analyzing top-performing {topic} videos...
                   </div>
                 ) : (
                   <div className="flex items-start justify-between gap-4">
@@ -137,6 +130,11 @@ export default function AIAssistantPage() {
                         {tools.find(t => t.id === output.type)?.name}
                       </div>
                       <div className="text-gray-900 whitespace-pre-line">{output.content}</div>
+                      {output.source && (
+                        <div className="text-xs text-gray-500 mt-2 bg-gray-100 px-2 py-1 rounded">
+                          📊 {output.source}
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => navigator.clipboard.writeText(output.content)}
@@ -150,6 +148,33 @@ export default function AIAssistantPage() {
             ))}
           </div>
         )}
+
+        {/* How It Works */}
+        <div className="mt-12 bg-gray-50 rounded-2xl p-6 border border-gray-200">
+          <h3 className="font-bold text-lg mb-4">How It Works</h3>
+          <div className="grid sm:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-2 font-bold">1</div>
+              <div className="font-medium text-sm">Search</div>
+              <div className="text-xs text-gray-500">We search YouTube for top videos in your topic</div>
+            </div>
+            <div className="text-center">
+              <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-2 font-bold">2</div>
+              <div className="font-medium text-sm">Analyze</div>
+              <div className="text-xs text-gray-500">Our AI analyzes patterns, keywords, and structures</div>
+            </div>
+            <div className="text-center">
+              <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-2 font-bold">3</div>
+              <div className="font-medium text-sm">Generate</div>
+              <div className="text-xs text-gray-500">Proven suggestions based on real performance data</div>
+            </div>
+            <div className="text-center">
+              <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-2 font-bold">4</div>
+              <div className="font-medium text-sm">Create</div>
+              <div className="text-xs text-gray-500">Use data-driven insights for your content</div>
+            </div>
+          </div>
+        </div>
 
         {/* Tips Section */}
         <div className="mt-12 grid sm:grid-cols-2 gap-6">

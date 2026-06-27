@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
-import { fetchTrendingVideos } from '@/lib/api-client'
+import { searchYouTubeMulti } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 
 export const metadata: Metadata = {
@@ -30,7 +30,11 @@ function getGamingInsights(title: string): string {
 
 export default async function GamingTrendsPage() {
   const region = await getRegion()
-  const videos = await fetchTrendingVideos(region, 50)
+  const videos = await searchYouTubeMulti(
+    ['gaming trending', 'gameplay highlights', 'gaming news'],
+    25,
+    'viewCount'
+  )
 
   const gamingVideos = videos.filter((v: any) => {
     const text = `${v.snippet?.title || ''} ${v.snippet?.description || ''}`.toLowerCase()

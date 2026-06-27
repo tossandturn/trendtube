@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
-import { fetchTrendingVideos } from '@/lib/api-client'
+import { searchYouTubeMulti } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 
 export const metadata: Metadata = {
@@ -30,16 +30,13 @@ function getMrBeastInsights(title: string): string {
 
 export default async function MrBeastStylePage() {
   const region = await getRegion()
-  const videos = await fetchTrendingVideos(region, 50)
+  const videos = await searchYouTubeMulti(
+    ['challenge video', 'last to leave', 'survive 24 hours', 'extreme challenge'],
+    20,
+    'viewCount'
+  )
 
-  // Filter for challenge/high-stakes content
-  const challengeVideos = videos.filter((v: any) => {
-    const text = `${v.snippet?.title || ''} ${v.snippet?.description || ''}`.toLowerCase()
-    const keywords = ['challenge', 'last to', '$1000', '$10000', '$100000', 'survive', 'extreme', 'giveaway', '24 hours', '48 hours', 'wins']
-    return keywords.some((k) => text.includes(k))
-  })
-
-  const sorted = [...challengeVideos].sort((a: any, b: any) => {
+  const sorted = [...videos].sort((a: any, b: any) => {
     const velA = getViewVelocity(a)
     const velB = getViewVelocity(b)
     return velB - velA

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getViewVelocity, getTagEmoji } from '@/lib/analytics'
-import { fetchTrendingVideos } from '@/lib/api-client'
+import { searchYouTubeMulti } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { REGION_META } from '@/lib/region'
 import { getTodayString } from '@/lib/recommendations'
@@ -49,12 +49,12 @@ function getHookStyle(title: string): string {
 
 export default async function ShortsPage() {
   const region = await getRegion()
-  const videos = await fetchTrendingVideos(region, 50)
-  const shortsVideos = videos.filter((video: any) => {
-    const title = video.snippet?.title?.toLowerCase() || ''
-    return title.includes('shorts') || title.includes('#shorts') || title.includes('short')
-  })
-  const finalShorts = shortsVideos.length > 0 ? shortsVideos : videos
+  const videos = await searchYouTubeMulti(
+    ['youtube shorts trending', 'viral shorts'],
+    25,
+    'viewCount'
+  )
+  const finalShorts = videos.length > 0 ? videos : []
 
   return (
     <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">

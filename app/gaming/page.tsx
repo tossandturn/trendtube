@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { getRegion } from '@/lib/region-server'
 import { REGION_META } from '@/lib/region'
-import { fetchTrendingVideos } from '@/lib/api-client'
+import { searchYouTubeMulti } from '@/lib/api-client'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
 import { getTodayString } from '@/lib/recommendations'
 
@@ -125,7 +125,13 @@ function getThumbnailUrl(video: any): string {
 
 export default async function GamingTrendsPage() {
   const region = await getRegion()
-  const videos = await fetchTrendingVideos(region, 50)
+
+  // Search for actual gaming content instead of filtering general trending
+  const videos = await searchYouTubeMulti(
+    ['gaming trending', 'gameplay highlights', 'gaming news'],
+    25,
+    'viewCount'
+  )
 
   // Organize videos by gaming category
   const categoryVideos: Record<string, any[]> = {}
