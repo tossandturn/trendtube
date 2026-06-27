@@ -202,19 +202,19 @@ export default function CreatorEcosystem({ category }: CreatorEcosystemProps) {
       <div className="mt-6 grid grid-cols-4 gap-3">
         <div className="bg-blue-50 rounded-lg p-3 text-center">
           <div className="text-2xl font-bold text-blue-600">1,247</div>
-          <div className="text-xs text-blue-700">活跃创作者</div>
+          <div className="text-xs text-blue-700">Active Creators</div>
         </div>
         <div className="bg-green-50 rounded-lg p-3 text-center">
           <div className="text-2xl font-bold text-green-600">23%</div>
-          <div className="text-xs text-green-700">新人增长率</div>
+          <div className="text-xs text-green-700">New Creator Growth</div>
         </div>
         <div className="bg-purple-50 rounded-lg p-3 text-center">
           <div className="text-2xl font-bold text-purple-600">5.2</div>
-          <div className="text-xs text-purple-700">平均内容数/周</div>
+          <div className="text-xs text-purple-700">Avg Content/Week</div>
         </div>
         <div className="bg-amber-50 rounded-lg p-3 text-center">
           <div className="text-2xl font-bold text-amber-600">68%</div>
-          <div className="text-xs text-amber-700">转型成功率</div>
+          <div className="text-xs text-amber-700">Transition Success</div>
         </div>
       </div>
     </div>

@@ -24,43 +24,43 @@ export default function TopicPrediction({ category }: TopicPredictionProps) {
     setTimeout(() => {
       const mockTopics: PredictedTopic[] = [
         {
-          topic: 'AI工具实操教程',
+          topic: 'AI Tools Tutorial',
           confidence: 92,
           trend: 'rising',
-          tags: ['AI', '教程', '效率工具'],
-          estimatedViews: '50-100万',
+          tags: ['AI', 'Tutorial', 'Productivity'],
+          estimatedViews: '500K-1M',
           competition: 'medium',
         },
         {
-          topic: '2024职场技能盘点',
+          topic: '2024 Workplace Skills Review',
           confidence: 88,
           trend: 'rising',
-          tags: ['职场', '技能', '年终'],
-          estimatedViews: '30-80万',
+          tags: ['Work', 'Skills', 'Year-end'],
+          estimatedViews: '300K-800K',
           competition: 'low',
         },
         {
-          topic: '极简生活方法论',
+          topic: 'Minimalist Living Guide',
           confidence: 85,
           trend: 'stable',
-          tags: ['生活', '极简', '断舍离'],
-          estimatedViews: '20-50万',
+          tags: ['Life', 'Minimalism', 'Declutter'],
+          estimatedViews: '200K-500K',
           competition: 'medium',
         },
         {
-          topic: '副业变现案例',
+          topic: 'Side Hustle Case Studies',
           confidence: 82,
           trend: 'rising',
-          tags: ['副业', '变现', '创业'],
-          estimatedViews: '40-90万',
+          tags: ['Side Hustle', 'Monetization', 'Entrepreneurship'],
+          estimatedViews: '400K-900K',
           competition: 'high',
         },
         {
-          topic: '学习方法论升级',
+          topic: 'Learning Methodology Upgrade',
           confidence: 78,
           trend: 'stable',
-          tags: ['学习', '效率', '方法论'],
-          estimatedViews: '25-60万',
+          tags: ['Learning', 'Efficiency', 'Methods'],
+          estimatedViews: '250K-600K',
           competition: 'low',
         },
       ]
@@ -80,26 +80,26 @@ export default function TopicPrediction({ category }: TopicPredictionProps) {
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'rising':
-        return { icon: '📈', label: '上升', color: 'text-green-600' }
+        return { icon: '📈', label: 'Rising', color: 'text-green-600' }
       case 'stable':
-        return { icon: '➡️', label: '稳定', color: 'text-blue-600' }
+        return { icon: '➡️', label: 'Stable', color: 'text-blue-600' }
       case 'falling':
-        return { icon: '📉', label: '下降', color: 'text-orange-600' }
+        return { icon: '📉', label: 'Falling', color: 'text-orange-600' }
       default:
-        return { icon: '➡️', label: '稳定', color: 'text-gray-600' }
+        return { icon: '➡️', label: 'Stable', color: 'text-gray-600' }
     }
   }
 
   const getCompetitionBadge = (level: string) => {
     switch (level) {
       case 'low':
-        return { label: '低竞争', color: 'bg-green-100 text-green-700' }
+        return { label: 'Low Competition', color: 'bg-green-100 text-green-700' }
       case 'medium':
-        return { label: '中等', color: 'bg-yellow-100 text-yellow-700' }
+        return { label: 'Medium', color: 'bg-yellow-100 text-yellow-700' }
       case 'high':
-        return { label: '高竞争', color: 'bg-red-100 text-red-700' }
+        return { label: 'High Competition', color: 'bg-red-100 text-red-700' }
       default:
-        return { label: '未知', color: 'bg-gray-100 text-gray-700' }
+        return { label: 'Unknown', color: 'bg-gray-100 text-gray-700' }
     }
   }
 
@@ -108,10 +108,10 @@ export default function TopicPrediction({ category }: TopicPredictionProps) {
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
           <span className="text-2xl">🔮</span>
-          热门选题预测
+          Trending Topics Prediction
         </h3>
         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-          AI 预测模型
+          AI Prediction Model
         </span>
       </div>
 
@@ -144,13 +144,13 @@ export default function TopicPrediction({ category }: TopicPredictionProps) {
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-bold text-indigo-600">{topic.confidence}%</div>
-                  <div className="text-xs text-gray-500">预测置信度</div>
+                  <div className="text-xs text-gray-500">Prediction Confidence</div>
                 </div>
               </div>
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
                 <div className="flex items-center gap-4">
                   <div>
-                    <span className="text-xs text-gray-500">预估播放量</span>
+                    <span className="text-xs text-gray-500">Est. Views</span>
                     <div className="font-semibold text-gray-900">{topic.estimatedViews}</div>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${competition.color}`}>
@@ -158,7 +158,7 @@ export default function TopicPrediction({ category }: TopicPredictionProps) {
                   </span>
                 </div>
                 <button className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
-                  查看详情 →
+                  View Details →
                 </button>
               </div>
             </div>
@@ -169,12 +169,12 @@ export default function TopicPrediction({ category }: TopicPredictionProps) {
       {/* Prediction Insight */}
       <div className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100">
         <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
-          <span>💡</span> 选题建议
+          <span>💡</span> Topic Recommendations
         </h4>
         <ul className="space-y-1 text-sm text-purple-800">
-          <li>• "AI工具实操教程" 预测热度最高，建议优先制作</li>
-          <li>• "2024职场技能盘点" 竞争较低，适合新人创作者</li>
-          <li>• "副业变现案例" 搜索量高但竞争激烈，需差异化切入</li>
+          <li>• "AI Tools Tutorial" has highest predicted popularity, prioritize this</li>
+          <li>• "2024 Workplace Skills Review" has low competition, great for new creators</li>
+          <li>• "Side Hustle Case Studies" has high search volume but fierce competition</li>
         </ul>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REG
 import { REGION_META } from '@/lib/region'
 import TrendVideosGrid from '@/app/components/TrendVideosGrid'
 import { WordCloud } from '@/app/components/WordCloud'
+import PotentialVideoRanking from '@/app/components/PotentialVideoRanking'
 
 interface TrendPageProps {
   params: Promise<{
@@ -782,6 +783,11 @@ export default async function TrendPage({ params }: TrendPageProps) {
               <span>High Competition</span>
             </div>
           </div>
+        </section>
+
+        {/* Potential Video Ranking */}
+        <section className="mb-12">
+          <PotentialVideoRanking videos={displayVideos} region={region} />
         </section>
 
           {/* Daily Recommendations for This Trend */}

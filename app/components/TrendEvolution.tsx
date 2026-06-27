@@ -63,10 +63,10 @@ export default function TrendEvolution({ keyword }: TrendEvolutionProps) {
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
           <span className="text-2xl">🔥</span>
-          热点演变追踪
+          Trend Evolution Tracker
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">分区流量迁移:</span>
+          <span className="text-sm text-gray-500">Category Traffic Migration:</span>
           <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
             {categoryShift}
           </span>
@@ -83,14 +83,14 @@ export default function TrendEvolution({ keyword }: TrendEvolutionProps) {
               orientation="left"
               tick={{ fontSize: 11 }}
               reversed
-              label={{ value: '热榜排名', angle: -90, position: 'insideLeft' }}
+              label={{ value: 'Hot Rank', angle: -90, position: 'insideLeft' }}
             />
             <YAxis
               yAxisId="right"
               orientation="right"
               tick={{ fontSize: 11 }}
               tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`}
-              label={{ value: '流量', angle: 90, position: 'insideRight' }}
+              label={{ value: 'Traffic', angle: 90, position: 'insideRight' }}
             />
             <Tooltip
               contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
@@ -118,9 +118,9 @@ export default function TrendEvolution({ keyword }: TrendEvolutionProps) {
 
       {/* Category Timeline */}
       <div className="mb-6">
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">分区热度演变</h4>
+        <h4 className="text-sm font-semibold text-gray-700 mb-3">Category Heat Evolution</h4>
         <div className="flex items-center gap-1">
-          {['科技', '知识', '教育', '热门'].map((cat, index) => (
+          {['Tech', 'Knowledge', 'Education', 'Trending'].map((cat, index) => (
             <div key={cat} className="flex items-center">
               <div
                 className="px-3 py-1.5 rounded-lg text-sm font-medium"
@@ -145,39 +145,39 @@ export default function TrendEvolution({ keyword }: TrendEvolutionProps) {
       {/* Migration Analysis */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-blue-50 rounded-lg p-4">
-          <div className="text-xs text-blue-600 mb-1">初始分区</div>
-          <div className="text-lg font-bold text-blue-900">科技数码</div>
-          <div className="text-xs text-blue-600">种子用户: 极客群体</div>
+          <div className="text-xs text-blue-600 mb-1">Initial Category</div>
+          <div className="text-lg font-bold text-blue-900">Tech & Digital</div>
+          <div className="text-xs text-blue-600">Seed Users: Tech Enthusiasts</div>
         </div>
         <div className="bg-indigo-50 rounded-lg p-4">
-          <div className="text-xs text-indigo-600 mb-1">扩散分区</div>
-          <div className="text-lg font-bold text-indigo-900">知识科普</div>
-          <div className="text-xs text-indigo-600">破圈人群: 学习者</div>
+          <div className="text-xs text-indigo-600 mb-1">Spread Category</div>
+          <div className="text-lg font-bold text-indigo-900">Knowledge</div>
+          <div className="text-xs text-indigo-600">Breaking Audience: Learners</div>
         </div>
         <div className="bg-purple-50 rounded-lg p-4">
-          <div className="text-xs text-purple-600 mb-1">爆发分区</div>
-          <div className="text-lg font-bold text-purple-900">全站热门</div>
-          <div className="text-xs text-purple-600">峰值流量: 156K</div>
+          <div className="text-xs text-purple-600 mb-1">Viral Category</div>
+          <div className="text-lg font-bold text-purple-900">Site-wide Trending</div>
+          <div className="text-xs text-purple-600">Peak Traffic: 156K</div>
         </div>
       </div>
 
       {/* Insights */}
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 border border-amber-200">
         <h4 className="font-semibold text-amber-900 mb-2 flex items-center gap-2">
-          <span>💡</span> 热点演变洞察
+          <span>💡</span> Trend Evolution Insights
         </h4>
         <ul className="space-y-2 text-sm text-amber-800">
           <li className="flex items-start gap-2">
             <span className="text-green-600">✓</span>
-            <span>内容从科技数码区扩散至知识科普区，成功破圈</span>
+            <span>Content spread from Tech to Knowledge category, successfully breaking audience barriers</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-green-600">✓</span>
-            <span>Day 3-5 是关键转折点，流量迁移至知识分区</span>
+            <span>Day 3-5 is the critical turning point, traffic migrates to Knowledge category</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-blue-600">ℹ️</span>
-            <span>建议在 Week 2 前发布续集，承接从热门分区流入的流量</span>
+            <span>Recommend publishing sequel before Week 2 to capture traffic from Trending category</span>
           </li>
         </ul>
       </div>

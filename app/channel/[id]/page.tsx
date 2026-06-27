@@ -791,13 +791,13 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
         {/* Channel Value Analysis */}
         {analysis && (
           <div className="mb-10">
-            <ChannelValueAnalysis channelId={channel.id} />
+            <ChannelValueAnalysis channel={channel} videos={videos} />
           </div>
         )}
 
         {/* Enhanced Channel Analytics - 粉丝增长、活跃度、内容分区热度 */}
         <div className="mb-10">
-          <EnhancedChannelAnalytics channelId={channel.id} />
+          <EnhancedChannelAnalytics channel={channel} videos={videos} />
         </div>
 
         {/* Audience Demographics */}

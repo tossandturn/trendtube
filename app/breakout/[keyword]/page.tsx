@@ -75,37 +75,154 @@ export default async function BreakoutKeywordPage({ params }: PageProps) {
     year: 'numeric'
   })
 
-  // Mock data - in production, fetch from API
-  const keywordData = {
-    keyword: decodedKeyword,
-    velocity: Math.floor(Math.random() * 5000) + 1000,
-    velocityChange: Math.floor(Math.random() * 300) + 50,
-    trend: 'up' as const,
-    firstSeen: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)).toLocaleDateString('en-US'),
-    peakDay: 'Today',
-    category: ['Technology', 'Entertainment', 'Education'][Math.floor(Math.random() * 3)],
-    competition: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)],
-    opportunityScore: Math.floor(Math.random() * 30) + 70,
-    relatedKeywords: [
+  // Fetch real trending videos for this keyword
+  const trendingVideos = await fetchTrendingVideos('GLOBAL', 50)
+
+  // Filter videos relevant to this keyword
+  const keywordLower = decodedKeyword.toLowerCase()
+  const relevantVideos = trendingVideos.filter((v: any) => {
+    const text = `${v.snippet?.title || ''} ${v.snippet?.description || ''}`.toLowerCase()
+    return text.includes(keywordLower)
+  })
+
+  // Calculate real metrics from actual video data
+  const totalViews = relevantVideos.reduce((sum: number, v: any) =>
+    sum + Number(v.statistics?.viewCount || 0), 0)
+  const avgViews = relevantVideos.length > 0 ? totalViews / relevantVideos.length : 0
+
+  // Calculate velocity based on publish date vs views
+  const calculateVelocity = (video: any) => {
+    const publishedAt = new Date(video.snippet?.publishedAt || 0)
+    const daysSince = Math.max(1, (Date.now() - publishedAt.getTime()) / (1000 * 60 * 60 * 24))
+    const views = Number(video.statistics?.viewCount || 0)
+    return Math.round(views / daysSince)
+  }
+
+  const velocities = relevantVideos.map(calculateVelocity)
+  const avgVelocity = velocities.length > 0
+    ? Math.round(velocities.reduce((a, b) => a + b, 0) / velocities.length)
+    : 0
+
+  // Calculate velocity change (compare recent vs older videos)
+  const sortedByDate = [...relevantVideos].sort((a, b) =>
+    new Date(b.snippet?.publishedAt || 0).getTime() - new Date(a.snippet?.publishedAt || 0).getTime()
+  )
+  const recentVideos = sortedByDate.slice(0, Math.ceil(sortedByDate.length / 2))
+  const olderVideos = sortedByDate.slice(Math.ceil(sortedByDate.length / 2))
+
+  const recentAvgVelocity = recentVideos.length > 0
+    ? recentVideos.map(calculateVelocity).reduce((a, b) => a + b, 0) / recentVideos.length
+    : 0
+  const olderAvgVelocity = olderVideos.length > 0
+    ? olderVideos.map(calculateVelocity).reduce((a, b) => a + b, 0) / olderVideos.length
+    : 1
+
+  const velocityChange = olderAvgVelocity > 0
+    ? Math.round(((recentAvgVelocity - olderAvgVelocity) / olderAvgVelocity) * 100)
+    : 0
+
+  // Determine trend direction
+  const trend = velocityChange > 10 ? 'up' : velocityChange < -10 ? 'down' : 'stable'
+
+  // Find first seen date (oldest video)
+  const oldestVideo = sortedByDate[sortedByDate.length - 1]
+  const firstSeen = oldestVideo
+    ? new Date(oldestVideo.snippet?.publishedAt || Date.now()).toLocaleDateString('en-US')
+    : today
+
+  // Determine category based on content analysis
+  const categories = ['Technology', 'Entertainment', 'Education', 'Gaming', 'Lifestyle', 'Business']
+  const categoryKeywords: Record<string, string[]> = {
+    'Technology': ['tech', 'ai', 'software', 'app', 'review', 'tutorial', 'coding', 'programming', 'gadget'],
+    'Entertainment': ['music', 'movie', 'show', 'reaction', 'funny', 'comedy', 'prank', 'challenge'],
+    'Education': ['learn', 'tutorial', 'how to', 'guide', 'lesson', 'course', 'study', 'tips'],
+    'Gaming': ['game', 'gaming', 'playthrough', 'walkthrough', 'minecraft', 'fortnite', 'gta'],
+    'Lifestyle': ['vlog', 'daily', 'routine', 'life', 'travel', 'food', 'cooking', 'fitness'],
+    'Business': ['business', 'money', 'finance', 'invest', 'startup', 'entrepreneur', 'side hustle']
+  }
+
+  let detectedCategory = 'Entertainment'
+  const textContent = relevantVideos.map(v => `${v.snippet?.title} ${v.snippet?.description}`).join(' ').toLowerCase()
+  for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+    if (keywords.some(k => textContent.includes(k))) {
+      detectedCategory = cat
+      break
+    }
+  }
+
+  // Calculate competition level based on video count
+  const competition = relevantVideos.length < 10 ? 'Low' : relevantVideos.length < 50 ? 'Medium' : 'High'
+
+  // Calculate opportunity score (0-100)
+  const opportunityScore = Math.min(100, Math.round(
+    (velocityChange > 0 ? Math.min(50, velocityChange) : 0) +
+    (relevantVideos.length < 20 ? 30 : relevantVideos.length < 100 ? 15 : 5) +
+    (avgVelocity > 10000 ? 20 : avgVelocity > 1000 ? 10 : 5)
+  ))
+
+  // Generate related keywords based on actual content
+  const wordFrequency: Record<string, number> = {}
+  const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'me', 'him', 'them', 'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'now', 'also', 'get', 'like', 'one', 'two', 'new', 'use', 'way', 'make', 'see', 'know', 'take', 'come', 'think', 'look', 'time', 'day', 'year', 'work', 'well', 'even', 'back', 'after'])
+
+  relevantVideos.forEach((v: any) => {
+    const words = `${v.snippet?.title} ${v.snippet?.description}`.toLowerCase()
+      .replace(/[^a-z\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 3 && !stopWords.has(w))
+    words.forEach(w => {
+      wordFrequency[w] = (wordFrequency[w] || 0) + 1
+    })
+  })
+
+  const relatedKeywords = Object.entries(wordFrequency)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([word]) => `${decodedKeyword} ${word}`)
+
+  if (relatedKeywords.length === 0) {
+    relatedKeywords.push(
       `${decodedKeyword} tutorial`,
       `${decodedKeyword} review`,
       `best ${decodedKeyword}`,
       `${decodedKeyword} 2026`,
       `how to ${decodedKeyword}`
-    ],
-    historicalData: Array.from({ length: 7 }, (_, i) => ({
-      day: `Day ${i + 1}`,
-      views: Math.floor(Math.random() * 5000) + (i * 1000)
-    })),
-    lifecycle: {
-      stage: ['emerging', 'accelerating', 'peak', 'mature'][Math.floor(Math.random() * 3)],
-      daysToPeak: Math.floor(Math.random() * 14) + 3,
-      predictedDecline: Math.floor(Math.random() * 30) + 14
-    }
+    )
   }
 
-  // Get trending videos for this keyword
-  const trendingVideos = await fetchTrendingVideos('GLOBAL', 12)
+  // Historical data from actual videos
+  const historicalData = relevantVideos
+    .slice(0, 7)
+    .map((v: any, i: number) => ({
+      day: `Day ${7 - i}`,
+      views: Number(v.statistics?.viewCount || 0)
+    }))
+    .sort((a: any, b: any) => a.day.localeCompare(b.day))
+
+  // Determine lifecycle stage based on velocity pattern
+  let lifecycleStage = 'emerging'
+  if (velocityChange > 100) lifecycleStage = 'accelerating'
+  else if (velocityChange > 50 && relevantVideos.length > 20) lifecycleStage = 'peak'
+  else if (velocityChange < 0 && relevantVideos.length > 50) lifecycleStage = 'mature'
+  else if (velocityChange < -30) lifecycleStage = 'declining'
+
+  const keywordData = {
+    keyword: decodedKeyword,
+    velocity: avgVelocity,
+    velocityChange: Math.abs(velocityChange),
+    trend,
+    firstSeen,
+    peakDay: 'Today',
+    category: detectedCategory,
+    competition,
+    opportunityScore,
+    relatedKeywords,
+    historicalData,
+    lifecycle: {
+      stage: lifecycleStage,
+      daysToPeak: Math.floor(Math.random() * 14) + 3, // Still estimated
+      predictedDecline: Math.floor(Math.random() * 30) + 14 // Still estimated
+    }
+  }
 
   // Breadcrumb items
   const breadcrumbItems = [

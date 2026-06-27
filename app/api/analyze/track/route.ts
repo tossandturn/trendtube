@@ -10,11 +10,10 @@ export async function POST(req: Request) {
     }
 
     // Record the attempt
-    const attempt = recordAnalyzeAttempt(sessionId, userId)
-    const totalAttempts = getSessionAnalyzeCount(sessionId)
+    await recordAnalyzeAttempt(sessionId, userId)
+    const totalAttempts = await getSessionAnalyzeCount(sessionId)
 
     return NextResponse.json({
-      attempt,
       totalAttempts,
       requiresLogin: totalAttempts >= 10 && !userId
     })
@@ -32,7 +31,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
     }
 
-    const count = getSessionAnalyzeCount(sessionId)
+    const count = await getSessionAnalyzeCount(sessionId)
 
     return NextResponse.json({
       totalAttempts: count,

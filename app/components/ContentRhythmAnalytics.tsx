@@ -112,6 +112,7 @@ function StarRating({ stars }: { stars: number }) {
 
 export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalyticsProps) {
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState<'dropoff' | 'retention'>('dropoff')
 
   // Derive data from video
   const data = useMemo<ContentRhythmData>(() => {
@@ -198,89 +199,146 @@ export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalytics
         </div>
       </div>
 
-      {/* Dropoff Chart */}
+      {/* Dropoff Chart - Line Chart */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
           <h3 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wider">Dropoff Trend</h3>
           <div className="flex items-center gap-3 sm:gap-4 text-xs">
             <div className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-pink-500" />
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-pink-500" />
               <span className="text-gray-600">This Video</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-gray-300" />
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-gray-400" />
               <span className="text-gray-600">Category Avg</span>
             </div>
           </div>
         </div>
 
-        <div className="relative">
-          {/* Y-axis labels */}
-          <div className="flex">
-            <div className="flex flex-col justify-between h-48 sm:h-56 pr-2 text-xs text-gray-400 w-10">
-              <span>50%</span>
-              <span>40%</span>
-              <span>30%</span>
-              <span>20%</span>
-              <span>10%</span>
-              <span>0%</span>
-            </div>
+        <div className="relative h-48 sm:h-56">
+          <svg viewBox="0 0 600 200" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+            {(() => {
+              const width = 600
+              const height = 200
+              const margin = { top: 10, right: 20, bottom: 40, left: 50 }
+              const chartW = width - margin.left - margin.right
+              const chartH = height - margin.top - margin.bottom
 
-            {/* Chart area */}
-            <div className="flex-1 relative">
-              {/* Grid lines */}
-              <div className="absolute inset-0 flex flex-col justify-between">
-                {[5, 4, 3, 2, 1, 0].map((i) => (
-                  <div key={i} className="border-t border-gray-100" />
-                ))}
-              </div>
+              const chartData = data.dropoffData
+              if (chartData.length === 0) return <text x={width / 2} y={height / 2} fill="#9ca3af" fontSize="14" textAnchor="middle">No data</text>
 
-              {/* Bars */}
-              <div className="absolute inset-0 flex items-end justify-between px-2">
-                {data.dropoffData.map((point, index) => (
-                  <div
-                    key={index}
-                    className="flex flex-col items-center flex-1 mx-0.5"
-                    onMouseEnter={() => setHoveredPoint(index)}
-                    onMouseLeave={() => setHoveredPoint(null)}
-                  >
-                    {/* Tooltip */}
-                    {hoveredPoint === index && (
-                      <div className="absolute -top-12 sm:-top-16 bg-gray-900 text-white text-xs rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 z-10 whitespace-nowrap">
-                        <div className="font-bold">{point.time}</div>
-                        <div className="text-pink-300">This Video: {point.percentage}%</div>
-                        <div className="text-gray-400">Avg: {point.similarAvg}%</div>
-                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1 w-2 h-2 bg-gray-900 rotate-45" />
-                      </div>
-                    )}
+              const maxY = 100
 
-                    {/* Similar avg bar (background) */}
-                    <div
-                      className="w-full rounded-t-sm bg-gray-200 transition-all duration-300"
-                      style={{ height: `${(point.similarAvg / 50) * 100}%` }}
-                    />
-                    {/* Current video bar */}
-                    <div
-                      className="w-full rounded-t-sm bg-gradient-to-t from-pink-500 to-pink-400 transition-all duration-300 absolute bottom-0"
-                      style={{
-                        height: `${(point.percentage / 50) * 100}%`,
-                        opacity: hoveredPoint === index ? 1 : 0.85,
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+              // Generate path for this video line
+              const thisVideoPoints = chartData.map((point, i) => {
+                const x = margin.left + (i / (chartData.length - 1)) * chartW
+                const y = margin.top + chartH - (point.percentage / maxY) * chartH
+                return `${x},${y}`
+              }).join(' ')
 
-          {/* X-axis labels */}
-          <div className="flex ml-10 mt-2">
-            {data.dropoffData.map((point, index) => (
-              <div key={index} className="flex-1 text-center text-[10px] text-gray-400">
-                {point.time}
-              </div>
-            ))}
-          </div>
+              // Generate path for category average line
+              const avgPoints = chartData.map((point, i) => {
+                const x = margin.left + (i / (chartData.length - 1)) * chartW
+                const y = margin.top + chartH - (point.similarAvg / maxY) * chartH
+                return `${x},${y}`
+              }).join(' ')
+
+              return (
+                <>
+                  {/* Grid lines */}
+                  {[0, 25, 50, 75, 100].map((val, i) => {
+                    const y = margin.top + chartH - (val / maxY) * chartH
+                    return (
+                      <g key={`grid-${i}`}>
+                        <line x1={margin.left} y1={y} x2={margin.left + chartW} y2={y} stroke="#f3f4f6" strokeWidth="1" />
+                        <text x={margin.left - 8} y={y + 4} fill="#9ca3af" fontSize="10" textAnchor="end">{val}%</text>
+                      </g>
+                    )
+                  })}
+
+                  {/* Area under this video line (pink gradient) */}
+                  <defs>
+                    <linearGradient id="pinkGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#ec4899" stopOpacity="0.2" />
+                      <stop offset="100%" stopColor="#ec4899" stopOpacity="0.05" />
+                    </linearGradient>
+                  </defs>
+                  <polygon
+                    points={`${margin.left},${margin.top + chartH} ${chartData.map((point, i) => {
+                      const x = margin.left + (i / (chartData.length - 1)) * chartW
+                      const y = margin.top + chartH - (point.percentage / maxY) * chartH
+                      return `${x},${y}`
+                    }).join(' ')} ${margin.left + chartW},${margin.top + chartH}`}
+                    fill="url(#pinkGradient)"
+                  />
+
+                  {/* Category average line (dashed gray) */}
+                  <polyline
+                    points={avgPoints}
+                    fill="none"
+                    stroke="#9ca3af"
+                    strokeWidth="2"
+                    strokeDasharray="4,4"
+                  />
+
+                  {/* This video line (solid pink) */}
+                  <polyline
+                    points={thisVideoPoints}
+                    fill="none"
+                    stroke="#ec4899"
+                    strokeWidth="2.5"
+                  />
+
+                  {/* Data points for this video */}
+                  {chartData.map((point, i) => {
+                    const x = margin.left + (i / (chartData.length - 1)) * chartW
+                    const y = margin.top + chartH - (point.percentage / maxY) * chartH
+                    return (
+                      <g key={i}>
+                        <circle
+                          cx={x}
+                          cy={y}
+                          r="4"
+                          fill="#ec4899"
+                          stroke="white"
+                          strokeWidth="2"
+                          className="cursor-pointer hover:r-6 transition-all"
+                          onMouseEnter={() => setHoveredPoint(i)}
+                          onMouseLeave={() => setHoveredPoint(null)}
+                        />
+                        {/* Tooltip */}
+                        {hoveredPoint === i && (
+                          <g>
+                            <rect
+                              x={x - 60}
+                              y={y - 55}
+                              width="120"
+                              height="45"
+                              rx="8"
+                              fill="#1f2937"
+                            />
+                            <text x={x} y={y - 38} fill="white" fontSize="11" textAnchor="middle" fontWeight="bold">{point.time}</text>
+                            <text x={x} y={y - 25} fill="#f472b6" fontSize="10" textAnchor="middle">This Video: {point.percentage}%</text>
+                            <text x={x} y={y - 12} fill="#9ca3af" fontSize="10" textAnchor="middle">Avg: {point.similarAvg}%</text>
+                            <polygon points={`${x - 6},${y - 10} ${x + 6},${y - 10} ${x},${y - 5}`} fill="#1f2937" />
+                          </g>
+                        )}
+                      </g>
+                    )
+                  })}
+
+                  {/* X-axis labels */}
+                  {chartData.filter((_, i) => i % Math.ceil(chartData.length / 8) === 0 || i === chartData.length - 1).map((point, i, arr) => {
+                    const index = chartData.indexOf(point)
+                    const x = margin.left + (index / (chartData.length - 1)) * chartW
+                    return (
+                      <text key={i} x={x} y={margin.top + chartH + 18} fill="#9ca3af" fontSize="10" textAnchor="middle">{point.time}</text>
+                    )
+                  })}
+                </>
+              )
+            })()}
+          </svg>
         </div>
       </div>
 

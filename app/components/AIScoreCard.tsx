@@ -16,33 +16,173 @@ interface AIScoreCardProps {
   videoId?: string
   channelId?: string
   type: 'video' | 'channel'
+  // Optional: pass real data for scoring
+  videoData?: {
+    statistics?: {
+      viewCount?: string
+      likeCount?: string
+      commentCount?: string
+    }
+    snippet?: {
+      publishedAt?: string
+      title?: string
+    }
+  }
+  channelData?: {
+    statistics?: {
+      subscriberCount?: string
+      viewCount?: string
+      videoCount?: string
+    }
+    snippet?: {
+      publishedAt?: string
+    }
+  }
+  videos?: any[] // Channel videos for analysis
 }
 
-export default function AIScoreCard({ videoId, channelId, type }: AIScoreCardProps) {
+export default function AIScoreCard({ videoId, channelId, type, videoData, channelData, videos }: AIScoreCardProps) {
   const [score, setScore] = useState<ScoreData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate AI calculation
     const calculateScore = () => {
       setLoading(true)
+
+      // Calculate real scores based on actual data
+      const calculateRealScores = (): ScoreData => {
+        if (type === 'video' && videoData) {
+          const views = Number(videoData.statistics?.viewCount || 0)
+          const likes = Number(videoData.statistics?.likeCount || 0)
+          const comments = Number(videoData.statistics?.commentCount || 0)
+          const publishedAt = videoData.snippet?.publishedAt
+            ? new Date(videoData.snippet.publishedAt)
+            : new Date()
+          const daysSince = Math.max(1, (Date.now() - publishedAt.getTime()) / (1000 * 60 * 60 * 24))
+
+          // Engagement rate (likes + comments * 2) / views
+          const engagementRate = views > 0 ? ((likes + comments * 2) / views) * 100 : 0
+          // Like rate
+          const likeRate = views > 0 ? (likes / views) * 100 : 0
+
+          // Velocity score (views per day)
+          const velocity = views / daysSince
+          const velocityScore = Math.min(100, Math.round(velocity / 10000))
+
+          // Content quality based on title length, description presence
+          const title = videoData.snippet?.title || ''
+          const qualityScore = Math.min(100, 50 + (title.length > 30 ? 20 : 0) + (views > 10000 ? 30 : 0))
+
+          // Calculate retention estimate based on engagement
+          const retentionScore = Math.min(100, Math.round(engagementRate * 10))
+
+          // Overall score weighted combination
+          const overall = Math.round(
+            qualityScore * 0.25 +
+            Math.min(100, engagementRate * 10) * 0.25 +
+            retentionScore * 0.25 +
+            velocityScore * 0.25
+          )
+
+          // Percentile based on view count relative to typical videos
+          const percentile = views > 1000000 ? 95 : views > 100000 ? 85 : views > 10000 ? 70 : 50
+
+          return {
+            overall,
+            percentile,
+            quality: qualityScore,
+            engagement: Math.min(100, Math.round(engagementRate * 10)),
+            retention: retentionScore,
+            growth: velocityScore,
+            category: engagementRate > 5 ? 'Entertainment' : likeRate > 2 ? 'Educational' : 'General',
+          }
+        }
+
+        if (type === 'channel' && channelData && videos) {
+          const subscriberCount = Number(channelData.statistics?.subscriberCount || 0)
+          const totalViews = Number(channelData.statistics?.viewCount || 0)
+          const videoCount = Number(channelData.statistics?.videoCount || 0)
+
+          // Calculate avg views per video
+          const avgViews = videoCount > 0 ? totalViews / videoCount : 0
+
+          // Calculate engagement from recent videos
+          let totalEngagement = 0
+          videos.forEach((v: any) => {
+            const vViews = Number(v.statistics?.viewCount || 0)
+            const vLikes = Number(v.statistics?.likeCount || 0)
+            const vComments = Number(v.statistics?.commentCount || 0)
+            if (vViews > 0) {
+              totalEngagement += ((vLikes + vComments * 2) / vViews) * 100
+            }
+          })
+          const avgEngagement = videos.length > 0 ? totalEngagement / videos.length : 0
+
+          // Channel age in days
+          const publishedAt = channelData.snippet?.publishedAt
+            ? new Date(channelData.snippet.publishedAt)
+            : new Date()
+          const daysSince = Math.max(1, (Date.now() - publishedAt.getTime()) / (1000 * 60 * 60 * 24))
+          const yearsActive = daysSince / 365
+
+          // Growth score based on subscribers per year
+          const growthScore = yearsActive > 0
+            ? Math.min(100, Math.round(subscriberCount / yearsActive / 10000))
+            : 50
+
+          // Quality score based on consistency
+          const qualityScore = Math.min(100, 40 + (avgEngagement > 3 ? 30 : 0) + (videos.length >= 10 ? 30 : 0))
+
+          // Retention based on views per subscriber
+          const viewsPerSubscriber = subscriberCount > 0 ? totalViews / subscriberCount : 0
+          const retentionScore = Math.min(100, Math.round(viewsPerSubscriber * 10))
+
+          // Engagement score
+          const engagementScore = Math.min(100, Math.round(avgEngagement * 15))
+
+          // Overall score
+          const overall = Math.round(
+            qualityScore * 0.2 +
+            engagementScore * 0.25 +
+            retentionScore * 0.25 +
+            growthScore * 0.3
+          )
+
+          // Percentile based on subscriber count
+          const percentile = subscriberCount > 1000000 ? 97 : subscriberCount > 100000 ? 88 : subscriberCount > 10000 ? 75 : 55
+
+          return {
+            overall,
+            percentile,
+            quality: qualityScore,
+            engagement: engagementScore,
+            retention: retentionScore,
+            growth: growthScore,
+            category: avgEngagement > 4 ? 'Entertainment' : avgEngagement > 2 ? 'Knowledge' : 'Vlog',
+          }
+        }
+
+        // Fallback if no data provided
+        return {
+          overall: 0,
+          percentile: 0,
+          quality: 0,
+          engagement: 0,
+          retention: 0,
+          growth: 0,
+          category: 'Unknown',
+        }
+      }
+
+      // Small delay for UX
       setTimeout(() => {
-        // Generate realistic scores based on type
-        const baseScore = type === 'video' ? 72 : 68
-        setScore({
-          overall: baseScore + Math.floor(Math.random() * 20),
-          percentile: 85 + Math.floor(Math.random() * 14),
-          quality: 70 + Math.floor(Math.random() * 25),
-          engagement: 75 + Math.floor(Math.random() * 20),
-          retention: 65 + Math.floor(Math.random() * 30),
-          growth: 60 + Math.floor(Math.random() * 35),
-          category: type === 'video' ? 'Entertainment' : 'Knowledge',
-        })
+        setScore(calculateRealScores())
         setLoading(false)
-      }, 800)
+      }, 300)
     }
+
     calculateScore()
-  }, [videoId, channelId, type])
+  }, [videoId, channelId, type, videoData, channelData, videos])
 
   if (loading) {
     return (
@@ -52,7 +192,13 @@ export default function AIScoreCard({ videoId, channelId, type }: AIScoreCardPro
     )
   }
 
-  if (!score) return null
+  if (!score || score.overall === 0) {
+    return (
+      <div className="bg-gradient-to-br from-gray-600 to-gray-700 rounded-2xl p-6 text-white">
+        <p className="text-center">Insufficient data for AI analysis</p>
+      </div>
+    )
+  }
 
   const getScoreColor = (s: number) => {
     if (s >= 90) return 'text-green-400'

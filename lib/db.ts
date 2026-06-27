@@ -3,6 +3,7 @@ import Database from 'better-sqlite3'
 import { join } from 'path'
 
 const IS_VERCEL = !!process.env.VERCEL
+const HAS_POSTGRES = !!process.env.POSTGRES_URL
 
 // For local scripts - SQLite fallback
 let sqliteDb: Database.Database | null = null
@@ -26,28 +27,49 @@ export interface User {
   last_login: string | null
 }
 
-// User functions
+// User functions - with SQLite fallback
 export async function createUser(username: string, email: string, passwordHash: string): Promise<User> {
-  const result = await sql<User>`
-    INSERT INTO users (username, email, password_hash)
-    VALUES (${username}, ${email}, ${passwordHash})
-    RETURNING *
-  `
-  return result.rows[0]
+  if (HAS_POSTGRES) {
+    const result = await sql<User>`
+      INSERT INTO users (username, email, password_hash)
+      VALUES (${username}, ${email}, ${passwordHash})
+      RETURNING *
+    `
+    return result.rows[0]
+  } else {
+    const db = getDb()
+    const result = db.prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?) RETURNING *').get(username, email, passwordHash) as User
+    return result
+  }
 }
 
 export async function getUserByEmail(email: string): Promise<User | undefined> {
-  const result = await sql<User>`SELECT * FROM users WHERE email = ${email}`
-  return result.rows[0]
+  if (HAS_POSTGRES) {
+    const result = await sql<User>`SELECT * FROM users WHERE email = ${email}`
+    return result.rows[0]
+  } else {
+    const db = getDb()
+    return db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User | undefined
+  }
 }
 
 export async function getUserByUsername(username: string): Promise<User | undefined> {
-  const result = await sql<User>`SELECT * FROM users WHERE username = ${username}`
-  return result.rows[0]
+  if (HAS_POSTGRES) {
+    const result = await sql<User>`SELECT * FROM users WHERE username = ${username}`
+    return result.rows[0]
+  } else {
+    const db = getDb()
+    return db.prepare('SELECT * FROM users WHERE username = ?').get(username) as User | undefined
+  }
 }
 
 export async function verifyUserEmail(userId: number): Promise<void> {
-  await sql`UPDATE users SET email_verified = 1 WHERE id = ${userId}`
+  if (HAS_POSTGRES) {
+    await sql`UPDATE users SET email_verified = 1 WHERE id = ${userId}`
+  } else {
+    const db = getDb()
+    db.prepare('UPDATE users SET email_verified = 1 WHERE id = ?').run(userId)
+  }
 }
 
 // Email verification
@@ -61,62 +83,117 @@ export interface EmailVerification {
 }
 
 export async function createEmailVerification(userId: number, token: string, expiresAt: Date): Promise<EmailVerification> {
-  const result = await sql<EmailVerification>`
-    INSERT INTO email_verifications (user_id, token, expires_at)
-    VALUES (${userId}, ${token}, ${expiresAt.toISOString()})
-    RETURNING *
-  `
-  return result.rows[0]
+  if (HAS_POSTGRES) {
+    const result = await sql<EmailVerification>`
+      INSERT INTO email_verifications (user_id, token, expires_at)
+      VALUES (${userId}, ${token}, ${expiresAt.toISOString()})
+      RETURNING *
+    `
+    return result.rows[0]
+  } else {
+    const db = getDb()
+    const result = db.prepare('INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, ?, ?) RETURNING *').get(userId, token, expiresAt.toISOString()) as EmailVerification
+    return result
+  }
 }
 
 export async function getVerificationByToken(token: string): Promise<EmailVerification | undefined> {
-  const result = await sql<EmailVerification>`SELECT * FROM email_verifications WHERE token = ${token}`
-  return result.rows[0]
+  if (HAS_POSTGRES) {
+    const result = await sql<EmailVerification>`SELECT * FROM email_verifications WHERE token = ${token}`
+    return result.rows[0]
+  } else {
+    const db = getDb()
+    return db.prepare('SELECT * FROM email_verifications WHERE token = ?').get(token) as EmailVerification | undefined
+  }
 }
 
 export async function markVerificationUsed(token: string): Promise<void> {
-  await sql`UPDATE email_verifications SET verified_at = CURRENT_TIMESTAMP WHERE token = ${token}`
+  if (HAS_POSTGRES) {
+    await sql`UPDATE email_verifications SET verified_at = CURRENT_TIMESTAMP WHERE token = ${token}`
+  } else {
+    const db = getDb()
+    db.prepare('UPDATE email_verifications SET verified_at = CURRENT_TIMESTAMP WHERE token = ?').run(token)
+  }
 }
 
 export async function deleteExpiredVerifications(): Promise<void> {
-  await sql`DELETE FROM email_verifications WHERE expires_at < CURRENT_TIMESTAMP AND verified_at IS NULL`
+  if (HAS_POSTGRES) {
+    await sql`DELETE FROM email_verifications WHERE expires_at < CURRENT_TIMESTAMP AND verified_at IS NULL`
+  } else {
+    const db = getDb()
+    db.prepare("DELETE FROM email_verifications WHERE expires_at < datetime('now') AND verified_at IS NULL").run()
+  }
 }
 
 export async function updateLastLogin(userId: number): Promise<void> {
-  await sql`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ${userId}`
+  if (HAS_POSTGRES) {
+    await sql`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ${userId}`
+  } else {
+    const db = getDb()
+    db.prepare("UPDATE users SET last_login = datetime('now') WHERE id = ?").run(userId)
+  }
 }
 
 // Initialize tables
 export async function initTables() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      username VARCHAR(20) UNIQUE NOT NULL,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      password_hash VARCHAR(255) NOT NULL,
-      email_verified INTEGER DEFAULT 0,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      last_login TIMESTAMP
-    )
-  `
+  if (HAS_POSTGRES) {
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(20) UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        email_verified INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP
+      )
+    `
 
-  await sql`
-    CREATE TABLE IF NOT EXISTS email_verifications (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES users(id),
-      token VARCHAR(255) UNIQUE NOT NULL,
-      expires_at TIMESTAMP NOT NULL,
-      verified_at TIMESTAMP,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `
+    await sql`
+      CREATE TABLE IF NOT EXISTS email_verifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        token VARCHAR(255) UNIQUE NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        verified_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
 
-  await sql`CREATE INDEX IF NOT EXISTS idx_email_verification_token ON email_verifications(token)`
-  await sql`CREATE INDEX IF NOT EXISTS idx_email_verification_user ON email_verifications(user_id)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_email_verification_token ON email_verifications(token)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_email_verification_user ON email_verifications(user_id)`
+  } else {
+    const db = getDb()
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username VARCHAR(20) UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        email_verified INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP
+      )
+    `)
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS email_verifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        token VARCHAR(255) UNIQUE NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        verified_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+
+    db.exec("CREATE INDEX IF NOT EXISTS idx_email_verification_token ON email_verifications(token)")
+    db.exec("CREATE INDEX IF NOT EXISTS idx_email_verification_user ON email_verifications(user_id)")
+  }
 }
 
-// Initialize on module load
-if (IS_VERCEL) {
+// Initialize on module load - but only if we have database
+if (HAS_POSTGRES) {
   initTables().catch(console.error)
 }
 
@@ -151,32 +228,14 @@ export function upsertTrend(slug: string, title: string, category?: string, desc
   throw new Error('Not implemented')
 }
 
-// Trend snapshots
+// Additional stub functions for API routes
+
 export interface TrendSnapshot {
   id: number
   trend_id: number
-  velocity: number | null
-  views: number | null
-  likes: number | null
-  comments: number | null
-  creator_count: number | null
-  saturation_score: number | null
-  breakout_score: number | null
-  predicted_peak_hours: number | null
-  snapshot_date: string
-  created_at: string
-}
-
-export function createSnapshot(data: Omit<TrendSnapshot, 'id' | 'created_at'>): TrendSnapshot {
-  throw new Error('Not implemented')
-}
-
-export function getSnapshotForDate(trendId: number, date: string): TrendSnapshot | undefined {
-  return undefined
-}
-
-export function upsertSnapshot(data: Omit<TrendSnapshot, 'id' | 'created_at'>): TrendSnapshot {
-  throw new Error('Not implemented')
+  view_count: number
+  video_count: number
+  timestamp: string
 }
 
 export function getTrendSnapshots(trendId: number, limit?: number): TrendSnapshot[] {
@@ -187,51 +246,94 @@ export function getLatestSnapshot(trendId: number): TrendSnapshot | undefined {
   return undefined
 }
 
-// Tags
-export function addTag(trendId: number, tagName: string) {}
+export interface Tag {
+  id: number
+  name: string
+  slug: string
+  video_count: number
+}
 
-export function getTagsForTrend(trendId: number): string[] {
+export function getAllTags(): Tag[] {
   return []
 }
 
-export function getTrendsByTag(tagName: string): Trend[] {
+export function getTagsForTrend(trendId: number): Tag[] {
   return []
 }
 
-export function getAllTags(): string[] {
+export function getTrendsByTag(tagSlug: string): Trend[] {
   return []
 }
 
-// Saved trends
-export function saveTrend(userId: number, trendId: number) {}
+export async function addTag(trendId: number, tagName: string): Promise<void> {
+  // Stub - no-op
+}
 
-export function unsaveTrend(userId: number, trendId: number) {}
+// Analyze tracking stubs
+export interface AnalyzeAttempt {
+  id: number
+  session_id: string
+  video_url?: string
+  channel_url?: string
+  attempted_at: string
+}
+
+export async function recordAnalyzeAttempt(sessionId: string, data?: { videoUrl?: string; channelUrl?: string }): Promise<void> {
+  // Stub - no-op
+}
+
+export async function getSessionAnalyzeCount(sessionId: string): Promise<number> {
+  return 0
+}
+
+// Saved trends stubs
+export interface SavedTrend {
+  id: number
+  user_id: number
+  trend_id: number
+  saved_at: string
+}
 
 export function getSavedTrends(userId: number): Trend[] {
   return []
+}
+
+export async function saveTrend(userId: number, trendId: number): Promise<void> {
+  // Stub - no-op
+}
+
+export async function unsaveTrend(userId: number, trendId: number): Promise<void> {
+  // Stub - no-op
 }
 
 export function isTrendSaved(userId: number, trendId: number): boolean {
   return false
 }
 
-// Analyze attempts
-export interface AnalyzeAttempt {
+// Snapshot functions
+export interface Snapshot {
   id: number
-  user_id: number | null
-  session_id: string
-  attempt_number: number
-  analyzed_at: string
+  trend_id: number
+  date: string
+  view_count: number
+  video_count: number
+  engagement_rate: number
+  velocity: number
 }
 
-export function recordAnalyzeAttempt(sessionId: string, userId?: number): AnalyzeAttempt {
+export async function upsertSnapshot(data: {
+  trend_id: number
+  velocity: number
+  views: number
+  likes: number
+  comments: number
+  creator_count: number
+  saturation_score: number
+  breakout_score: number
+  predicted_peak_hours: number
+  snapshot_date: string
+}): Promise<Snapshot> {
   throw new Error('Not implemented')
 }
 
-export function getSessionAnalyzeCount(sessionId: string): number {
-  return 0
-}
 
-export function getUserAnalyzeCount(userId: number): number {
-  return 0
-}
