@@ -116,8 +116,8 @@ export default function SmartRecommendations({
             const likeCount = Number(v.statistics?.likeCount || 0)
             const engagement = viewCount > 0 ? (likeCount / viewCount) * 100 : 0
 
-            // Calculate AI score based on engagement and view velocity
-            const aiScore = Math.min(98, Math.round(70 + engagement * 3 + Math.random() * 10))
+            // Calculate AI score based on engagement (deterministic)
+            const aiScore = Math.min(98, Math.round(70 + engagement * 3 + (viewCount % 10)))
 
             // Determine reason based on category/tags match
             let reason = 'Trending'

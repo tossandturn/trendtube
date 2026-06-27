@@ -219,8 +219,10 @@ export default async function BreakoutKeywordPage({ params }: PageProps) {
     historicalData,
     lifecycle: {
       stage: lifecycleStage,
-      daysToPeak: Math.floor(Math.random() * 14) + 3, // Still estimated
-      predictedDecline: Math.floor(Math.random() * 30) + 14 // Still estimated
+      // Calculate based on velocity: higher velocity = sooner peak
+      daysToPeak: Math.max(3, Math.min(14, Math.floor(1000000 / Math.max(avgVelocity, 100000)))),
+      // Calculate based on video count: more videos = longer trend life
+      predictedDecline: Math.max(14, Math.min(45, relevantVideos.length + 14))
     }
   }
 
@@ -379,7 +381,7 @@ export default async function BreakoutKeywordPage({ params }: PageProps) {
                       <span className="font-medium text-gray-900">Trend Age</span>
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
-                      {Math.floor(Math.random() * 7) + 1} days
+                      {Math.max(1, Math.floor((Date.now() - new Date(firstSeen).getTime()) / (1000 * 60 * 60 * 24)))} days
                     </p>
                     <p className="text-sm text-gray-500">since emergence</p>
                   </div>

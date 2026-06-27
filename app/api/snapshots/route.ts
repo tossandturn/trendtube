@@ -64,6 +64,10 @@ export async function POST() {
       const saturation = Math.min(100, creatorSet.size * 2)
       const breakout = Math.min(100, avgVelocity / 5000 + engagement * 5)
 
+      // Calculate predicted peak hours based on velocity (deterministic)
+      // Higher velocity = sooner peak, lower velocity = later peak
+      const predictedPeakHours = Math.floor(72 - Math.min(66, avgVelocity / 10000))
+
       upsertSnapshot({
         trend_id: trend.id,
         velocity: avgVelocity,
@@ -73,7 +77,7 @@ export async function POST() {
         creator_count: creatorSet.size,
         saturation_score: saturation,
         breakout_score: breakout,
-        predicted_peak_hours: Math.floor(Math.random() * 48) + 6,
+        predicted_peak_hours: predictedPeakHours,
         snapshot_date: today,
       })
       updated++
