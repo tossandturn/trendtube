@@ -185,6 +185,99 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== EXAMPLE OUTPUT ===== */}
+      <section className="bg-gradient-to-b from-gray-50 to-white border-y border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Example Output</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              See what detailed analytics look like when you analyze a YouTube channel
+            </p>
+          </div>
+
+          {/* Example Channel Card */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-8">
+            {/* Channel Header */}
+            <div className="p-6 sm:p-8 border-b border-gray-100">
+              <div className="flex items-start gap-4 sm:gap-6">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
+                  MR
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">MrBeast</h3>
+                  <p className="text-gray-500 text-sm mb-2 line-clamp-1">SUBSCRIBE FOR A FREE CAR!</p>
+                  <a href="#" className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 text-sm font-medium">
+                    View on YouTube →
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-100">
+              <div className="bg-white p-5">
+                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Subscribers</div>
+                <div className="text-2xl font-bold text-gray-900">335M</div>
+                <div className="text-xs text-green-600 mt-1">Total subscribers</div>
+              </div>
+              <div className="bg-white p-5">
+                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Views</div>
+                <div className="text-2xl font-bold text-gray-900">65.2B</div>
+                <div className="text-xs text-blue-600 mt-1">Lifetime views</div>
+              </div>
+              <div className="bg-white p-5">
+                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Videos</div>
+                <div className="text-2xl font-bold text-gray-900">835</div>
+                <div className="text-xs text-purple-600 mt-1">Published</div>
+              </div>
+              <div className="bg-white p-5">
+                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Avg Views</div>
+                <div className="text-2xl font-bold text-gray-900">78M</div>
+                <div className="text-xs text-orange-600 mt-1">Per video</div>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Insights Preview */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="bg-green-50 rounded-xl p-5 border border-green-200">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">🚀</div>
+                <div>
+                  <div className="font-bold text-gray-900 mb-1">Viral Content Producer</div>
+                  <div className="text-sm text-gray-600">156 videos with 1M+ views demonstrate viral potential.</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-red-50 rounded-xl p-5 border border-red-200">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">🔥</div>
+                <div>
+                  <div className="font-bold text-gray-900 mb-1">Exceptional Engagement</div>
+                  <div className="text-sm text-gray-600">Engagement rate of 8.5% is well above YouTube average.</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">⚡</div>
+                <div>
+                  <div className="font-bold text-gray-900 mb-1">Consistent Upload</div>
+                  <div className="text-sm text-gray-600">Publishing 2 videos/week shows dedication.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="mt-10 text-center">
+            <Link href="/youtube-channel-analytics" className="inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors">
+              Analyze Your Channel →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ===== HOW IT WORKS ===== */}
       <section className="bg-white border-y border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
