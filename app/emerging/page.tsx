@@ -56,6 +56,44 @@ export default async function EmergingPage() {
             Videos with low views but explosive growth velocity. These are the opportunities
             most creators miss — catch them before they blow up.
           </p>
+          {region === 'GLOBAL' && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
+              <span className="text-lg">🌍</span>
+              <span>Showing emerging videos from all regions — sorted by velocity</span>
+            </div>
+          )}
+        </div>
+
+        {/* Stats Summary */}
+        <div className="mb-8 glass-panel rounded-2xl p-6 border border-gray-200">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-black text-gray-900">{emerging.length}</div>
+              <div className="text-xs text-gray-500">Emerging Videos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black text-green-600">
+                {formatNumber(
+                  emerging.reduce((sum, { video }) => sum + Number(video.statistics?.viewCount || 0), 0).toString()
+                )}
+              </div>
+              <div className="text-xs text-gray-500">Total Views</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black text-yellow-600">
+                {emerging.length > 0
+                  ? Math.round(emerging.reduce((sum, { velocity }) => sum + velocity, 0) / emerging.length / 1000)
+                  : 0}K
+              </div>
+              <div className="text-xs text-gray-500">Avg Velocity/Day</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black text-blue-600">
+                {region === 'GLOBAL' ? 'All Regions' : REGION_META[region]?.label}
+              </div>
+              <div className="text-xs text-gray-500">Data Source</div>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">

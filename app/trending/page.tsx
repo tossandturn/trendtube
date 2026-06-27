@@ -100,6 +100,12 @@ export default async function TrendingPage() {
             The most viral YouTube videos in {labels.full} right now, ranked by real-time view count with
             velocity and engagement analysis.
           </p>
+          {region === 'GLOBAL' && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
+              <span className="text-lg">🌍</span>
+              <span>Global ranking from 15 regions — sorted by total views</span>
+            </div>
+          )}
         </div>
 
         {/* Professional Analytics Dashboard */}

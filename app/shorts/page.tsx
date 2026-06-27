@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getViewVelocity, getTagEmoji } from '@/lib/analytics'
-import { searchYouTubeMulti } from '@/lib/api-client'
+import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { REGION_META } from '@/lib/region'
 import { getTodayString } from '@/lib/recommendations'
@@ -47,14 +47,25 @@ function getHookStyle(title: string): string {
   return 'Curiosity gap'
 }
 
+// Get region from video if available (for GLOBAL view)
+function getVideoRegion(video: any): string | null {
+  // In GLOBAL mode, videos may have region metadata from the API
+  return video.region || null
+}
+
 export default async function ShortsPage() {
   const region = await getRegion()
-  const videos = await searchYouTubeMulti(
-    ['youtube shorts trending', 'viral shorts'],
-    25,
-    'viewCount'
-  )
-  const finalShorts = videos.length > 0 ? videos : []
+  const videos = await fetchTrendingVideos(region, 50)
+
+  // Filter for shorts content and sort by velocity
+  const shortsVideos = videos
+    .filter((v: any) => {
+      const title = v.snippet?.title?.toLowerCase() || ''
+      const desc = v.snippet?.description?.toLowerCase() || ''
+      return title.includes('shorts') || desc.includes('shorts') || title.includes('#shorts')
+    })
+    .sort((a: any, b: any) => getViewVelocity(b) - getViewVelocity(a))
+    .slice(0, 15)
 
   return (
     <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">
@@ -71,18 +82,28 @@ export default async function ShortsPage() {
 
         <div className="mb-8 sm:mb-10">
           <div className="text-gray-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">📱 SHORTS RADAR</div>
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">{getTagEmoji('Shorts')} Shorts Exploding Right Now</h1>
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">
+            {getTagEmoji('Shorts')} Shorts Exploding Right Now
+          </h1>
           <p className="text-gray-500 text-sm sm:text-base max-w-2xl leading-relaxed">
             Explore the latest viral YouTube Shorts, analyze rapid growth videos, and identify
             creator opportunities before everyone else.
           </p>
+          {region === 'GLOBAL' && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
+              <span className="text-lg">🌍</span>
+              <span>Showing Shorts from all regions — ranked by global velocity</span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          {finalShorts.map((video: any) => {
+          {shortsVideos.map((video: any) => {
             const viralScore = getViralScore(video)
             const hookStyle = getHookStyle(video.snippet?.title || '')
             const velocity = getViewVelocity(video)
+            const videoRegion = getVideoRegion(video)
+
             return (
               <Link key={video.id} href={`/video/${video.id}`} className="group block">
                 <div className="aspect-[9/16] rounded-xl sm:rounded-2xl overflow-hidden relative glass-panel neon-border glow-hover">
@@ -96,9 +117,21 @@ export default async function ShortsPage() {
                   <div className="absolute top-2 left-2 bg-red-500/90 px-2 py-0.5 rounded-md text-[10px] font-bold shadow-[0_0_10px_rgba(220,38,38,0.3)] text-white">
                     SHORTS
                   </div>
-                  <div className="absolute top-2 right-2 glass-panel px-2 py-0.5 rounded-md text-[10px] font-bold text-gray-700 data-mono">
-                    {viralScore}/100
-                  </div>
+
+                  {/* Region Badge for GLOBAL view */}
+                  {region === 'GLOBAL' && videoRegion && (
+                    <div className="absolute top-2 right-2 bg-blue-500/90 px-2 py-0.5 rounded-md text-[10px] font-bold text-white">
+                      {videoRegion}
+                    </div>
+                  )}
+
+                  {/* Viral Score Badge - shown when not GLOBAL or no region */}
+                  {region !== 'GLOBAL' && (
+                    <div className="absolute top-2 right-2 glass-panel px-2 py-0.5 rounded-md text-[10px] font-bold text-gray-700 data-mono">
+                      {viralScore}/100
+                    </div>
+                  )}
+
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <div className="text-gray-900 font-bold text-xs line-clamp-2 mb-1">
                       {video.snippet?.title}
@@ -119,6 +152,38 @@ export default async function ShortsPage() {
               </Link>
             )
           })}
+        </div>
+
+        {/* Stats Summary */}
+        <div className="mt-8 glass-panel rounded-2xl p-6 border border-gray-200">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-black text-gray-900">{shortsVideos.length}</div>
+              <div className="text-xs text-gray-500">Shorts Analyzed</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black text-red-600">
+                {formatNumber(
+                  shortsVideos.reduce((sum, v) => sum + Number(v.statistics?.viewCount || 0), 0).toString()
+                )}
+              </div>
+              <div className="text-xs text-gray-500">Total Views</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black text-green-600">
+                {Math.round(
+                  shortsVideos.reduce((sum, v) => sum + getViewVelocity(v), 0) / Math.max(shortsVideos.length, 1) / 1000
+                )}K
+              </div>
+              <div className="text-xs text-gray-500">Avg Velocity/Day</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-black text-blue-600">
+                {region === 'GLOBAL' ? 'All Regions' : REGION_META[region]?.label}
+              </div>
+              <div className="text-xs text-gray-500">Data Source</div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
