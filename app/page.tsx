@@ -120,6 +120,12 @@ export default function HomePage() {
               <h3 className="font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">Channel Analytics</h3>
               <p className="text-gray-500 text-xs">Deep dive into any channel's performance metrics</p>
             </Link>
+            <Link href="/compare-new" className="group bg-white rounded-xl p-5 border-2 border-amber-300 bg-amber-50/50 hover:border-amber-400 hover:shadow-lg transition-all duration-200 relative">
+              <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">HOT</div>
+              <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">⚔️</div>
+              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-amber-600 transition-colors">Compare Tool</h3>
+              <p className="text-gray-500 text-xs">Side-by-side channel &amp; video comparison</p>
+            </Link>
             <Link href="/youtube-competitor-analysis" className="group bg-white rounded-xl p-5 border border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all duration-200">
               <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">🎯</div>
               <h3 className="font-bold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">Competitor Research</h3>
@@ -139,6 +145,41 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-lg bg-yellow-50 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">🤖</div>
               <h3 className="font-bold text-gray-900 mb-1 group-hover:text-yellow-600 transition-colors">AI Assistant</h3>
               <p className="text-gray-500 text-xs">Get personalized content recommendations</p>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== COMPARE TOOL SPOTLIGHT ===== */}
+      <section className="bg-gradient-to-br from-amber-50 to-orange-50 border-y border-amber-200">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="text-center mb-10">
+            <span className="inline-block bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-4">FEATURED TOOL</span>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">YouTube Competitor Comparison</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Compare two YouTube channels or videos side-by-side. See who leads in subscribers, engagement, views, and more — with AI-powered insights.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="bg-white rounded-xl p-6 border border-amber-100 text-center">
+              <div className="text-3xl mb-3">⚔️</div>
+              <h3 className="font-bold text-gray-900 mb-2">Head-to-Head</h3>
+              <p className="text-gray-600 text-sm">Compare any two channels or videos with detailed metric breakdowns and winner analysis.</p>
+            </div>
+            <div className="bg-white rounded-xl p-6 border border-amber-100 text-center">
+              <div className="text-3xl mb-3">📊</div>
+              <h3 className="font-bold text-gray-900 mb-2">Visual Analytics</h3>
+              <p className="text-gray-600 text-sm">Interactive charts and progress bars make it easy to spot strengths and weaknesses at a glance.</p>
+            </div>
+            <div className="bg-white rounded-xl p-6 border border-amber-100 text-center">
+              <div className="text-3xl mb-3">💡</div>
+              <h3 className="font-bold text-gray-900 mb-2">AI Insights</h3>
+              <p className="text-gray-600 text-sm">Get smart recommendations on which channel strategy performs better and why.</p>
+            </div>
+          </div>
+          <div className="text-center">
+            <Link href="/compare-new" className="inline-flex items-center justify-center px-8 py-4 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-colors shadow-lg shadow-amber-200 text-lg">
+              Start Comparing →
             </Link>
           </div>
         </div>
