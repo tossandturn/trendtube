@@ -313,9 +313,64 @@ export default function HomePage() {
 
 
 
+      {/* ===== QUICK START SUMMARY ===== */}
+      <section className="bg-white border-y border-gray-200">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="lg:col-span-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">What You Get In 60 Seconds</h2>
+              <p className="text-gray-600 mb-6 max-w-2xl">
+                Tubefission helps you answer three practical questions fast: what worked, what is rising, and who is actually worth benchmarking.
+              </p>
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
+                  <div className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Analyze</div>
+                  <div className="font-semibold text-gray-900 mb-1">Why something worked</div>
+                  <p className="text-sm text-gray-600">See title, engagement, timing, and performance signals in one place.</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
+                  <div className="text-xs font-bold uppercase tracking-wider text-red-600 mb-2">Discover</div>
+                  <div className="font-semibold text-gray-900 mb-1">What is rising now</div>
+                  <p className="text-sm text-gray-600">Track breakout topics and video momentum before the niche gets crowded.</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
+                  <div className="text-xs font-bold uppercase tracking-wider text-amber-600 mb-2">Compare</div>
+                  <div className="font-semibold text-gray-900 mb-1">Who is the better model</div>
+                  <p className="text-sm text-gray-600">Separate raw size from repeatable strategy before you copy a competitor.</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5">
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Best pages to start with</div>
+              <div className="space-y-3 text-sm">
+                <Link href="/youtube-channel-analytics" className="block rounded-lg border border-gray-200 bg-white px-4 py-3 hover:border-gray-300 hover:bg-gray-50 transition">
+                  <div className="font-semibold text-gray-900">Channel Analytics</div>
+                  <div className="text-gray-500">Best for diagnosing your own or a competitor’s channel</div>
+                </Link>
+                <Link href="/trending" className="block rounded-lg border border-gray-200 bg-white px-4 py-3 hover:border-gray-300 hover:bg-gray-50 transition">
+                  <div className="font-semibold text-gray-900">Trending</div>
+                  <div className="text-gray-500">Best for fast-moving opportunities and what is taking off</div>
+                </Link>
+                <Link href="/compare-new" className="block rounded-lg border border-gray-200 bg-white px-4 py-3 hover:border-gray-300 hover:bg-gray-50 transition">
+                  <div className="font-semibold text-gray-900">Compare</div>
+                  <div className="text-gray-500">Best when you already have two channels or videos to benchmark</div>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== LONG-FORM CONTENT ===== */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-        <h2 className="text-3xl font-bold text-gray-900 mb-6">What Is Tubefission?</h2>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center border-b border-gray-100 mb-10">
+          <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Prefer to read first?</div>
+          <p className="text-sm text-gray-600">
+            The detailed product explanation below is for users who want a deeper understanding of how TubeFission works. If you are ready to act, use the quick-start sections above.
+          </p>
+        </div>
+
+
         <p className="text-gray-700 leading-relaxed mb-6">
           Tubefission is a free <strong>AI-powered YouTube analytics platform</strong> designed for creators, marketers, and researchers who want data-driven insights into YouTube performance and trends. Whether you need to analyze a competitor channel, study viral content patterns, or discover trending topics before they peak, Tubefission gives you the intelligence to make informed decisions.
         </p>

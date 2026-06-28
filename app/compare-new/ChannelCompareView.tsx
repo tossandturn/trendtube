@@ -184,6 +184,31 @@ export default function ChannelCompareView({ leftId, rightId }: ChannelCompareVi
         <p className="text-sm text-gray-700">{summary.recommendation}</p>
       </div>
 
+      <div className="flex flex-wrap gap-3 mb-8">
+        {leftChannel?.id && (
+          <Link
+            href={`/channel/${leftChannel.id}`}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+          >
+            Open Channel A Analysis
+          </Link>
+        )}
+        {rightChannel?.id && (
+          <Link
+            href={`/channel/${rightChannel.id}`}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+          >
+            Open Channel B Analysis
+          </Link>
+        )}
+        <Link
+          href="/compare-new?type=channels"
+          className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition"
+        >
+          Compare Another Pair
+        </Link>
+      </div>
+
       <div className="grid lg:grid-cols-2 gap-6 mb-8">
         <ChannelCompareCard channel={leftChannel} videos={leftVideos} label="Channel A" color="blue" />
         <ChannelCompareCard channel={rightChannel} videos={rightVideos} label="Channel B" color="red" />

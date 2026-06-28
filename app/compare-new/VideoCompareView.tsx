@@ -174,6 +174,31 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
         <p className="text-sm text-gray-700">{summary.recommendation}</p>
       </div>
 
+      <div className="flex flex-wrap gap-3 mb-8">
+        {leftVideo?.id && (
+          <Link
+            href={`/video/${leftVideo.id}`}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+          >
+            Open Video A Analysis
+          </Link>
+        )}
+        {rightVideo?.id && (
+          <Link
+            href={`/video/${rightVideo.id}`}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+          >
+            Open Video B Analysis
+          </Link>
+        )}
+        <Link
+          href="/compare-new?type=videos"
+          className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition"
+        >
+          Compare Another Pair
+        </Link>
+      </div>
+
       <div className="grid lg:grid-cols-2 gap-6 mb-8">
         <VideoCompareCard video={leftVideo} label="Video A" color="blue" />
         <VideoCompareCard video={rightVideo} label="Video B" color="red" />
