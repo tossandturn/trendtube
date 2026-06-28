@@ -111,7 +111,6 @@ function analyzeChannel(videos: any[], channel: any) {
   const avgLikeRate = videos.reduce((sum, v) => sum + calculateLikeRate(v), 0) / videos.length
   const avgCommentRate = videos.reduce((sum, v) => sum + calculateCommentRate(v), 0) / videos.length
 
-  // Upload frequency analysis
   const publishDates = videos
     .map(v => new Date(v.snippet?.publishedAt))
     .filter(d => !isNaN(d.getTime()))
@@ -119,14 +118,17 @@ function analyzeChannel(videos: any[], channel: any) {
 
   let uploadFrequency = 'N/A'
   let uploadConsistency = 0
+  let recentUploadsPerMonth = 0
+
   if (publishDates.length >= 2) {
     const daysBetween = (publishDates[0].getTime() - publishDates[publishDates.length - 1].getTime()) / (1000 * 60 * 60 * 24)
     const videosPerDay = publishDates.length / Math.max(daysBetween, 1)
+    recentUploadsPerMonth = videosPerDay * 30
+
     if (videosPerDay >= 1) uploadFrequency = `${videosPerDay.toFixed(1)} videos/day`
     else if (videosPerDay >= 0.14) uploadFrequency = `${Math.round(videosPerDay * 7)} videos/week`
-    else uploadFrequency = `${Math.round(videosPerDay * 30)} videos/month`
+    else uploadFrequency = `${Math.max(1, Math.round(videosPerDay * 30))} videos/month`
 
-    // Calculate consistency (standard deviation of days between uploads)
     const intervals = []
     for (let i = 0; i < publishDates.length - 1; i++) {
       intervals.push((publishDates[i].getTime() - publishDates[i + 1].getTime()) / (1000 * 60 * 60 * 24))
@@ -134,16 +136,14 @@ function analyzeChannel(videos: any[], channel: any) {
     const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length
     const variance = intervals.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) / intervals.length
     const stdDev = Math.sqrt(variance)
-    uploadConsistency = Math.max(0, 100 - (stdDev / avgInterval) * 100)
+    uploadConsistency = Math.max(0, 100 - (stdDev / Math.max(avgInterval, 1)) * 100)
   }
 
-  // Best performing video
   const sortedByViews = [...videos].sort((a, b) => Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0))
   const bestVideo = sortedByViews[0]
   const worstVideo = sortedByViews[sortedByViews.length - 1]
   const medianVideo = sortedByViews[Math.floor(sortedByViews.length / 2)]
 
-  // Performance tiers
   const performanceTiers = {
     viral: videos.filter(v => Number(v.statistics?.viewCount || 0) > 1000000).length,
     high: videos.filter(v => Number(v.statistics?.viewCount || 0) > 100000 && Number(v.statistics?.viewCount || 0) <= 1000000).length,
@@ -151,7 +151,6 @@ function analyzeChannel(videos: any[], channel: any) {
     low: videos.filter(v => Number(v.statistics?.viewCount || 0) <= 10000).length,
   }
 
-  // Content type analysis (based on title keywords)
   const titleWords = videos.map(v => v.snippet?.title?.toLowerCase() || '')
   const contentTypes: Record<string, number> = {}
   const typeKeywords: Record<string, string[]> = {
@@ -181,7 +180,6 @@ function analyzeChannel(videos: any[], channel: any) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
 
-  // Best publish time analysis
   const hourCounts = new Array(24).fill(0)
   const dayCounts = new Array(7).fill(0)
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -197,20 +195,17 @@ function analyzeChannel(videos: any[], channel: any) {
   const bestHour = hourCounts.indexOf(Math.max(...hourCounts))
   const bestDay = dayCounts.indexOf(Math.max(...dayCounts))
 
-  // Channel age and growth metrics
   const channelCreated = new Date(channel.snippet?.publishedAt || 0)
-  const channelAge = Math.floor((Date.now() - channelCreated.getTime()) / (1000 * 60 * 60 * 24 * 365))
+  const channelAge = Math.max(1, Math.floor((Date.now() - channelCreated.getTime()) / (1000 * 60 * 60 * 24 * 365)))
   const subscriberCount = Number(channel.statistics?.subscriberCount || 0)
   const viewCount = Number(channel.statistics?.viewCount || 0)
   const videoCount = Number(channel.statistics?.videoCount || 0)
 
-  // Calculate estimated monthly growth
   const viewsPerVideo = videoCount > 0 ? viewCount / videoCount : 0
-  const estimatedMonthlyViews = viewsPerVideo * (uploadFrequency.includes('week') ?
-    parseInt(uploadFrequency) * 4 : parseInt(uploadFrequency) || 0)
-
-  // Content velocity (videos per month on average)
-  const contentVelocity = channelAge > 0 ? videoCount / (channelAge * 12) : 0
+  const estimatedMonthlyViews = Math.round(viewsPerVideo * Math.max(recentUploadsPerMonth, 0))
+  const lifetimeOutputPerMonth = videoCount / (channelAge * 12)
+  const avgViewsPer1KSubscribers = subscriberCount > 0 ? (avgViews / subscriberCount) * 1000 : 0
+  const likeToViewRate = avgLikeRate
 
   return {
     totalViews,
@@ -222,6 +217,7 @@ function analyzeChannel(videos: any[], channel: any) {
     avgCommentRate,
     uploadFrequency,
     uploadConsistency,
+    recentUploadsPerMonth,
     bestVideo,
     worstVideo,
     medianVideo,
@@ -237,7 +233,9 @@ function analyzeChannel(videos: any[], channel: any) {
     channelAge,
     viewsPerVideo,
     estimatedMonthlyViews,
-    contentVelocity,
+    lifetimeOutputPerMonth,
+    avgViewsPer1KSubscribers,
+    likeToViewRate,
   }
 }
 
@@ -247,90 +245,83 @@ function generateChannelInsights(channel: any, analysis: any) {
   const subscriberCount = Number(stats?.subscriberCount || 0)
   const viewCount = Number(stats?.viewCount || 0)
   const videoCount = Number(stats?.videoCount || 0)
-
-  // Growth insights
   const viewsPerVideo = videoCount > 0 ? viewCount / videoCount : 0
+
   if (viewsPerVideo > 100000) {
     insights.push({
       icon: '🚀',
-      title: 'High View-to-Video Ratio',
-      desc: `Averaging ${formatNumber(viewsPerVideo)} views per video indicates strong content performance.`,
+      title: 'Strong Average View Performance',
+      desc: `Averaging ${formatNumber(viewsPerVideo)} views per video suggests this channel consistently earns attention beyond a one-off spike.`,
       level: 'high',
     })
   }
 
-  // Engagement insights
   if (analysis.avgEngagement > 5) {
     insights.push({
       icon: '🔥',
-      title: 'Exceptional Engagement',
-      desc: `Engagement rate of ${analysis.avgEngagement.toFixed(2)}% is well above YouTube average of 1-3%.`,
+      title: 'Exceptional Audience Response',
+      desc: `Average engagement of ${analysis.avgEngagement.toFixed(2)}% is significantly above the typical 1-3% range on YouTube.`,
       level: 'high',
     })
   } else if (analysis.avgEngagement > 3) {
     insights.push({
       icon: '💎',
-      title: 'Good Engagement',
-      desc: `Engagement rate of ${analysis.avgEngagement.toFixed(2)}% indicates quality audience interaction.`,
+      title: 'Healthy Engagement Quality',
+      desc: `Average engagement of ${analysis.avgEngagement.toFixed(2)}% shows viewers are doing more than passively watching.`,
       level: 'medium',
     })
   }
 
-  // Upload frequency insights
-  if (analysis.uploadFrequency.includes('day') && !analysis.uploadFrequency.includes('0.')) {
+  if (analysis.recentUploadsPerMonth >= 8) {
     insights.push({
       icon: '⚡',
-      title: 'Consistent Upload Schedule',
-      desc: `Publishing ${analysis.uploadFrequency} shows dedication and helps algorithm favorability.`,
+      title: 'Aggressive Publishing Cadence',
+      desc: `Recent output is running at roughly ${analysis.recentUploadsPerMonth.toFixed(1)} uploads per month, which helps maintain momentum and audience habit.`,
       level: 'high',
     })
   }
 
-  // Consistency score
   if (analysis.uploadConsistency > 80) {
     insights.push({
       icon: '📅',
-      title: 'Highly Consistent',
-      desc: `Upload consistency score: ${Math.round(analysis.uploadConsistency)}%. Regular posting builds audience loyalty.`,
+      title: 'Highly Consistent Schedule',
+      desc: `Upload consistency is ${Math.round(analysis.uploadConsistency)}%, which makes the channel easier for both viewers and the algorithm to trust.`,
       level: 'high',
     })
   }
 
-  // Subscriber milestone
   if (subscriberCount > 1000000) {
     insights.push({
       icon: '👑',
-      title: 'Million Subscriber Club',
-      desc: 'Over 1M subscribers places this channel in the top tier of YouTube creators.',
+      title: 'Top-Tier Audience Scale',
+      desc: 'Crossing 1M subscribers puts this channel in a top-tier creator bracket with strong brand leverage.',
       level: 'viral',
     })
   } else if (subscriberCount > 100000) {
     insights.push({
       icon: '🏆',
-      title: 'Established Creator',
-      desc: '100K+ subscribers demonstrates consistent value delivery to audience.',
+      title: 'Established Channel Position',
+      desc: '100K+ subscribers signals that this creator has already built repeatable audience trust.',
       level: 'high',
     })
   }
 
-  // Performance distribution
   if (analysis.performanceTiers.viral > 0) {
     insights.push({
       icon: '🌟',
-      title: 'Viral Content Producer',
-      desc: `${analysis.performanceTiers.viral} videos with 1M+ views demonstrate viral potential.`,
+      title: 'Has Proven Viral Upside',
+      desc: `${analysis.performanceTiers.viral} videos have crossed 1M views, which means this channel can break beyond its baseline audience.`,
       level: 'viral',
     })
   }
 
-  // Content strategy insights
   if (analysis.contentTypes.length > 0) {
     const topType = analysis.contentTypes[0][0]
-    const percentage = Math.round((analysis.contentTypes[0][1] / videoCount) * 100)
+    const percentage = Math.round((analysis.contentTypes[0][1] / Math.max(videoCount, 1)) * 100)
     insights.push({
       icon: '🎯',
-      title: 'Content Focus Identified',
-      desc: `${percentage}% of content is ${topType}-style, showing clear niche positioning.`,
+      title: 'Clear Content Positioning',
+      desc: `${percentage}% of uploads cluster around ${topType}, giving the channel a recognizable content identity.`,
       level: 'info',
     })
   }
@@ -338,13 +329,50 @@ function generateChannelInsights(channel: any, analysis: any) {
   if (insights.length === 0) {
     insights.push({
       icon: '📊',
-      title: 'Steady Channel Performance',
-      desc: 'Channel is performing within expected parameters for its niche and size.',
+      title: 'Stable Baseline Performance',
+      desc: 'This channel looks steady overall, but it needs a stronger differentiator to stand out in the current sample.',
       level: 'low',
     })
   }
 
   return insights
+}
+function buildChannelActionPlan(analysis: any) {
+  const items = []
+
+  items.push({
+    priority: analysis.avgEngagement > 5 ? 'Scale this' : 'High impact',
+    title: 'Audience response strategy',
+    description: analysis.avgEngagement > 5
+      ? `Engagement is already strong at ${analysis.avgEngagement.toFixed(2)}%. Build the next 2-3 uploads around the same promise, pacing, and CTA pattern.`
+      : `Engagement is only ${analysis.avgEngagement.toFixed(2)}%. Strengthen the opening hook, add a clearer opinion or payoff, and ask for a specific viewer response earlier in the video.`,
+  })
+
+  items.push({
+    priority: analysis.uploadConsistency > 80 ? 'Maintain' : 'High impact',
+    title: 'Publishing habit',
+    description: analysis.uploadConsistency > 80
+      ? `Schedule consistency is a strength. Keep publishing around ${analysis.bestPublishTime.dayName}s at ${analysis.bestPublishTime.formattedHour} and focus experiments on packaging or topic selection.`
+      : `Consistency is still uneven. Pick one dependable weekly publishing window around ${analysis.bestPublishTime.dayName}s ${analysis.bestPublishTime.formattedHour} to train both viewers and the algorithm.`,
+  })
+
+  items.push({
+    priority: analysis.performanceTiers.viral > 0 ? 'Scale this' : 'Test next',
+    title: 'Content portfolio decision',
+    description: analysis.performanceTiers.viral > 0
+      ? `You already have ${analysis.performanceTiers.viral} viral-level wins. Turn the best-performing topic into a repeatable series before shifting into new experiments.`
+      : `You do not yet have a breakout winner in this sample. Use your strongest median-performing topic as the base and test 2-3 tighter variations before broadening scope.`,
+  })
+
+  items.push({
+    priority: analysis.contentTypes.length > 0 ? 'Quick win' : 'High impact',
+    title: 'Positioning clarity',
+    description: analysis.contentTypes.length > 0
+      ? `${analysis.contentTypes[0][0]} is your clearest audience signal right now. Keep that as the core identity and only diversify when the format is consistently converting.`
+      : 'The channel does not show a clear content identity yet. Narrow topic selection so returning viewers and recommendations can better understand what the channel is about.',
+  })
+
+  return items
 }
 
 export async function generateMetadata({ params }: ChannelPageProps): Promise<Metadata> {
@@ -373,6 +401,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
   const stats = channel.statistics
   const snippet = channel.snippet
+  const channelActionPlan = analysis ? buildChannelActionPlan(analysis) : []
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
@@ -569,16 +598,16 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Content Velocity</span>
-                    <span className="font-medium">{analysis.contentVelocity.toFixed(1)} videos/month</span>
+                    <span className="text-gray-600">Lifetime Output Avg</span>
+                    <span className="font-medium">{analysis.lifetimeOutputPerMonth.toFixed(1)} videos/month</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Channel Age</span>
                     <span className="font-medium">{analysis.channelAge} years</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Views/Subscriber</span>
-                    <span className="font-medium">{analysis.viewsPerVideo > 0 && Number(channel.statistics?.subscriberCount || 0) > 0 ? (analysis.viewsPerVideo / Number(channel.statistics?.subscriberCount || 1) * 1000).toFixed(0) : 0}x</span>
+                    <span className="text-gray-600">Avg Views per 1K Subs</span>
+                    <span className="font-medium">{analysis.avgViewsPer1KSubscribers.toFixed(0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Best Upload Time</span>
@@ -645,11 +674,39 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
                     <span className="font-medium text-blue-600">{formatNumber(Math.round(analysis.estimatedMonthlyViews))}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Like-to-View Ratio</span>
-                    <span className="font-medium">{(analysis.avgLikeRate / 100).toFixed(2)}%</span>
+                    <span className="text-gray-600">Like Rate</span>
+                    <span className="font-medium">{analysis.likeToViewRate.toFixed(2)}%</span>
                   </div>
                 </div>
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* Recommended Next Moves */}
+        {analysis && (
+          <section className="mb-10">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <span>🎯</span> Recommended Next Moves
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {channelActionPlan.map((item) => (
+                <div key={item.title} className="bg-white rounded-xl p-5 border border-gray-200">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h3 className="font-semibold text-gray-900">{item.title}</h3>
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
+                      item.priority === 'High impact' ? 'bg-red-100 text-red-700' :
+                      item.priority === 'Quick win' ? 'bg-green-100 text-green-700' :
+                      item.priority === 'Scale this' ? 'bg-blue-100 text-blue-700' :
+                      item.priority === 'Maintain' ? 'bg-gray-100 text-gray-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {item.priority}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+                </div>
+              ))}
             </div>
           </section>
         )}

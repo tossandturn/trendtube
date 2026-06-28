@@ -240,6 +240,45 @@ function getTitleScore(analysis: any) {
   return Math.min(100, score)
 }
 
+function buildActionPlan(video: any, titleAnalysis: any, publishAnalysis: any, descAnalysis: any, velocity: number, engagementRate: number) {
+  const actionItems = []
+
+  actionItems.push({
+    priority: titleAnalysis.hasPowerWord && titleAnalysis.hasNumber ? 'Keep' : 'High impact',
+    title: 'Packaging strategy',
+    description: titleAnalysis.hasPowerWord && titleAnalysis.hasNumber
+      ? 'This title already uses click-driving structure. Study which specific words and framing are doing the work before reusing the pattern.'
+      : 'Test a tighter title with one concrete outcome, a number, or a stronger curiosity phrase. This is the fastest improvement lever for underperforming packaging.',
+  })
+
+  actionItems.push({
+    priority: engagementRate > 5 ? 'Scale this' : 'Quick win',
+    title: 'Audience response',
+    description: engagementRate > 5
+      ? `Engagement is already strong at ${engagementRate.toFixed(2)}%. Double down on the same promise, pacing, and CTA pattern in the next 2-3 uploads.`
+      : `Engagement is only ${engagementRate.toFixed(2)}%. Add a clearer opinion, stronger hook, or a more specific viewer prompt in the first 30 seconds.`,
+  })
+
+  actionItems.push({
+    priority: publishAnalysis.timeScore >= 80 ? 'Test next' : 'High impact',
+    title: 'Distribution timing',
+    description: publishAnalysis.timeScore >= 80
+      ? `Publishing time looks favorable. Keep the timing stable and test whether topic/thumbnail changes move the result more than timing does.`
+      : `This upload time was not ideal. Re-test the same style closer to ${publishAnalysis.dayName} ${publishAnalysis.timeString} windows that better match viewer activity.`,
+  })
+
+  actionItems.push({
+    priority: descAnalysis.seoScore >= 80 ? 'Maintain' : 'Quick win',
+    title: 'Search and description support',
+    description: descAnalysis.seoScore >= 80
+      ? 'Description support is solid. Preserve structure, links, and timestamps when repeating this format.'
+      : 'Improve description depth with clearer summary text, timestamps, or related links so the video has more search and session-supporting context.',
+  })
+
+  return actionItems
+}
+
+
 export async function generateMetadata({ params }: VideoPageProps): Promise<Metadata> {
   const { id } = await params
   const video = await fetchVideoById(id)
@@ -272,12 +311,13 @@ export default async function VideoPage({ params }: VideoPageProps) {
   const trendData = generateTrendData(video)
 
   // Calculate performance percentiles
+  const actionPlan = buildActionPlan(video, titleAnalysis, publishAnalysis, descAnalysis, velocity, engagementRate)
   const allRelatedEngagement = related.map((v: any) => getEngagementRate(v))
   const avgRelatedEngagement = allRelatedEngagement.length > 0
     ? allRelatedEngagement.reduce((a: number, b: number) => a + b, 0) / allRelatedEngagement.length
     : 0
   const engagementPercentile = avgRelatedEngagement > 0
-    ? Math.round((engagementRate / avgRelatedEngagement) * 50) + 50
+    ? Math.min(99, Math.max(1, Math.round((engagementRate / avgRelatedEngagement) * 50) + 50))
     : 50
 
   return (
@@ -334,6 +374,35 @@ export default async function VideoPage({ params }: VideoPageProps) {
             <div className="text-xl sm:text-2xl font-black text-green-600 data-mono text-glow-green">{engagement}%</div>
           </div>
         </div>
+
+        {/* Action Plan */}
+        <section className="mb-10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-emerald-400 to-emerald-600" />
+            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+              <span className="text-emerald-600">🎯</span> What To Do Next
+            </h2>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {actionPlan.map((item) => (
+              <div key={item.title} className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <h3 className="font-bold text-gray-900">{item.title}</h3>
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
+                    item.priority === 'High impact' ? 'bg-red-100 text-red-700' :
+                    item.priority === 'Quick win' ? 'bg-green-100 text-green-700' :
+                    item.priority === 'Scale this' ? 'bg-blue-100 text-blue-700' :
+                    item.priority === 'Maintain' ? 'bg-gray-100 text-gray-700' :
+                    'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {item.priority}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Performance Trend Charts */}
         <section className="mb-10">
@@ -554,9 +623,12 @@ export default async function VideoPage({ params }: VideoPageProps) {
           <div className="flex items-center gap-3 mb-4">
             <div className="w-1 h-6 rounded-full bg-gradient-to-b from-yellow-400 to-yellow-600" />
             <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-              <span className="text-yellow-600">🧠</span> AI Trend Analysis
+              <span className="text-yellow-600">🧠</span> What The Data Says
             </h2>
           </div>
+          <p className="text-sm text-gray-500 mb-4 max-w-3xl">
+            Use this section to understand why the video performed the way it did. Then use the action plan above to decide what to repeat, fix, or test next.
+          </p>
           <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
             {insights.slice(0, 4).map((insight, idx) => (
               <div
@@ -585,52 +657,48 @@ export default async function VideoPage({ params }: VideoPageProps) {
           <div className="flex items-center gap-3 mb-4">
             <div className="w-1 h-6 rounded-full bg-gradient-to-b from-purple-400 to-purple-600" />
             <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-              <span className="text-purple-600">💡</span> AI Inspiration Report
+              <span className="text-purple-600">💡</span> Replication Checklist
             </h2>
           </div>
           <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover bg-gradient-to-br from-purple-50/30 to-blue-50/30">
-            <h3 className="font-bold text-gray-900 mb-4">What You Can Learn From This Video</h3>
+            <h3 className="font-bold text-gray-900 mb-4">Before You Reuse This Pattern</h3>
             <div className="space-y-4">
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">1</div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Title Strategy</h4>
+                  <h4 className="font-semibold text-gray-900">Check the packaging, not just the topic</h4>
                   <p className="text-gray-600 text-sm">
-                    {titleAnalysis.hasPowerWord ? 'This title uses emotional power words that drive clicks. Consider using words like "ultimate", "best", or "amazing" in your titles.' : 'Consider adding power words to boost CTR. Words like "ultimate", "secret", or "proven" can increase click-through rates by 15-30%.'}
+                    If this video outperformed, the title and thumbnail may be doing as much work as the topic itself. Save both before you try to reproduce the idea.
                   </p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">2</div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Thumbnail Opportunity</h4>
+                  <h4 className="font-semibold text-gray-900">Separate broad appeal from audience fit</h4>
                   <p className="text-gray-600 text-sm">
-                    {Number(video.statistics?.viewCount) > 1000000
-                      ? 'This video\'s high view count suggests an effective thumbnail strategy. Study the visual composition - likely uses contrasting colors, clear focal points, and readable text.'
-                      : 'Videos with 1M+ views often use faces with emotional expressions, bold contrasting colors, and minimal text (3-4 words max).'}
+                    A high-view video is not automatically a good fit for your audience. Reuse the promise style only if it matches your niche, viewer expectations, and format strengths.
                   </p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">3</div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Content Format Insight</h4>
+                  <h4 className="font-semibold text-gray-900">Test one variable at a time</h4>
                   <p className="text-gray-600 text-sm">
-                    {video.snippet?.title?.toLowerCase().includes('how to')
-                      ? 'Tutorial content like this builds long-term authority. Consider creating a series covering related topics to maximize SEO value.'
-                      : 'This format resonates with the audience. Analyze the pacing, length, and structure - then adapt these elements to your own content.'}
+                    When adapting this pattern, change either the topic angle, title framing, or thumbnail treatment first — not all three at once — so you know what actually improved the result.
                   </p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">4</div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Action Steps For You</h4>
+                  <h4 className="font-semibold text-gray-900">Use this as one reference, not a rule</h4>
                   <ul className="text-gray-600 text-sm list-disc list-inside space-y-1">
-                    <li>Analyze 3-5 similar high-performing videos in your niche</li>
-                    <li>Identify common patterns in titles, thumbnails, and pacing</li>
-                    <li>Create a content calendar incorporating these insights</li>
-                    <li>Test variations and measure performance over 4 weeks</li>
+                    <li>Compare at least 3 similar winners in the same niche</li>
+                    <li>Look for repeated title and thumbnail structures</li>
+                    <li>Confirm whether engagement also stayed strong, not just views</li>
+                    <li>Only scale the format after a successful small test</li>
                   </ul>
                 </div>
               </div>

@@ -287,6 +287,24 @@ export default function ChannelCompareMetrics({
           </div>
         </div>
       )}
+      {/* Comparison Actions */}
+      <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl border border-slate-200 p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">What To Do With This Comparison</h3>
+        <div className="grid sm:grid-cols-3 gap-4 text-sm">
+          <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <div className="font-semibold text-gray-900 mb-2">Study the efficiency winner</div>
+            <p className="text-gray-600">If a smaller channel gets stronger average views per upload, its topic choice or packaging may be more repeatable than the biggest player.</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <div className="font-semibold text-gray-900 mb-2">Separate scale from strategy</div>
+            <p className="text-gray-600">The largest channel is not always the best model. Prioritize formats and posting patterns you can realistically replicate at your current stage.</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <div className="font-semibold text-gray-900 mb-2">Open the winner next</div>
+            <p className="text-gray-600">After comparing, inspect the winner’s recent uploads and best-performing videos to understand which exact formats or topics are carrying the result.</p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

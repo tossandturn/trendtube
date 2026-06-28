@@ -300,60 +300,22 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
         </div>
       </div>
 
-      {/* AI Insights */}
-      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">💡 Comparison Insights</h3>
-        <div className="space-y-3">
-          {leftEngagement > rightEngagement && (
-            <div className="flex gap-3 p-3 bg-white rounded-lg">
-              <span className="text-blue-600 font-bold">Video A</span>
-              <p className="text-gray-700">
-                has {((leftEngagement - rightEngagement) / rightEngagement * 100).toFixed(0)}% better engagement,
-                indicating stronger audience connection.
-              </p>
-            </div>
-          )}
-          {rightEngagement > leftEngagement && (
-            <div className="flex gap-3 p-3 bg-white rounded-lg">
-              <span className="text-red-600 font-bold">Video B</span>
-              <p className="text-gray-700">
-                has {((rightEngagement - leftEngagement) / leftEngagement * 100).toFixed(0)}% better engagement,
-                indicating stronger audience connection.
-              </p>
-            </div>
-          )}
-          {Number(leftStats?.viewCount) > Number(rightStats?.viewCount) * 2 && (
-            <div className="flex gap-3 p-3 bg-white rounded-lg">
-              <span className="text-blue-600 font-bold">Video A</span>
-              <p className="text-gray-700">
-                has significantly more views, suggesting better discoverability or broader appeal.
-              </p>
-            </div>
-          )}
-          {Number(rightStats?.viewCount) > Number(leftStats?.viewCount) * 2 && (
-            <div className="flex gap-3 p-3 bg-white rounded-lg">
-              <span className="text-red-600 font-bold">Video B</span>
-              <p className="text-gray-700">
-                has significantly more views, suggesting better discoverability or broader appeal.
-              </p>
-            </div>
-          )}
-          {leftLikeRate > rightLikeRate * 1.5 && (
-            <div className="flex gap-3 p-3 bg-white rounded-lg">
-              <span className="text-blue-600 font-bold">Video A</span>
-              <p className="text-gray-700">
-                has a much higher like rate, indicating better content reception.
-              </p>
-            </div>
-          )}
-          {rightLikeRate > leftLikeRate * 1.5 && (
-            <div className="flex gap-3 p-3 bg-white rounded-lg">
-              <span className="text-red-600 font-bold">Video B</span>
-              <p className="text-gray-700">
-                has a much higher like rate, indicating better content reception.
-              </p>
-            </div>
-          )}
+      {/* Comparison Actions */}
+      <div className="bg-gradient-to-br from-slate-50 to-amber-50 rounded-2xl border border-slate-200 p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">How To Use This Result</h3>
+        <div className="grid sm:grid-cols-3 gap-4 text-sm">
+          <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <div className="font-semibold text-gray-900 mb-2">Copy the winner’s strength</div>
+            <p className="text-gray-600">If one video wins on engagement, study its promise, pacing, and viewer payoff before copying only the topic.</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <div className="font-semibold text-gray-900 mb-2">Test packaging separately</div>
+            <p className="text-gray-600">A view winner and an engagement winner may be different. Treat title-thumbnail packaging and content satisfaction as separate tests.</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <div className="font-semibold text-gray-900 mb-2">Validate with more examples</div>
+            <p className="text-gray-600">Do not generalize from one match-up. Compare 3-5 similar videos in the same niche before turning this into a repeatable content rule.</p>
+          </div>
         </div>
       </div>
     </div>

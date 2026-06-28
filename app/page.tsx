@@ -78,9 +78,14 @@ export default function HomePage() {
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-6 leading-tight">
             YouTube AI Analytics<br className="hidden sm:block" /> & Trend Intelligence
           </h1>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-            AI-powered YouTube analytics, competitor research, and viral trend discovery. Get data-driven insights to grow your channel.
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-6 leading-relaxed">
+            Understand why a video worked, spot trends before they peak, and benchmark against competitors with real YouTube data.
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-10 text-sm">
+            <span className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 font-medium">Analyze a video or channel</span>
+            <span className="px-3 py-1.5 rounded-full bg-red-50 text-red-700 font-medium">Find breakout trends</span>
+            <span className="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 font-medium">Compare against competitors</span>
+          </div>
 
           {/* CTA Input */}
           <AnalyzeHeroForm />
@@ -107,44 +112,34 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== FEATURE CARDS ===== */}
+      {/* ===== DECISION ENTRY POINTS ===== */}
       <section className="border-y border-gray-200 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 text-center">Powerful Analytics Tools</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 text-center">Start With The Job You Need To Get Done</h2>
           <p className="text-gray-600 text-center mb-10 max-w-2xl mx-auto">
-            Everything you need to analyze, optimize, and grow your YouTube presence
+            TubeFission works best when you start from the decision you need to make, not from a generic tool list.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href="/youtube-channel-analytics" className="group bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200">
               <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">📊</div>
-              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">Channel Analytics</h3>
-              <p className="text-gray-500 text-xs">Deep dive into any channel's performance metrics</p>
+              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">Audit a Channel</h3>
+              <p className="text-gray-500 text-xs">Check growth, engagement quality, posting rhythm, and what the creator should improve next.</p>
+            </Link>
+            <Link href="/trending" className="group bg-white rounded-xl p-5 border border-gray-200 hover:border-red-400 hover:shadow-lg transition-all duration-200">
+              <div className="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
+              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-red-600 transition-colors">Find What Is Rising</h3>
+              <p className="text-gray-500 text-xs">See which videos and topics are moving fastest so you can react before the market saturates.</p>
             </Link>
             <Link href="/compare-new" className="group bg-white rounded-xl p-5 border-2 border-amber-300 bg-amber-50/50 hover:border-amber-400 hover:shadow-lg transition-all duration-200 relative">
               <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">HOT</div>
               <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">⚔️</div>
-              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-amber-600 transition-colors">Compare Tool</h3>
-              <p className="text-gray-500 text-xs">Side-by-side channel &amp; video comparison</p>
-            </Link>
-            <Link href="/youtube-competitor-analysis" className="group bg-white rounded-xl p-5 border border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all duration-200">
-              <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">🎯</div>
-              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">Competitor Research</h3>
-              <p className="text-gray-500 text-xs">Compare channels &amp; uncover winning strategies</p>
-            </Link>
-            <Link href="/trending" className="group bg-white rounded-xl p-5 border border-gray-200 hover:border-red-400 hover:shadow-lg transition-all duration-200">
-              <div className="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
-              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-red-600 transition-colors">Trending Videos</h3>
-              <p className="text-gray-500 text-xs">Real-time trending content across regions</p>
-            </Link>
-            <Link href="/trends" className="group bg-white rounded-xl p-5 border border-gray-200 hover:border-green-400 hover:shadow-lg transition-all duration-200">
-              <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">📈</div>
-              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-green-600 transition-colors">Trend Database</h3>
-              <p className="text-gray-500 text-xs">AI-powered trend discovery &amp; forecasting</p>
+              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-amber-600 transition-colors">Compare Two Players</h3>
+              <p className="text-gray-500 text-xs">Benchmark two channels or videos side by side and see who wins on scale, efficiency, and engagement.</p>
             </Link>
             <Link href="/ai-assistant" className="group bg-white rounded-xl p-5 border border-gray-200 hover:border-yellow-400 hover:shadow-lg transition-all duration-200">
               <div className="w-12 h-12 rounded-lg bg-yellow-50 flex items-center justify-center text-2xl mb-3 group-hover:scale-110 transition-transform">🤖</div>
-              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-yellow-600 transition-colors">AI Assistant</h3>
-              <p className="text-gray-500 text-xs">Get personalized content recommendations</p>
+              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-yellow-600 transition-colors">Turn Data Into Ideas</h3>
+              <p className="text-gray-500 text-xs">Generate stronger titles, hooks, thumbnail angles, and content direction from real winning patterns.</p>
             </Link>
           </div>
         </div>
@@ -278,37 +273,45 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== HOW IT WORKS ===== */}
+      {/* ===== WHO SHOULD START WHERE ===== */}
       <section className="bg-white border-y border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">How It Works</h2>
-          <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
-            Analyze any YouTube video or channel in three simple steps. No software installation, no registration required.
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 text-center">Choose The Fastest Path</h2>
+          <p className="text-gray-600 text-center mb-10 max-w-2xl mx-auto">
+            Most users do not need every feature. Start from the workflow that matches the decision you need to make today.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-2xl mb-4 mx-auto">1</div>
-              <h3 className="font-semibold text-gray-900 mb-2">Paste URL</h3>
-              <p className="text-gray-600 text-sm">Copy the YouTube video or channel link from your browser and paste it into the input field above.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
+              <div className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">For creators</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Improve your next upload</h3>
+              <p className="text-sm text-gray-600 mb-4">Start with video or channel analysis if you want to understand what worked, what underperformed, and what to test next.</p>
+              <div className="flex gap-2">
+                <Link href="/youtube-channel-analytics" className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">Analyze Channel</Link>
+                <Link href="/ai-assistant" className="px-4 py-2 bg-white text-gray-900 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">Get Ideas</Link>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-2xl mb-4 mx-auto">2</div>
-              <h3 className="font-semibold text-gray-900 mb-2">AI Analysis</h3>
-              <p className="text-gray-600 text-sm">Our AI engine processes the data in seconds, extracting performance metrics, trends, and insights.</p>
+            <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
+              <div className="text-xs font-bold uppercase tracking-wider text-red-600 mb-2">For trend hunters</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Find momentum before it peaks</h3>
+              <p className="text-sm text-gray-600 mb-4">Use trending and trend database views when your main question is what is rising right now and where the next content gap is.</p>
+              <div className="flex gap-2">
+                <Link href="/trending" className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">See Trending</Link>
+                <Link href="/trends" className="px-4 py-2 bg-white text-gray-900 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">Open Database</Link>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-2xl mb-4 mx-auto">3</div>
-              <h3 className="font-semibold text-gray-900 mb-2">Get Insights</h3>
-              <p className="text-gray-600 text-sm">View detailed analytics, competitor benchmarks, and actionable recommendations to grow your channel.</p>
+            <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
+              <div className="text-xs font-bold uppercase tracking-wider text-amber-600 mb-2">For competitor research</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Benchmark before you copy</h3>
+              <p className="text-sm text-gray-600 mb-4">Use compare when you already have two channels or videos in mind and need a faster conclusion on who is actually worth studying.</p>
+              <div className="flex gap-2">
+                <Link href="/compare-new" className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">Start Comparing</Link>
+              </div>
             </div>
-          </div>
-          <div className="mt-12 text-center">
-            <Link href="/youtube-channel-analytics" className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors">
-              Explore Analytics Features →
-            </Link>
           </div>
         </div>
       </section>
+
+
 
       {/* ===== LONG-FORM CONTENT ===== */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
@@ -442,17 +445,25 @@ export default function HomePage() {
 
       {/* ===== STICKY CTA FOOTER ===== */}
       <section className="sticky bottom-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <p className="text-sm text-gray-600 flex-1 text-center sm:text-left">
-              Paste a YouTube URL to start analyzing videos and channels
+              Start with a URL if you want diagnosis, or jump into compare/trending if you already know the decision you need to make.
             </p>
-            <Link
-              href="/youtube-channel-analytics"
-              className="w-full sm:w-auto px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors text-center"
-            >
-              Analyze Now
-            </Link>
+            <div className="flex w-full sm:w-auto gap-2">
+              <Link
+                href="/youtube-channel-analytics"
+                className="flex-1 sm:flex-none px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors text-center"
+              >
+                Analyze a Channel
+              </Link>
+              <Link
+                href="/compare-new"
+                className="flex-1 sm:flex-none px-5 py-2.5 bg-white text-gray-900 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-center"
+              >
+                Compare Instead
+              </Link>
+            </div>
           </div>
         </div>
       </section>
