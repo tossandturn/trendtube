@@ -627,7 +627,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
             </h2>
           </div>
           <p className="text-sm text-gray-500 mb-4 max-w-3xl">
-            Use this section to understand why the video performed the way it did. Then use the action plan above to decide what to repeat, fix, or test next.
+            Read this as the explanation layer. The action plan above tells you what to change first; this section explains why the video likely behaved this way.
           </p>
           <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
             {insights.slice(0, 4).map((insight, idx) => (
@@ -652,7 +652,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
           </div>
         </div>
 
-        {/* AI Inspiration Report */}
+        {/* Replication Checklist */}
         <div className="mb-8 sm:mb-10">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-1 h-6 rounded-full bg-gradient-to-b from-purple-400 to-purple-600" />
@@ -661,50 +661,27 @@ export default async function VideoPage({ params }: VideoPageProps) {
             </h2>
           </div>
           <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover bg-gradient-to-br from-purple-50/30 to-blue-50/30">
-            <h3 className="font-bold text-gray-900 mb-4">Before You Reuse This Pattern</h3>
-            <div className="space-y-4">
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">1</div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Check the packaging, not just the topic</h4>
-                  <p className="text-gray-600 text-sm">
-                    If this video outperformed, the title and thumbnail may be doing as much work as the topic itself. Save both before you try to reproduce the idea.
-                  </p>
-                </div>
+            <div className="grid sm:grid-cols-2 gap-4 text-sm">
+              <div className="rounded-xl bg-white/70 border border-purple-100 p-4">
+                <div className="font-semibold text-gray-900 mb-2">Check packaging separately</div>
+                <p className="text-gray-600">Save the title and thumbnail pattern before assuming the topic was the only reason it worked.</p>
               </div>
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">2</div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Separate broad appeal from audience fit</h4>
-                  <p className="text-gray-600 text-sm">
-                    A high-view video is not automatically a good fit for your audience. Reuse the promise style only if it matches your niche, viewer expectations, and format strengths.
-                  </p>
-                </div>
+              <div className="rounded-xl bg-white/70 border border-purple-100 p-4">
+                <div className="font-semibold text-gray-900 mb-2">Match audience fit</div>
+                <p className="text-gray-600">Reuse the format only if the promise also fits your niche, tone, and viewer expectation.</p>
               </div>
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">3</div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Test one variable at a time</h4>
-                  <p className="text-gray-600 text-sm">
-                    When adapting this pattern, change either the topic angle, title framing, or thumbnail treatment first — not all three at once — so you know what actually improved the result.
-                  </p>
-                </div>
+              <div className="rounded-xl bg-white/70 border border-purple-100 p-4">
+                <div className="font-semibold text-gray-900 mb-2">Test one variable</div>
+                <p className="text-gray-600">Change one thing first — title, topic angle, or thumbnail — so you know what actually moved performance.</p>
               </div>
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">4</div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Use this as one reference, not a rule</h4>
-                  <ul className="text-gray-600 text-sm list-disc list-inside space-y-1">
-                    <li>Compare at least 3 similar winners in the same niche</li>
-                    <li>Look for repeated title and thumbnail structures</li>
-                    <li>Confirm whether engagement also stayed strong, not just views</li>
-                    <li>Only scale the format after a successful small test</li>
-                  </ul>
-                </div>
+              <div className="rounded-xl bg-white/70 border border-purple-100 p-4">
+                <div className="font-semibold text-gray-900 mb-2">Confirm with more examples</div>
+                <p className="text-gray-600">Use 3-5 comparable winners before turning one successful video into a content rule.</p>
               </div>
             </div>
           </div>
         </div>
+
 
         {/* Content Quality Score */}
         <div className="mb-8 sm:mb-10">

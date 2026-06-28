@@ -818,9 +818,14 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
             {/* AI Recommendations */}
             {aiIntelligence.recommendations.length > 0 && (
               <div className="bg-white rounded-xl p-6 border border-gray-200">
-                <h3 className="font-bold text-gray-900 mb-4">AI Recommendations</h3>
+                <div className="flex items-center justify-between mb-4 gap-4">
+                  <div>
+                    <h3 className="font-bold text-gray-900">Priority Experiments</h3>
+                    <p className="text-sm text-gray-500">Use these as the next tests after the recommended moves above, not as a separate strategy layer.</p>
+                  </div>
+                </div>
                 <div className="space-y-4">
-                  {aiIntelligence.recommendations.map((rec, idx) => (
+                  {aiIntelligence.recommendations.slice(0, 3).map((rec, idx) => (
                     <div key={idx} className={`p-4 rounded-lg border ${rec.priority === 'high' ? 'bg-red-50 border-red-200' : rec.priority === 'medium' ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-start gap-3">
                         <div className={`px-2 py-1 rounded text-xs font-medium ${rec.priority === 'high' ? 'bg-red-100 text-red-700' : rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>
