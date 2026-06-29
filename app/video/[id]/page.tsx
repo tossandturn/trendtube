@@ -334,6 +334,21 @@ export default async function VideoPage({ params }: VideoPageProps) {
           <span className="text-sm font-medium">Back to Potential</span>
         </Link>
 
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Link
+            href="/trending"
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+          >
+            Back to Trending
+          </Link>
+          <Link
+            href="/compare-new?type=videos"
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+          >
+            Compare Videos
+          </Link>
+        </div>
+
         {/* Video Player */}
         <div className="mb-6 sm:mb-8">
           <VideoPlayer

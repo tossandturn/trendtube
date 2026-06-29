@@ -415,7 +415,23 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
           <span className="text-sm font-medium">Back to Analytics</span>
         </Link>
 
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Link
+            href="/trending"
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+          >
+            Back to Trending
+          </Link>
+          <Link
+            href="/compare-new?type=channels"
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+          >
+            Compare Channels
+          </Link>
+        </div>
+
         {/* Channel Header */}
+
         <div className="mb-8 sm:mb-10">
           <div className="flex items-start gap-4 sm:gap-6 mb-4">
             {snippet?.thumbnails?.high?.url && (
