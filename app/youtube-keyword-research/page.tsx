@@ -16,7 +16,6 @@ function formatNumber(n: number) {
   return n.toLocaleString()
 }
 
-// Calculate keyword metrics from search results
 function analyzeKeywordMetrics(videos: any[], keyword: string) {
   if (videos.length === 0) {
     return {
@@ -26,13 +25,13 @@ function analyzeKeywordMetrics(videos: any[], keyword: string) {
       cpc: '$0.00',
       trend: '+0%',
       topVideos: [],
+      relatedKeywords: [],
     }
   }
 
   const totalViews = videos.reduce((sum, v) => sum + Number(v.statistics?.viewCount || 0), 0)
   const avgViews = totalViews / videos.length
 
-  // Calculate competition based on average views of top videos
   let competition: 'Low' | 'Medium' | 'High'
   let difficulty: number
 
@@ -47,13 +46,11 @@ function analyzeKeywordMetrics(videos: any[], keyword: string) {
     difficulty = Math.max(1, Math.round(avgViews / 50000))
   }
 
-  // Estimate search volume based on total views and video age
   const estimatedMonthly = Math.round(totalViews / 10)
   const searchVolume = estimatedMonthly >= 1000
     ? formatNumber(estimatedMonthly) + '/mo'
     : estimatedMonthly.toString() + '/mo'
 
-  // Calculate trend based on recent uploads
   const recentVideos = videos.filter(v => {
     const published = new Date(v.snippet?.publishedAt || 0)
     const daysOld = (Date.now() - published.getTime()) / (1000 * 60 * 60 * 24)
@@ -62,12 +59,11 @@ function analyzeKeywordMetrics(videos: any[], keyword: string) {
   const trendPercent = Math.round((recentVideos.length / Math.max(videos.length, 1)) * 100)
   const trend = trendPercent > 50 ? `+${trendPercent}%` : `-${100 - trendPercent}%`
 
-  // Estimate CPC based on keyword type
-  const keyword_lower = keyword.toLowerCase()
+  const keywordLower = keyword.toLowerCase()
   let cpc = '$0.50-$2.00'
-  if (keyword_lower.includes('review') || keyword_lower.includes('best')) cpc = '$2.00-$8.00'
-  if (keyword_lower.includes('tutorial') || keyword_lower.includes('how to')) cpc = '$1.00-$4.00'
-  if (keyword_lower.includes('business') || keyword_lower.includes('marketing')) cpc = '$5.00-$15.00'
+  if (keywordLower.includes('review') || keywordLower.includes('best')) cpc = '$2.00-$8.00'
+  if (keywordLower.includes('tutorial') || keywordLower.includes('how to')) cpc = '$1.00-$4.00'
+  if (keywordLower.includes('business') || keywordLower.includes('marketing')) cpc = '$5.00-$15.00'
 
   return {
     searchVolume,
@@ -76,31 +72,18 @@ function analyzeKeywordMetrics(videos: any[], keyword: string) {
     cpc,
     trend,
     topVideos: videos.slice(0, 5),
+    relatedKeywords: generateRelatedKeywords(keyword),
   }
 }
 
-// Generate related keywords
 function generateRelatedKeywords(baseKeyword: string): string[] {
-  const modifiers = [
-    'tutorial',
-    'review',
-    'guide',
-    'tips',
-    'for beginners',
-    '2026',
-    'how to',
-    'best',
-    'vs',
-    'comparison',
-  ]
-
+  const modifiers = ['tutorial', 'review', 'guide', 'tips', 'for beginners', '2026', 'how to', 'best', 'vs', 'comparison']
   return modifiers.map(mod => `${baseKeyword} ${mod}`).slice(0, 5)
 }
 
 export default async function KeywordResearchPage() {
   const region = await getRegion()
 
-  // Analyze trending keywords
   const trendingKeywords = [
     'AI tools',
     'YouTube Shorts',
@@ -119,6 +102,8 @@ export default async function KeywordResearchPage() {
     })
   )
 
+  const featuredKeyword = keywordData[0]
+
   return (
     <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">
       <div className="ambient-glow-tl" />
@@ -129,7 +114,6 @@ export default async function KeywordResearchPage() {
           <span className="text-sm font-medium">Back to TubeFission</span>
         </Link>
 
-        {/* Hero */}
         <div className="mb-8 sm:mb-12">
           <div className="text-gray-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">🔍 KEYWORD INTELLIGENCE</div>
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">
@@ -141,7 +125,6 @@ export default async function KeywordResearchPage() {
           </p>
         </div>
 
-        {/* Search Bar */}
         <div className="glass-panel rounded-2xl p-6 mb-8 border border-gray-200">
           <label className="block font-medium mb-2">Enter a keyword to research</label>
           <div className="flex gap-3">
@@ -156,10 +139,12 @@ export default async function KeywordResearchPage() {
           </div>
         </div>
 
-        {/* Trending Keywords Table */}
-        <div className="mb-12">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Trending Keywords</h2>
+        <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-6 mb-12">
           <div className="glass-panel rounded-2xl overflow-hidden border border-gray-200">
+            <div className="p-5 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Trending Keywords</h2>
+              <p className="text-sm text-gray-500 mt-1">Real-time analysis based on current YouTube search results</p>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
@@ -216,9 +201,35 @@ export default async function KeywordResearchPage() {
               </table>
             </div>
           </div>
+
+          {featuredKeyword && (
+            <div className="space-y-6">
+              <div className="glass-panel rounded-2xl p-5 border border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Top Related Keywords</h2>
+                <div className="space-y-2">
+                  {featuredKeyword.relatedKeywords.map((keyword) => (
+                    <div key={keyword} className="bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-700 border border-gray-100">
+                      {keyword}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="glass-panel rounded-2xl p-5 border border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Top Ranking Samples</h2>
+                <div className="space-y-3">
+                  {featuredKeyword.topVideos.slice(0, 3).map((video: any) => (
+                    <Link key={video.id} href={`/video/${video.id}`} className="block rounded-xl border border-gray-100 p-3 hover:border-red-200 hover:bg-gray-50 transition">
+                      <div className="font-medium text-gray-900 line-clamp-2 mb-1">{video.snippet?.title}</div>
+                      <div className="text-xs text-gray-500">{video.snippet?.channelTitle}</div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Features */}
         <div className="grid sm:grid-cols-3 gap-4 mb-12">
           {[
             { title: 'Search Volume Data', desc: 'Real-time estimated search volume based on actual YouTube data', icon: '📊' },
@@ -233,7 +244,6 @@ export default async function KeywordResearchPage() {
           ))}
         </div>
 
-        {/* How It Works */}
         <div className="mb-12">
           <h2 className="text-xl font-bold mb-4 text-gray-900">How Keyword Research Works</h2>
           <div className="glass-panel rounded-2xl p-6 border border-gray-200">
@@ -256,7 +266,6 @@ export default async function KeywordResearchPage() {
           </div>
         </div>
 
-        {/* CTA */}
         <div className="glass-panel neon-border rounded-2xl p-6 sm:p-8 text-center glow-hover border border-gray-200">
           <h2 className="text-xl font-bold mb-2 text-gray-900">Start Your Keyword Research</h2>
           <p className="text-gray-500 text-sm mb-4 max-w-xl mx-auto">

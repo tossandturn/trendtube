@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { AnalyzeHeroForm } from '@/app/components/AnalyzeHeroForm'
 import { FAQPageSchema, BreadcrumbSchema, ArticleSchema } from '@/app/components/JsonLd'
+import { searchYouTubeMulti } from '@/lib/api-client'
+import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
 
 export const metadata: Metadata = {
   title: 'YouTube Competitor Analysis — AI-Powered Channel Intelligence',
@@ -61,7 +63,45 @@ const FAQ_ITEMS = [
   },
 ]
 
-export default function CompetitorAnalysisPage() {
+function formatNumber(n: number) {
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B'
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M'
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K'
+  return n.toLocaleString()
+}
+
+function summarizeChannel(video: any, allVideos: any[]) {
+  const channelTitle = video.snippet?.channelTitle || 'Unknown channel'
+  const channelVideos = allVideos.filter((v: any) => v.snippet?.channelTitle === channelTitle)
+  const avgViews = channelVideos.length
+    ? channelVideos.reduce((sum: number, v: any) => sum + Number(v.statistics?.viewCount || 0), 0) / channelVideos.length
+    : 0
+  const avgEngagement = channelVideos.length
+    ? channelVideos.reduce((sum: number, v: any) => sum + getEngagementRate(v), 0) / channelVideos.length
+    : 0
+  const avgVelocity = channelVideos.length
+    ? channelVideos.reduce((sum: number, v: any) => sum + getViewVelocity(v), 0) / channelVideos.length
+    : 0
+
+  return {
+    channelTitle,
+    channelId: video.snippet?.channelId,
+    avgViews,
+    avgEngagement,
+    avgVelocity,
+    sampleCount: channelVideos.length,
+  }
+}
+
+export default async function CompetitorAnalysisPage() {
+  const sampleVideos = await searchYouTubeMulti(['youtube creator tips', 'youtube growth strategy', 'channel growth'], 12, 'viewCount')
+
+  const competitors = sampleVideos
+    .map((video: any) => summarizeChannel(video, sampleVideos))
+    .filter((channel: any, index: number, arr: any[]) => arr.findIndex((c) => c.channelTitle === channel.channelTitle) === index)
+    .sort((a: any, b: any) => b.avgViews - a.avgViews)
+    .slice(0, 6)
+
   return (
     <main className="min-h-screen bg-white">
       <ArticleSchema
@@ -76,7 +116,6 @@ export default function CompetitorAnalysisPage() {
         { name: 'YouTube Competitor Analysis', url: 'https://tubefission.com/youtube-competitor-analysis' },
       ]} />
 
-      {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white pt-16 pb-12 sm:pt-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-4 leading-tight">
@@ -87,23 +126,52 @@ export default function CompetitorAnalysisPage() {
           </p>
           <AnalyzeHeroForm />
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-gray-500">
-            <span className="inline-flex items-center gap-1">
-              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-              Real-time data
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-              AI insights
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-              No registration
-            </span>
+            <span className="inline-flex items-center gap-1">• Real-time data</span>
+            <span className="inline-flex items-center gap-1">• AI insights</span>
+            <span className="inline-flex items-center gap-1">• No registration</span>
           </div>
         </div>
       </section>
 
-      {/* Internal Links */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-gray-900">Live Competitor Snapshot</h2>
+          <Link href="/compare-new" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+            Open compare tool →
+          </Link>
+        </div>
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mb-10">
+          {competitors.map((channel: any, index: number) => (
+            <div key={channel.channelTitle} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-blue-300 hover:shadow-sm transition">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Competitor #{index + 1}</div>
+                {channel.channelId && (
+                  <Link href={`/channel/${channel.channelId}`} className="text-xs font-medium text-blue-600 hover:text-blue-700">
+                    Analyze →
+                  </Link>
+                )}
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">{channel.channelTitle}</h3>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div>
+                  <div className="text-gray-400 text-xs uppercase tracking-wider">Avg Views</div>
+                  <div className="font-bold text-gray-900">{formatNumber(Math.round(channel.avgViews))}</div>
+                </div>
+                <div>
+                  <div className="text-gray-400 text-xs uppercase tracking-wider">Engagement</div>
+                  <div className="font-bold text-gray-900">{channel.avgEngagement.toFixed(2)}%</div>
+                </div>
+                <div>
+                  <div className="text-gray-400 text-xs uppercase tracking-wider">Velocity</div>
+                  <div className="font-bold text-gray-900">{channel.avgVelocity >= 1e6 ? (channel.avgVelocity / 1e6).toFixed(1) + 'M/d' : channel.avgVelocity >= 1e3 ? (channel.avgVelocity / 1e3).toFixed(1) + 'K/d' : Math.round(channel.avgVelocity) + '/d'}</div>
+                </div>
+              </div>
+              <div className="mt-3 text-xs text-gray-500">Sample size: {channel.sampleCount} videos</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="border-y border-gray-200 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm">
@@ -120,7 +188,6 @@ export default function CompetitorAnalysisPage() {
         </div>
       </section>
 
-      {/* Content */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
         <h2 className="text-3xl font-bold text-gray-900 mb-6">AI-Powered YouTube Competitive Intelligence</h2>
         <p className="text-gray-700 leading-relaxed mb-6">
@@ -129,31 +196,6 @@ export default function CompetitorAnalysisPage() {
         <p className="text-gray-700 leading-relaxed mb-10">
           Unlike manual research that takes hours of spreadsheet work, Tubefission automates the entire process. Paste a competitor channel URL, and within seconds you will see subscriber velocity, engagement benchmarks, content gap analysis, and AI-generated strategic recommendations tailored to your niche.
         </p>
-
-        <h2 className="text-3xl font-bold text-gray-900 mb-6">How Competitor Analysis Works</h2>
-        <div className="space-y-6 mb-10">
-          <div className="flex gap-4">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">1</div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Enter Competitor URL</h3>
-              <p className="text-gray-600">Paste the YouTube channel or video URL of any competitor you want to analyze.</p>
-            </div>
-          </div>
-          <div className="flex gap-4">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">2</div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1">AI Data Extraction</h3>
-              <p className="text-gray-600">Our engine fetches real-time metrics and compares them against industry benchmarks.</p>
-            </div>
-          </div>
-          <div className="flex gap-4">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">3</div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Get Actionable Insights</h3>
-              <p className="text-gray-600">Receive AI-generated reports on their strengths, weaknesses, and your optimization opportunities.</p>
-            </div>
-          </div>
-        </div>
 
         <h2 className="text-3xl font-bold text-gray-900 mb-6">Key Metrics We Analyze</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
@@ -173,58 +215,18 @@ export default function CompetitorAnalysisPage() {
             <h3 className="font-semibold text-gray-900 mb-2">Upload Consistency</h3>
             <p className="text-sm text-gray-600">Analyze publishing schedules to understand the optimal frequency and timing for audience retention.</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-2">Viral Score Prediction</h3>
-            <p className="text-sm text-gray-600">Our AI calculates a viral potential score (0-100) based on engagement velocity and historical trend patterns.</p>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-2">Thumbnail Effectiveness</h3>
-            <p className="text-sm text-gray-600">Evaluate click-through rates based on visual composition, text overlays, and color psychology.</p>
-          </div>
         </div>
-
-        <h2 className="text-3xl font-bold text-gray-900 mb-6">Why Competitor Research Matters</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-          <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-2">Identify Content Gaps</h3>
-            <p className="text-sm text-gray-600">Discover topics your competitors are ignoring that have high search demand and low competition.</p>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-2">Reverse-Engineer Success</h3>
-            <p className="text-sm text-gray-600">Break down the exact tactics, formats, and hooks that drive their top-performing videos.</p>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-2">Benchmark Your Growth</h3>
-            <p className="text-sm text-gray-600">Compare your channel metrics against industry leaders to set realistic, data-driven growth targets.</p>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-2">Spot Trending Patterns</h3>
-            <p className="text-sm text-gray-600">Detect emerging content trends across your niche before they become saturated.</p>
-          </div>
-        </div>
-
-        <h2 className="text-3xl font-bold text-gray-900 mb-6">AI-Generated Strategic Recommendations</h2>
-        <p className="text-gray-700 leading-relaxed mb-6">
-          Beyond raw numbers, our AI analyzes patterns across thousands of channels to generate personalized strategic advice:
-        </p>
-        <ul className="list-disc list-inside space-y-3 text-gray-700 leading-relaxed mb-10">
-          <li><strong>Content strategy adjustments</strong> — specific video types and formats you should create based on competitor gaps.</li>
-          <li><strong>SEO optimization tips</strong> — title structures, tag recommendations, and description frameworks that rank.</li>
-          <li><strong>Posting schedule optimization</strong> — ideal upload days and times based on audience activity patterns.</li>
-          <li><strong>Thumbnail and title A/B testing ideas</strong> — data-driven suggestions to improve click-through rates.</li>
-        </ul>
 
         <div className="flex flex-col sm:flex-row gap-4">
           <Link href="/youtube-channel-analytics" className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
             Channel Analytics →
           </Link>
-          <Link href="/" className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors">
-            Back to Home
+          <Link href="/compare-new" className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors">
+            Open Compare Tool →
           </Link>
         </div>
       </article>
 
-      {/* FAQ */}
       <section className="bg-gray-50 border-y border-gray-200">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
           <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">Frequently Asked Questions</h2>

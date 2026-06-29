@@ -44,6 +44,35 @@ function calculateCommentRate(video: any) {
   return (comments / views) * 100
 }
 
+function inferVideoAudience(video: any) {
+  const text = `${video.snippet?.title || ''} ${video.snippet?.description || ''}`.toLowerCase()
+
+  let age = 'Mixed 18-34'
+  if (/school|student|teen|gaming|anime|shorts/.test(text)) age = 'Younger 16-24'
+  else if (/finance|business|marketing|career|invest/.test(text)) age = 'Adult 25-44'
+
+  let gender = 'Balanced'
+  if (/football|gaming|crypto|cars|nfl|nba/.test(text)) gender = 'Male-leaning'
+  else if (/beauty|fashion|makeup|wedding|mom/.test(text)) gender = 'Female-leaning'
+
+  let geography = 'Broad English-speaking'
+  if (/india|hindi|bollywood/.test(text)) geography = 'India-focused'
+  else if (/korea|k-pop|kdrama/.test(text)) geography = 'Korea-focused'
+  else if (/japan|anime|manga/.test(text)) geography = 'Japan-leaning'
+  else if (/uk|premier league|london/.test(text)) geography = 'UK-leaning'
+  else if (/usa|american|nfl|nba/.test(text)) geography = 'US-leaning'
+
+  return { age, gender, geography }
+}
+
+function inferFormat(video: any) {
+  const title = (video.snippet?.title || '').toLowerCase()
+  if (title.includes('shorts') || title.includes('#shorts')) return 'Short-form'
+  if (title.includes('how to') || title.includes('tutorial')) return 'Tutorial'
+  if (title.includes('review') || title.includes('reaction') || title.includes('analysis')) return 'Commentary'
+  return 'General format'
+}
+
 export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoCompareMetricsProps) {
   const leftStats = leftVideo.statistics
   const rightStats = rightVideo.statistics
@@ -55,84 +84,29 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
   const leftCommentRate = calculateCommentRate(leftVideo)
   const rightCommentRate = calculateCommentRate(rightVideo)
 
-  // Comparison data for charts
+  const leftAudience = inferVideoAudience(leftVideo)
+  const rightAudience = inferVideoAudience(rightVideo)
+  const leftFormat = inferFormat(leftVideo)
+  const rightFormat = inferFormat(rightVideo)
+
   const comparisonData = [
-    {
-      metric: 'Views',
-      left: Number(leftStats?.viewCount || 0),
-      right: Number(rightStats?.viewCount || 0),
-    },
-    {
-      metric: 'Likes',
-      left: Number(leftStats?.likeCount || 0),
-      right: Number(rightStats?.likeCount || 0),
-    },
-    {
-      metric: 'Comments',
-      left: Number(leftStats?.commentCount || 0),
-      right: Number(rightStats?.commentCount || 0),
-    },
+    { metric: 'Views', left: Number(leftStats?.viewCount || 0), right: Number(rightStats?.viewCount || 0) },
+    { metric: 'Likes', left: Number(leftStats?.likeCount || 0), right: Number(rightStats?.likeCount || 0) },
+    { metric: 'Comments', left: Number(leftStats?.commentCount || 0), right: Number(rightStats?.commentCount || 0) },
   ]
 
-  // Detailed metrics
   const metrics = [
-    {
-      name: 'Views',
-      left: Number(leftStats?.viewCount || 0),
-      right: Number(rightStats?.viewCount || 0),
-      format: (n: number) => formatNumber(n),
-      icon: '👁️',
-    },
-    {
-      name: 'Likes',
-      left: Number(leftStats?.likeCount || 0),
-      right: Number(rightStats?.likeCount || 0),
-      format: (n: number) => formatNumber(n),
-      icon: '👍',
-    },
-    {
-      name: 'Comments',
-      left: Number(leftStats?.commentCount || 0),
-      right: Number(rightStats?.commentCount || 0),
-      format: (n: number) => formatNumber(n),
-      icon: '💬',
-    },
-    {
-      name: 'Engagement Rate',
-      left: leftEngagement,
-      right: rightEngagement,
-      format: (n: number) => n.toFixed(2) + '%',
-      icon: '📊',
-      isPercentage: true,
-    },
-    {
-      name: 'Like Rate',
-      left: leftLikeRate,
-      right: rightLikeRate,
-      format: (n: number) => n.toFixed(2) + '%',
-      icon: '❤️',
-      isPercentage: true,
-    },
-    {
-      name: 'Comment Rate',
-      left: leftCommentRate,
-      right: rightCommentRate,
-      format: (n: number) => n.toFixed(3) + '%',
-      icon: '💭',
-      isPercentage: true,
-    },
-    {
-      name: 'Likes/View Ratio',
-      left: leftLikeRate / 100,
-      right: rightLikeRate / 100,
-      format: (n: number) => n.toFixed(4),
-      icon: '⚖️',
-    },
+    { name: 'Views', left: Number(leftStats?.viewCount || 0), right: Number(rightStats?.viewCount || 0), format: (n: number) => formatNumber(n), icon: '👁️' },
+    { name: 'Likes', left: Number(leftStats?.likeCount || 0), right: Number(rightStats?.likeCount || 0), format: (n: number) => formatNumber(n), icon: '👍' },
+    { name: 'Comments', left: Number(leftStats?.commentCount || 0), right: Number(rightStats?.commentCount || 0), format: (n: number) => formatNumber(n), icon: '💬' },
+    { name: 'Engagement Rate', left: leftEngagement, right: rightEngagement, format: (n: number) => n.toFixed(2) + '%', icon: '📊' },
+    { name: 'Like Rate', left: leftLikeRate, right: rightLikeRate, format: (n: number) => n.toFixed(2) + '%', icon: '❤️' },
+    { name: 'Comment Rate', left: leftCommentRate, right: rightCommentRate, format: (n: number) => n.toFixed(3) + '%', icon: '💭' },
+    { name: 'Likes/View Ratio', left: leftLikeRate / 100, right: rightLikeRate / 100, format: (n: number) => n.toFixed(4), icon: '⚖️' },
   ]
 
   return (
     <div className="space-y-6">
-      {/* Winner Summary */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Performance Winner</h3>
         <div className="grid grid-cols-3 gap-4">
@@ -166,7 +140,6 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
         </div>
       </div>
 
-      {/* Detailed Comparison */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-bold text-gray-900">Detailed Metrics</h3>
@@ -186,38 +159,28 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
                     <span className="text-sm font-medium text-gray-700">{metric.name}</span>
                   </div>
                   {winner !== 'tie' && (
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                      winner === 'left' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
-                    }`}>
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${winner === 'left' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
                       Video {winner === 'left' ? 'A' : 'B'} Wins
                     </span>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Video A Bar */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-blue-600 font-medium">Video A</span>
                       <span className="font-bold">{metric.format(metric.left)}</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500 rounded-full transition-all"
-                        style={{ width: `${leftPercent}%` }}
-                      />
+                      <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${leftPercent}%` }} />
                     </div>
                   </div>
-                  {/* Video B Bar */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-red-600 font-medium">Video B</span>
                       <span className="font-bold">{metric.format(metric.right)}</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-red-500 rounded-full transition-all"
-                        style={{ width: `${rightPercent}%` }}
-                      />
+                      <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${rightPercent}%` }} />
                     </div>
                   </div>
                 </div>
@@ -227,80 +190,50 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
         </div>
       </div>
 
-      {/* Visualization Chart */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Visual Comparison</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={comparisonData} margin={{ left: 30, right: 30, top: 10, bottom: 10 }}>
-              <XAxis dataKey="metric" tick={{ fontSize: 12 }} />
-              <YAxis tickFormatter={(v) => formatNumber(v)} />
+            <BarChart data={comparisonData} layout="vertical" margin={{ left: 80, right: 30, top: 10, bottom: 10 }}>
+              <XAxis type="number" tickFormatter={(v) => formatNumber(v)} />
+              <YAxis dataKey="metric" type="category" width={70} tick={{ fontSize: 12 }} />
               <Tooltip formatter={(v) => formatNumber(Number(v))} />
-              <Bar dataKey="left" name="Video A" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="right" name="Video B" fill="#ef4444" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="left" name="Video A" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="right" name="Video B" fill="#ef4444" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex items-center justify-center gap-6 mt-4">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-500 rounded"></div>
-            <span className="text-sm text-gray-600">Video A</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-500 rounded"></div>
-            <span className="text-sm text-gray-600">Video B</span>
-          </div>
-        </div>
       </div>
 
-      {/* Video Info Comparison */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Video Details</h3>
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Audience & Market Inference</h3>
+            <p className="text-sm text-gray-500">These are inferred from public video patterns, not direct YouTube Analytics exports.</p>
+          </div>
+        </div>
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Video A Details */}
-          <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-            <h4 className="font-medium text-blue-900 mb-3">Video A</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Channel</span>
-                <span className="font-medium">{leftVideo.snippet?.channelTitle}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Published</span>
-                <span className="font-medium">
-                  {new Date(leftVideo.snippet?.publishedAt).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Category</span>
-                <span className="font-medium">{leftVideo.snippet?.categoryId || 'N/A'}</span>
-              </div>
+          <div className="rounded-xl border border-gray-200 p-4">
+            <div className="font-semibold text-blue-700 mb-3">Video A</div>
+            <div className="space-y-2 text-sm text-gray-700">
+              <div><span className="text-gray-500">Age leaning:</span> {leftAudience.age}</div>
+              <div><span className="text-gray-500">Gender leaning:</span> {leftAudience.gender}</div>
+              <div><span className="text-gray-500">Geography:</span> {leftAudience.geography}</div>
+              <div><span className="text-gray-500">Format:</span> {leftFormat}</div>
             </div>
           </div>
-          {/* Video B Details */}
-          <div className="p-4 bg-red-50 rounded-xl border border-red-100">
-            <h4 className="font-medium text-red-900 mb-3">Video B</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Channel</span>
-                <span className="font-medium">{rightVideo.snippet?.channelTitle}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Published</span>
-                <span className="font-medium">
-                  {new Date(rightVideo.snippet?.publishedAt).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Category</span>
-                <span className="font-medium">{rightVideo.snippet?.categoryId || 'N/A'}</span>
-              </div>
+          <div className="rounded-xl border border-gray-200 p-4">
+            <div className="font-semibold text-red-700 mb-3">Video B</div>
+            <div className="space-y-2 text-sm text-gray-700">
+              <div><span className="text-gray-500">Age leaning:</span> {rightAudience.age}</div>
+              <div><span className="text-gray-500">Gender leaning:</span> {rightAudience.gender}</div>
+              <div><span className="text-gray-500">Geography:</span> {rightAudience.geography}</div>
+              <div><span className="text-gray-500">Format:</span> {rightFormat}</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Comparison Actions */}
       <div className="bg-gradient-to-br from-slate-50 to-amber-50 rounded-2xl border border-slate-200 p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">How To Use This Result</h3>
         <div className="grid sm:grid-cols-3 gap-4 text-sm">

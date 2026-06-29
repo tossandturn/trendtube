@@ -7,7 +7,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Cell,
 } from 'recharts'
 
 interface ChannelCompareMetricsProps {
@@ -37,6 +36,49 @@ function calculateEngagementRate(videos: any[]) {
   return totalEngagement / videos.length
 }
 
+function inferAudienceProfile(videos: any[]) {
+  const combinedText = videos.map(v => `${v.snippet?.title || ''} ${v.snippet?.description || ''}`).join(' ').toLowerCase()
+
+  let age = 'Mixed 18-34'
+  if (/school|student|teen|gaming|anime|shorts/.test(combinedText)) age = 'Younger 16-24'
+  else if (/finance|business|marketing|career|invest/.test(combinedText)) age = 'Adult 25-44'
+
+  let gender = 'Balanced'
+  if (/football|gaming|crypto|cars|nfl|nba/.test(combinedText)) gender = 'Male-leaning'
+  else if (/beauty|fashion|makeup|wedding|mom/.test(combinedText)) gender = 'Female-leaning'
+
+  let geography = 'Broad English-speaking'
+  if (/india|hindi|bollywood/.test(combinedText)) geography = 'India-focused'
+  else if (/korea|k-pop|kdrama/.test(combinedText)) geography = 'Korea-focused'
+  else if (/japan|anime|manga/.test(combinedText)) geography = 'Japan-leaning'
+  else if (/uk|premier league|london/.test(combinedText)) geography = 'UK-leaning'
+  else if (/usa|american|nfl|nba/.test(combinedText)) geography = 'US-leaning'
+
+  return { age, gender, geography }
+}
+
+function estimateAudienceLoyalty(videos: any[]) {
+  if (!videos.length) return 'Medium'
+  const avgEngagement = calculateEngagementRate(videos)
+  if (avgEngagement > 5) return 'High'
+  if (avgEngagement > 3) return 'Medium'
+  return 'Low'
+}
+
+function estimateFormatMix(videos: any[]) {
+  const text = videos.map(v => v.snippet?.title?.toLowerCase() || '')
+  const shorts = text.filter(t => t.includes('shorts') || t.includes('#shorts')).length
+  const tutorials = text.filter(t => t.includes('how to') || t.includes('tutorial')).length
+  const commentary = text.filter(t => t.includes('review') || t.includes('reaction') || t.includes('analysis')).length
+
+  const total = Math.max(1, videos.length)
+  return {
+    shorts: Math.round((shorts / total) * 100),
+    tutorials: Math.round((tutorials / total) * 100),
+    commentary: Math.round((commentary / total) * 100),
+  }
+}
+
 export default function ChannelCompareMetrics({
   leftChannel,
   rightChannel,
@@ -56,74 +98,39 @@ export default function ChannelCompareMetrics({
     ? rightVideos.reduce((sum, v) => sum + Number(v.statistics?.viewCount || 0), 0) / rightVideos.length
     : 0
 
-  // Comparison data for charts
+  const leftCommentsPerVideo = leftVideos.length
+    ? leftVideos.reduce((sum, v) => sum + Number(v.statistics?.commentCount || 0), 0) / leftVideos.length
+    : 0
+  const rightCommentsPerVideo = rightVideos.length
+    ? rightVideos.reduce((sum, v) => sum + Number(v.statistics?.commentCount || 0), 0) / rightVideos.length
+    : 0
+
+  const leftAudience = inferAudienceProfile(leftVideos)
+  const rightAudience = inferAudienceProfile(rightVideos)
+  const leftLoyalty = estimateAudienceLoyalty(leftVideos)
+  const rightLoyalty = estimateAudienceLoyalty(rightVideos)
+  const leftFormats = estimateFormatMix(leftVideos)
+  const rightFormats = estimateFormatMix(rightVideos)
+
   const comparisonData = [
-    {
-      metric: 'Subscribers',
-      left: Number(leftStats?.subscriberCount || 0),
-      right: Number(rightStats?.subscriberCount || 0),
-    },
-    {
-      metric: 'Total Views',
-      left: Number(leftStats?.viewCount || 0),
-      right: Number(rightStats?.viewCount || 0),
-    },
-    {
-      metric: 'Videos',
-      left: Number(leftStats?.videoCount || 0),
-      right: Number(rightStats?.videoCount || 0),
-    },
-    {
-      metric: 'Avg Views',
-      left: leftAvgViews,
-      right: rightAvgViews,
-    },
+    { metric: 'Subscribers', left: Number(leftStats?.subscriberCount || 0), right: Number(rightStats?.subscriberCount || 0) },
+    { metric: 'Total Views', left: Number(leftStats?.viewCount || 0), right: Number(rightStats?.viewCount || 0) },
+    { metric: 'Avg Views', left: leftAvgViews, right: rightAvgViews },
+    { metric: 'Engagement', left: leftEngagement, right: rightEngagement },
   ]
 
-  // Calculate relative strengths
   const metrics = [
-    {
-      name: 'Subscribers',
-      left: Number(leftStats?.subscriberCount || 0),
-      right: Number(rightStats?.subscriberCount || 0),
-      format: (n: number) => formatNumber(n),
-    },
-    {
-      name: 'Total Views',
-      left: Number(leftStats?.viewCount || 0),
-      right: Number(rightStats?.viewCount || 0),
-      format: (n: number) => formatNumber(n),
-    },
-    {
-      name: 'Video Count',
-      left: Number(leftStats?.videoCount || 0),
-      right: Number(rightStats?.videoCount || 0),
-      format: (n: number) => formatNumber(n),
-    },
-    {
-      name: 'Avg Views/Video',
-      left: leftAvgViews,
-      right: rightAvgViews,
-      format: (n: number) => formatNumber(Math.round(n)),
-    },
-    {
-      name: 'Engagement Rate',
-      left: leftEngagement,
-      right: rightEngagement,
-      format: (n: number) => n.toFixed(2) + '%',
-      isPercentage: true,
-    },
-    {
-      name: 'Views/Subscriber',
-      left: leftAvgViews / Math.max(1, Number(leftStats?.subscriberCount || 1)) * 1000,
-      right: rightAvgViews / Math.max(1, Number(rightStats?.subscriberCount || 1)) * 1000,
-      format: (n: number) => n.toFixed(1) + 'x',
-    },
+    { name: 'Subscribers', left: Number(leftStats?.subscriberCount || 0), right: Number(rightStats?.subscriberCount || 0), format: (n: number) => formatNumber(n) },
+    { name: 'Total Views', left: Number(leftStats?.viewCount || 0), right: Number(rightStats?.viewCount || 0), format: (n: number) => formatNumber(n) },
+    { name: 'Video Count', left: Number(leftStats?.videoCount || 0), right: Number(rightStats?.videoCount || 0), format: (n: number) => formatNumber(n) },
+    { name: 'Avg Views/Video', left: leftAvgViews, right: rightAvgViews, format: (n: number) => formatNumber(Math.round(n)) },
+    { name: 'Engagement Rate', left: leftEngagement, right: rightEngagement, format: (n: number) => n.toFixed(2) + '%' },
+    { name: 'Comments/Video', left: leftCommentsPerVideo, right: rightCommentsPerVideo, format: (n: number) => formatNumber(Math.round(n)) },
+    { name: 'Avg Views per 1K Subs', left: leftAvgViews / Math.max(1, Number(leftStats?.subscriberCount || 1)) * 1000, right: rightAvgViews / Math.max(1, Number(rightStats?.subscriberCount || 1)) * 1000, format: (n: number) => n.toFixed(0) },
   ]
 
   return (
     <div className="space-y-6">
-      {/* Winner Summary */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Head-to-Head Summary</h3>
         <div className="grid grid-cols-3 gap-4">
@@ -153,7 +160,6 @@ export default function ChannelCompareMetrics({
         </div>
       </div>
 
-      {/* Detailed Comparison Table */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-bold text-gray-900">Detailed Metrics Comparison</h3>
@@ -170,38 +176,28 @@ export default function ChannelCompareMetrics({
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">{metric.name}</span>
                   {winner !== 'tie' && (
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                      winner === 'left' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
-                    }`}>
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${winner === 'left' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
                       {winner === 'left' ? 'Channel A Wins' : 'Channel B Wins'}
                     </span>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Channel A Bar */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-blue-600 font-medium">Channel A</span>
                       <span className="font-bold">{metric.format(metric.left)}</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500 rounded-full transition-all"
-                        style={{ width: `${leftPercent}%` }}
-                      />
+                      <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${leftPercent}%` }} />
                     </div>
                   </div>
-                  {/* Channel B Bar */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-red-600 font-medium">Channel B</span>
                       <span className="font-bold">{metric.format(metric.right)}</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-red-500 rounded-full transition-all"
-                        style={{ width: `${rightPercent}%` }}
-                      />
+                      <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${rightPercent}%` }} />
                     </div>
                   </div>
                 </div>
@@ -211,7 +207,6 @@ export default function ChannelCompareMetrics({
         </div>
       </div>
 
-      {/* Visualization Chart */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Visual Comparison</h3>
         <div className="h-64">
@@ -225,60 +220,70 @@ export default function ChannelCompareMetrics({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex items-center justify-center gap-6 mt-4">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-500 rounded"></div>
-            <span className="text-sm text-gray-600">Channel A</span>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Audience & Market Inference</h3>
+            <p className="text-sm text-gray-500">These are inferred signals from public content patterns, not direct YouTube Analytics exports.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-500 rounded"></div>
-            <span className="text-sm text-gray-600">Channel B</span>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="rounded-xl border border-gray-200 p-4">
+            <div className="font-semibold text-blue-700 mb-3">Channel A</div>
+            <div className="space-y-2 text-sm text-gray-700">
+              <div><span className="text-gray-500">Age leaning:</span> {leftAudience.age}</div>
+              <div><span className="text-gray-500">Gender leaning:</span> {leftAudience.gender}</div>
+              <div><span className="text-gray-500">Geography:</span> {leftAudience.geography}</div>
+              <div><span className="text-gray-500">Audience loyalty:</span> {leftLoyalty}</div>
+              <div><span className="text-gray-500">Shorts mix:</span> {leftFormats.shorts}%</div>
+              <div><span className="text-gray-500">Tutorial mix:</span> {leftFormats.tutorials}%</div>
+              <div><span className="text-gray-500">Commentary mix:</span> {leftFormats.commentary}%</div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-200 p-4">
+            <div className="font-semibold text-red-700 mb-3">Channel B</div>
+            <div className="space-y-2 text-sm text-gray-700">
+              <div><span className="text-gray-500">Age leaning:</span> {rightAudience.age}</div>
+              <div><span className="text-gray-500">Gender leaning:</span> {rightAudience.gender}</div>
+              <div><span className="text-gray-500">Geography:</span> {rightAudience.geography}</div>
+              <div><span className="text-gray-500">Audience loyalty:</span> {rightLoyalty}</div>
+              <div><span className="text-gray-500">Shorts mix:</span> {rightFormats.shorts}%</div>
+              <div><span className="text-gray-500">Tutorial mix:</span> {rightFormats.tutorials}%</div>
+              <div><span className="text-gray-500">Commentary mix:</span> {rightFormats.commentary}%</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Videos Comparison */}
       {leftVideos.length > 0 && rightVideos.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Videos Comparison</h3>
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Channel A Recent Videos */}
             <div>
               <h4 className="text-sm font-medium text-blue-600 mb-3">Channel A Latest</h4>
               <div className="space-y-3">
                 {leftVideos.slice(0, 3).map((video: any) => (
                   <div key={video.id} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
-                    <img
-                      src={video.snippet?.thumbnails?.default?.url}
-                      alt={video.snippet?.title}
-                      className="w-20 h-14 object-cover rounded"
-                    />
+                    <img src={video.snippet?.thumbnails?.default?.url} alt={video.snippet?.title} className="w-20 h-14 object-cover rounded" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 line-clamp-2">{video.snippet?.title}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatNumber(video.statistics?.viewCount)} views
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">{formatNumber(video.statistics?.viewCount)} views</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            {/* Channel B Recent Videos */}
             <div>
               <h4 className="text-sm font-medium text-red-600 mb-3">Channel B Latest</h4>
               <div className="space-y-3">
                 {rightVideos.slice(0, 3).map((video: any) => (
                   <div key={video.id} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
-                    <img
-                      src={video.snippet?.thumbnails?.default?.url}
-                      alt={video.snippet?.title}
-                      className="w-20 h-14 object-cover rounded"
-                    />
+                    <img src={video.snippet?.thumbnails?.default?.url} alt={video.snippet?.title} className="w-20 h-14 object-cover rounded" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 line-clamp-2">{video.snippet?.title}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatNumber(video.statistics?.viewCount)} views
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">{formatNumber(video.statistics?.viewCount)} views</p>
                     </div>
                   </div>
                 ))}
@@ -287,7 +292,7 @@ export default function ChannelCompareMetrics({
           </div>
         </div>
       )}
-      {/* Comparison Actions */}
+
       <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl border border-slate-200 p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">What To Do With This Comparison</h3>
         <div className="grid sm:grid-cols-3 gap-4 text-sm">
