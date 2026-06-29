@@ -46,6 +46,12 @@ function getPerformanceTier(score: number): { label: string; color: string } {
   return { label: 'STEADY', color: 'text-green-600' }
 }
 
+function getDecisionHint(score: number, engagement: number) {
+  if (score >= 80 && engagement >= 4) return 'Study immediately'
+  if (score >= 60) return 'Worth tracking'
+  return 'Use as context'
+}
+
 export default async function TrendingPage() {
   const region = await getRegion()
   const labels = getRegionLabels(region)
@@ -55,13 +61,10 @@ export default async function TrendingPage() {
     Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0)
   )
 
-  // Generate daily recommendations based on trending data
   const dailyRecommendations = generateDailyRecommendations(sorted.slice(0, 30), region, 5)
   const regionalPrefs = REGIONAL_PREFERENCES[region] || REGIONAL_PREFERENCES.US
 
-  // Calculate analytics
   const totalViews = sorted.reduce((sum: number, v: any) => sum + Number(v.statistics?.viewCount || 0), 0)
-  const totalLikes = sorted.reduce((sum: number, v: any) => sum + Number(v.statistics?.likeCount || 0), 0)
   const avgEngagement = sorted.length > 0
     ? sorted.reduce((sum: number, v: any) => sum + getEngagementRate(v), 0) / sorted.length
     : 0
@@ -69,7 +72,6 @@ export default async function TrendingPage() {
     ? sorted.reduce((sum: number, v: any) => sum + getViewVelocity(v), 0) / sorted.length
     : 0
 
-  // Top categories
   const categoryMap = new Map()
   sorted.forEach((v: any) => {
     const title = v.snippet?.title?.toLowerCase() || ''
@@ -96,9 +98,8 @@ export default async function TrendingPage() {
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">
             {labels.full} Trending Videos {getTodayString()}
           </h1>
-          <p className="text-gray-500 text-sm sm:text-base max-w-2xl leading-relaxed">
-            The most viral YouTube videos in {labels.full} right now, ranked by real-time view count with
-            velocity and engagement analysis.
+          <p className="text-gray-500 text-sm sm:text-base max-w-3xl leading-relaxed">
+            Use this page to answer three questions fast: what is getting the most attention, which patterns are worth studying, and which channels deserve a deeper audit.
           </p>
           {region === 'GLOBAL' && (
             <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
@@ -108,16 +109,16 @@ export default async function TrendingPage() {
           )}
         </div>
 
-        {/* Professional Analytics Dashboard */}
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-blue-400 to-blue-600" />
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-              <span className="text-blue-600">📊</span> Real-Time Analytics Dashboard
-            </h2>
-          </div>
+        <div className="flex flex-wrap gap-3 mb-8">
+          <Link href="/trends" className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition">
+            Open Trend Database
+          </Link>
+          <Link href="/compare-new" className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition">
+            Compare Channels or Videos
+          </Link>
+        </div>
 
-          {/* Key Metrics Grid */}
+        <section className="mb-12">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
             <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
               <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">🎬 VIDEOS TRACKED</div>
@@ -127,7 +128,7 @@ export default async function TrendingPage() {
             <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
               <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">👁️ TOTAL VIEWS</div>
               <div className="text-2xl sm:text-3xl font-black data-mono text-glow-red text-red-600">{formatNumber(totalViews.toString())}</div>
-              <div className="text-xs text-green-600 mt-1">↗ Across all videos</div>
+              <div className="text-xs text-green-600 mt-1">Across current leaders</div>
             </div>
             <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
               <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">⚡ AVG VELOCITY</div>
@@ -143,95 +144,85 @@ export default async function TrendingPage() {
             </div>
           </div>
 
-          {/* Today's Keyword */}
-          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent mb-8 border-gradient-to-r from-purple-500 via-pink-500 to-red-500">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">🔥</span>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">TODAY&apos;S KEYWORD</h3>
-                  <p className="text-xs text-gray-400">Trending search term with highest velocity</p>
+          <div className="grid lg:grid-cols-[1.3fr_0.7fr] gap-6 mb-8">
+            <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent border-gradient-to-r from-purple-500 via-pink-500 to-red-500">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🔥</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">TODAY&apos;S KEYWORD</h3>
+                    <p className="text-xs text-gray-400">Trending search term with highest velocity</p>
+                  </div>
                 </div>
               </div>
-              <span className="text-xs text-gray-500 data-mono bg-gray-100 px-3 py-1 rounded-full">
-                Updated {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+
+              {(() => {
+                const keywordCounts = new Map<string, { count: number; totalViews: number; velocity: number }>()
+                const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'should', 'now'])
+
+                sorted.forEach((v: any) => {
+                  const title = v.snippet?.title?.toLowerCase() || ''
+                  const words = title.split(/\s+/).filter((w: string) => w.length > 3 && !stopWords.has(w) && !/^\d+$/.test(w))
+                  const velocity = getViewVelocity(v)
+                  const views = Number(v.statistics?.viewCount || 0)
+
+                  words.forEach((word: string) => {
+                    const cleanWord = word.replace(/[^a-z]/g, '')
+                    if (cleanWord.length > 3) {
+                      const existing = keywordCounts.get(cleanWord)
+                      if (existing) {
+                        existing.count += 1
+                        existing.totalViews += views
+                        existing.velocity += velocity
+                      } else {
+                        keywordCounts.set(cleanWord, { count: 1, totalViews: views, velocity })
+                      }
+                    }
+                  })
+                })
+
+                const topKeyword = Array.from(keywordCounts.entries())
+                  .sort((a, b) => (b[1].velocity + b[1].count * 10000) - (a[1].velocity + a[1].count * 10000))
+                  .slice(0, 1)[0]
+
+                if (!topKeyword) return <div className="text-gray-500 text-sm py-4 text-center">No trending keywords detected</div>
+
+                const [keyword, data] = topKeyword
+                const keywordVelocity = data.velocity / data.count
+
+                return (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <Link href={`/trends/${keyword}`} className="group inline-flex items-center gap-3 hover:opacity-80 transition">
+                        <span className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 bg-clip-text text-transparent">
+                          #{keyword.charAt(0).toUpperCase() + keyword.slice(1)}
+                        </span>
+                      </Link>
+                      <div className="flex flex-wrap items-center gap-3 mt-2">
+                        <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full font-medium">🔍 {data.count} videos</span>
+                        <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium">👁️ {formatNumber(data.totalViews.toString())} total views</span>
+                        <span className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-full font-medium">⚡ {keywordVelocity >= 1e6 ? (keywordVelocity / 1e6).toFixed(1) + 'M' : keywordVelocity >= 1e3 ? (keywordVelocity / 1e3).toFixed(1) + 'K' : Math.round(keywordVelocity)}/day</span>
+                      </div>
+                    </div>
+                    <Link href={`/trends/${keyword}`} className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:from-purple-600 hover:to-pink-600 transition shadow-lg shadow-purple-200 whitespace-nowrap">
+                      Explore Trend
+                    </Link>
+                  </div>
+                )
+              })()}
             </div>
 
-            {(() => {
-              // Extract trending keywords from video titles
-              const keywordCounts = new Map<string, { count: number; totalViews: number; velocity: number }>()
-              const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'should', 'now'])
-
-              sorted.forEach((v: any) => {
-                const title = v.snippet?.title?.toLowerCase() || ''
-                const words = title.split(/\s+/).filter((w: string) => w.length > 3 && !stopWords.has(w) && !/^\d+$/.test(w))
-                const velocity = getViewVelocity(v)
-                const views = Number(v.statistics?.viewCount || 0)
-
-                words.forEach((word: string) => {
-                  const cleanWord = word.replace(/[^a-z]/g, '')
-                  if (cleanWord.length > 3) {
-                    const existing = keywordCounts.get(cleanWord)
-                    if (existing) {
-                      existing.count += 1
-                      existing.totalViews += views
-                      existing.velocity += velocity
-                    } else {
-                      keywordCounts.set(cleanWord, { count: 1, totalViews: views, velocity })
-                    }
-                  }
-                })
-              })
-
-              // Get top keyword by weighted score (velocity + count)
-              const topKeyword = Array.from(keywordCounts.entries())
-                .sort((a, b) => (b[1].velocity + b[1].count * 10000) - (a[1].velocity + a[1].count * 10000))
-                .slice(0, 1)[0]
-
-              if (!topKeyword) return <div className="text-gray-500 text-sm py-4 text-center">No trending keywords detected</div>
-
-              const [keyword, data] = topKeyword
-              const keywordVelocity = data.velocity / data.count
-
-              return (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <Link
-                      href={`/trends/${keyword}`}
-                      className="group inline-flex items-center gap-3 hover:opacity-80 transition"
-                    >
-                      <span className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:via-pink-500 group-hover:to-red-500">
-                        #{keyword.charAt(0).toUpperCase() + keyword.slice(1)}
-                      </span>
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-purple-600 text-sm">→</span>
-                    </Link>
-                    <div className="flex flex-wrap items-center gap-3 mt-2">
-                      <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full font-medium">
-                        🔍 {data.count} videos
-                      </span>
-                      <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium">
-                        👁️ {formatNumber(data.totalViews.toString())} total views
-                      </span>
-                      <span className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-full font-medium">
-                        ⚡ {keywordVelocity >= 1e6 ? (keywordVelocity / 1e6).toFixed(1) + 'M' : keywordVelocity >= 1e3 ? (keywordVelocity / 1e3).toFixed(1) + 'K' : Math.round(keywordVelocity)}/day velocity
-                      </span>
-                    </div>
-                  </div>
-                  <Link
-                    href={`/trends/${keyword}`}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:from-purple-600 hover:to-pink-600 transition shadow-lg shadow-purple-200 whitespace-nowrap"
-                  >
-                    <span>🔍</span> Explore Trend
-                  </Link>
-                </div>
-              )
-            })()}
+            <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono mb-4">HOW TO USE THIS PAGE</h3>
+              <div className="space-y-3 text-sm text-gray-600">
+                <p>1. Open videos with strong velocity and strong engagement first.</p>
+                <p>2. If a channel appears repeatedly, open the channel analysis next.</p>
+                <p>3. Use Compare after you have 2 candidates worth benchmarking.</p>
+              </div>
+            </div>
           </div>
 
-          {/* Category Distribution & Velocity Chart */}
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
-            {/* Category Distribution */}
             <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">🏷️ CATEGORY DISTRIBUTION</h3>
@@ -239,7 +230,7 @@ export default async function TrendingPage() {
               </div>
               {topCategories.length > 0 ? (
                 <div className="space-y-3">
-                  {topCategories.map(([category, count], i) => {
+                  {topCategories.map(([category, count]) => {
                     const maxCount = topCategories[0][1]
                     const percentage = (count / sorted.length) * 100
                     return (
@@ -251,10 +242,7 @@ export default async function TrendingPage() {
                             <span className="text-gray-500">{count} videos ({percentage.toFixed(1)}%)</span>
                           </div>
                           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full"
-                              style={{ width: `${(count / maxCount) * 100}%` }}
-                            />
+                            <div className="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full" style={{ width: `${(count / maxCount) * 100}%` }} />
                           </div>
                         </div>
                       </div>
@@ -266,142 +254,30 @@ export default async function TrendingPage() {
               )}
             </div>
 
-            {/* Velocity Distribution Chart */}
             <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">⚡ VELOCITY DISTRIBUTION</h3>
-                <span className="text-[10px] text-gray-500 data-mono">views/day</span>
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono mb-4">REGIONAL INTELLIGENCE</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+                  <div className="text-purple-600 text-xs font-bold mb-1">TOP FORMATS</div>
+                  <div className="text-sm text-gray-700">{regionalPrefs.popularFormats.slice(0, 2).join(', ')}</div>
+                </div>
+                <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                  <div className="text-blue-600 text-xs font-bold mb-1">HOT TOPICS</div>
+                  <div className="text-sm text-gray-700">{regionalPrefs.trendingTopics.slice(0, 2).join(', ')}</div>
+                </div>
+                <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+                  <div className="text-green-600 text-xs font-bold mb-1">OPTIMAL LENGTH</div>
+                  <div className="text-sm text-gray-700">{regionalPrefs.optimalLength}</div>
+                </div>
+                <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
+                  <div className="text-orange-600 text-xs font-bold mb-1">BEST TIME</div>
+                  <div className="text-sm text-gray-700">{regionalPrefs.bestPostTime}</div>
+                </div>
               </div>
-              <svg viewBox="0 0 520 200" className="w-full" preserveAspectRatio="xMidYMid meet">
-                {(() => {
-                  const width = 520
-                  const height = 200
-                  const margin = { top: 20, right: 60, bottom: 40, left: 80 }
-                  const chartW = width - margin.left - margin.right
-                  const chartH = height - margin.top - margin.bottom
-
-                  // Group by velocity ranges
-                  const ranges = [
-                    { label: '0-100K', min: 0, max: 100000, color: '#22c55e' },
-                    { label: '100K-500K', min: 100000, max: 500000, color: '#84cc16' },
-                    { label: '500K-1M', min: 500000, max: 1000000, color: '#eab308' },
-                    { label: '1M-5M', min: 1000000, max: 5000000, color: '#f97316' },
-                    { label: '5M+', min: 5000000, max: Infinity, color: '#dc2626' },
-                  ]
-
-                  const data = ranges.map(range => ({
-                    ...range,
-                    count: sorted.filter((v: any) => {
-                      const vel = getViewVelocity(v)
-                      return vel >= range.min && vel < range.max
-                    }).length
-                  })).filter(d => d.count > 0)
-
-                  if (data.length === 0) return <text x={width / 2} y={height / 2} fill="#9ca3af" fontSize="14" textAnchor="middle">No velocity data</text>
-
-                  const maxCount = Math.max(...data.map(d => d.count), 1)
-                  const barSlot = chartH / data.length
-                  const barHeight = barSlot * 0.6
-                  const barGap = barSlot * 0.4
-
-                  return (
-                    <>
-                      <rect x={margin.left} y={margin.top} width={chartW} height={chartH} fill="#f3f4f6" opacity="0.5" rx="8" />
-                      {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
-                        const x = margin.left + t * chartW
-                        const val = Math.round(t * maxCount)
-                        return (
-                          <g key={`grid-${i}`}>
-                            <line x1={x} y1={margin.top} x2={x} y2={margin.top + chartH} stroke="#e5e7eb" strokeWidth="1" strokeDasharray="2,2" />
-                            <text x={x} y={margin.top + chartH + 18} fill="#9ca3af" fontSize="10" textAnchor="middle" fontFamily="monospace">{val}</text>
-                          </g>
-                        )
-                      })}
-                      {data.map((d, i) => {
-                        const y = margin.top + i * barSlot + barGap / 2
-                        const w = (d.count / maxCount) * chartW
-                        return (
-                          <g key={i}>
-                            <rect x={margin.left} y={y} width={w} height={barHeight} rx="4" fill={d.color} opacity="0.85" />
-                            <text x={margin.left - 8} y={y + barHeight / 2 + 4} fill="#374151" fontSize="11" textAnchor="end" fontFamily="monospace">{d.label}</text>
-                            <text x={margin.left + w + 6} y={y + barHeight / 2 + 4} fill="#6b7280" fontSize="10" fontWeight="bold" fontFamily="monospace">{d.count}</text>
-                          </g>
-                        )
-                      })}
-                    </>
-                  )
-                })()}
-              </svg>
-            </div>
-          </div>
-
-          {/* Performance Score Distribution */}
-          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover mb-8">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">🎯 PERFORMANCE SCORE DISTRIBUTION</h3>
-              <span className="text-[10px] text-gray-500 data-mono">0-100 scale</span>
-            </div>
-            <div className="flex items-end justify-between gap-2 h-32">
-              {(() => {
-                const ranges = [
-                  { label: '0-20', color: '#9ca3af', desc: 'Steady' },
-                  { label: '20-40', color: '#22c55e', desc: 'Rising' },
-                  { label: '40-60', color: '#eab308', desc: 'Growing' },
-                  { label: '60-80', color: '#f97316', desc: 'Trending' },
-                  { label: '80-100', color: '#dc2626', desc: 'Viral' },
-                ]
-                const scores = sorted.map((v: any) => calculateViralityScore(v))
-                return ranges.map((range, i) => {
-                  const [min, max] = range.label.split('-').map(Number)
-                  const count = scores.filter(s => s >= min && s < (max || 101)).length
-                  const maxCount = Math.max(...ranges.map((r, idx) => {
-                    const [mn, mx] = r.label.split('-').map(Number)
-                    return scores.filter(s => s >= mn && s < (mx || 101)).length
-                  }), 1)
-                  const height = maxCount > 0 ? (count / maxCount) * 100 : 0
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                      <div className="w-full bg-gray-100 rounded-t-lg relative" style={{ height: '100px' }}>
-                        <div
-                          className="absolute bottom-0 w-full rounded-t-lg transition-all duration-500"
-                          style={{
-                            height: `${height}%`,
-                            backgroundColor: range.color,
-                            opacity: 0.85
-                          }}
-                        />
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs font-bold text-gray-700">{count}</div>
-                        <div className="text-[10px] text-gray-500">{range.desc}</div>
-                      </div>
-                    </div>
-                  )
-                })
-              })()}
-            </div>
-          </div>
-
-          {/* Data Export Section */}
-          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">📥 EXPORT DATA</h3>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition flex items-center gap-2">
-                <span>📊</span> Export as CSV
-              </button>
-              <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition flex items-center gap-2">
-                <span>📈</span> Export Analytics Report
-              </button>
-              <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition flex items-center gap-2">
-                <span>🔗</span> Share Dashboard
-              </button>
             </div>
           </div>
         </section>
 
-        {/* Daily Topic Recommendations */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -410,44 +286,11 @@ export default async function TrendingPage() {
                 <span className="text-purple-600">💡</span> {getTimeBasedGreeting()}, Creator
               </h2>
             </div>
-            <span className="text-xs text-gray-500 data-mono bg-gray-100 px-3 py-1 rounded-full">
-              {getTodayString()}
-            </span>
+            <span className="text-xs text-gray-500 data-mono bg-gray-100 px-3 py-1 rounded-full">{getTodayString()}</span>
           </div>
 
-          {/* Regional Insights */}
-          <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-2xl">{regionalPrefs.flag || '🌍'}</span>
-              <div>
-                <h3 className="font-bold text-gray-900">{labels.full} Creator Intelligence</h3>
-                <p className="text-sm text-gray-500">Based on today's trending data from {sorted.length} videos</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
-                <div className="text-purple-600 text-xs font-bold mb-1">🎬 TOP FORMATS</div>
-                <div className="text-sm text-gray-700">{regionalPrefs.popularFormats.slice(0, 3).join(', ')}</div>
-              </div>
-              <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-                <div className="text-blue-600 text-xs font-bold mb-1">🔥 HOT TOPICS</div>
-                <div className="text-sm text-gray-700">{regionalPrefs.trendingTopics.slice(0, 2).join(', ')}</div>
-              </div>
-              <div className="bg-green-50 rounded-xl p-3 border border-green-100">
-                <div className="text-green-600 text-xs font-bold mb-1">⏱️ OPTIMAL LENGTH</div>
-                <div className="text-sm text-gray-700">{regionalPrefs.optimalLength}</div>
-              </div>
-              <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
-                <div className="text-orange-600 text-xs font-bold mb-1">🚀 BEST TIME</div>
-                <div className="text-sm text-gray-700">{regionalPrefs.bestPostTime}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Recommendations Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {dailyRecommendations.map((rec, idx) => {
-              // Generate trend URL from title
               const trendKeyword = rec.title.toLowerCase()
                 .replace(/[^a-z0-9\s]/g, '')
                 .split(' ')
@@ -457,111 +300,53 @@ export default async function TrendingPage() {
                 .replace(/^-|-$/g, '') || 'trend'
 
               return (
-              <Link
-                key={rec.id}
-                href={`/trends/${trendKeyword}`}
-                className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group block hover:no-underline"
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`text-xs font-bold px-2 py-1 rounded ${
-                    rec.potentialViews === 'viral' ? 'bg-red-100 text-red-600' :
-                    rec.potentialViews === 'high' ? 'bg-orange-100 text-orange-600' :
-                    rec.potentialViews === 'medium' ? 'bg-yellow-100 text-yellow-600' :
-                    'bg-green-100 text-green-600'
-                  }`}>
-                    {rec.potentialViews === 'viral' ? '🔥 VIRAL' :
-                     rec.potentialViews === 'high' ? '⚡ HIGH' :
-                     rec.potentialViews === 'medium' ? '💡 MEDIUM' : '📈 STEADY'}
-                  </span>
-                  <span className="text-xs text-gray-400 data-mono">#{idx + 1}</span>
-                </div>
-
-                {/* Title */}
-                <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
-                  {rec.title}
-                </h3>
-
-                {/* Category */}
-                <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
-                  <span>🏷️</span> {rec.category}
-                </div>
-
-                {/* Metrics */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">Confidence</span>
-                    <span className="font-bold data-mono">{rec.confidence}%</span>
-                  </div>
-                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full" style={{ width: `${rec.confidence}%` }} />
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">Difficulty</span>
-                    <span className={`font-bold ${
-                      rec.difficulty === 'easy' ? 'text-green-600' :
-                      rec.difficulty === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                <Link key={rec.id} href={`/trends/${trendKeyword}`} className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group block hover:no-underline">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`text-xs font-bold px-2 py-1 rounded ${
+                      rec.potentialViews === 'viral' ? 'bg-red-100 text-red-600' :
+                      rec.potentialViews === 'high' ? 'bg-orange-100 text-orange-600' :
+                      rec.potentialViews === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+                      'bg-green-100 text-green-600'
                     }`}>
-                      {rec.difficulty === 'easy' ? '🟢 Easy' :
-                       rec.difficulty === 'medium' ? '🟡 Medium' : '🔴 Hard'}
+                      {rec.potentialViews === 'viral' ? '🔥 VIRAL' : rec.potentialViews === 'high' ? '⚡ HIGH' : rec.potentialViews === 'medium' ? '💡 MEDIUM' : '📈 STEADY'}
                     </span>
+                    <span className="text-xs text-gray-400 data-mono">#{idx + 1}</span>
                   </div>
-                </div>
-
-                {/* Why Trending */}
-                <div className="bg-gray-50 rounded-xl p-3 mb-4">
-                  <div className="text-xs font-bold text-gray-700 mb-1">🧠 Why This Works</div>
-                  <p className="text-xs text-gray-500 leading-relaxed">{rec.whyTrending}</p>
-                </div>
-
-                {/* Similar Videos */}
-                {rec.similarVideos.length > 0 && (
-                  <div className="mb-4">
-                    <div className="text-xs font-bold text-gray-700 mb-2">📺 Similar Performing Videos</div>
-                    <div className="space-y-1">
-                      {rec.similarVideos.slice(0, 2).map((v, i) => (
-                        <Link key={i} href={`/video/${v.id}`} className="block text-xs text-gray-500 hover:text-purple-600 transition truncate">
-                          • {v.title.slice(0, 40)}{v.title.length > 40 ? '...' : ''}
-                        </Link>
-                      ))}
+                  <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">{rec.title}</h3>
+                  <div className="text-xs text-gray-500 mb-3 flex items-center gap-1"><span>🏷️</span> {rec.category}</div>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">Confidence</span>
+                      <span className="font-bold data-mono">{rec.confidence}%</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full" style={{ width: `${rec.confidence}%` }} />
                     </div>
                   </div>
-                )}
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1">
-                  {rec.suggestedTags.slice(0, 4).map((tag, i) => (
-                    <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </Link>
+                  <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                    <div className="text-xs font-bold text-gray-700 mb-1">🧠 Why This Works</div>
+                    <p className="text-xs text-gray-500 leading-relaxed">{rec.whyTrending}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {rec.suggestedTags.slice(0, 4).map((tag, i) => (
+                      <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">#{tag}</span>
+                    ))}
+                  </div>
+                </Link>
               )
             })}
           </div>
-
-          {/* CTA */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500 mb-3">
-              💡 These recommendations are generated from real trending data in {labels.full}
-            </p>
-            <Link
-              href="/youtube-ai-trends"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-medium hover:from-purple-600 hover:to-purple-700 transition shadow-lg shadow-purple-200"
-            >
-              <span>🚀</span> Get More AI-Powered Ideas
-            </Link>
-          </div>
         </section>
 
-        {/* Video Grid with Enhanced Metrics */}
         <section>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-red-400 to-red-600" />
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-              <span className="text-red-600">🔥</span> Trending Videos
-            </h2>
+          <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-6 rounded-full bg-gradient-to-b from-red-400 to-red-600" />
+              <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
+                <span className="text-red-600">🔥</span> Trending Videos
+              </h2>
+            </div>
+            <div className="text-sm text-gray-500">Open the video first if you want packaging insight. Open the channel next if you want repeatability.</div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -570,10 +355,11 @@ export default async function TrendingPage() {
               const engagement = getEngagementRate(video)
               const viralityScore = calculateViralityScore(video)
               const tier = getPerformanceTier(viralityScore)
+              const decisionHint = getDecisionHint(viralityScore, engagement)
 
               return (
-                <Link key={video.id} href={`/video/${video.id}`} className="group block">
-                  <div className="glass-panel neon-border rounded-xl sm:rounded-2xl overflow-hidden glow-hover corner-accent">
+                <div key={video.id} className="glass-panel neon-border rounded-xl sm:rounded-2xl overflow-hidden glow-hover corner-accent">
+                  <Link href={`/video/${video.id}`} className="group block">
                     <div className="relative aspect-video overflow-hidden">
                       <img
                         src={video.snippet?.thumbnails?.high?.url}
@@ -591,36 +377,46 @@ export default async function TrendingPage() {
                         👁️ {formatNumber(video.statistics?.viewCount)}
                       </div>
                     </div>
-                    <div className="p-3 sm:p-5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${tier.color.replace('text-', 'bg-').replace('600', '100')} ${tier.color}`}>
-                          {tier.label}
-                        </span>
-                      </div>
+                  </Link>
+                  <div className="p-3 sm:p-5">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${tier.color.replace('text-', 'bg-').replace('600', '100')} ${tier.color}`}>
+                        {tier.label}
+                      </span>
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                        {decisionHint}
+                      </span>
+                    </div>
+                    <Link href={`/video/${video.id}`} className="group block">
                       <h3 className="font-bold text-sm sm:text-base line-clamp-2 mb-2 group-hover:text-red-600 transition-colors text-gray-900">
                         {video.snippet?.title}
                       </h3>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-[10px] font-bold text-gray-700">
-                          {video.snippet?.channelTitle?.[0]}
-                        </div>
-                        <span className="truncate">{video.snippet?.channelTitle}</span>
+                    </Link>
+                    <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-[10px] font-bold text-gray-700">
+                        {video.snippet?.channelTitle?.[0]}
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="glass-panel rounded-lg p-2 text-center">
-                          <div className="text-gray-500 text-[10px] data-mono tracking-wider">⚡ VELOCITY</div>
-                          <div className="text-green-600 font-bold text-xs data-mono text-glow-green">
-                            {velocity >= 1e6 ? (velocity / 1e6).toFixed(1) + 'M/d' : velocity >= 1e3 ? (velocity / 1e3).toFixed(1) + 'K/d' : Math.round(velocity) + '/d'}
-                          </div>
+                      <span className="truncate">{video.snippet?.channelTitle}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="glass-panel rounded-lg p-2 text-center">
+                        <div className="text-gray-500 text-[10px] data-mono tracking-wider">⚡ VELOCITY</div>
+                        <div className="text-green-600 font-bold text-xs data-mono text-glow-green">
+                          {velocity >= 1e6 ? (velocity / 1e6).toFixed(1) + 'M/d' : velocity >= 1e3 ? (velocity / 1e3).toFixed(1) + 'K/d' : Math.round(velocity) + '/d'}
                         </div>
-                        <div className="glass-panel rounded-lg p-2 text-center">
-                          <div className="text-gray-500 text-[10px] data-mono tracking-wider">📈 ENGAGEMENT</div>
-                          <div className="text-yellow-600 font-bold text-xs data-mono text-glow-yellow">{engagement.toFixed(2)}%</div>
-                        </div>
+                      </div>
+                      <div className="glass-panel rounded-lg p-2 text-center">
+                        <div className="text-gray-500 text-[10px] data-mono tracking-wider">📈 ENGAGEMENT</div>
+                        <div className="text-yellow-600 font-bold text-xs data-mono text-glow-yellow">{engagement.toFixed(2)}%</div>
                       </div>
                     </div>
+                    <div className="flex gap-2">
+                      <Link href={`/video/${video.id}`} className="flex-1 px-3 py-2 bg-gray-900 text-white rounded-lg text-xs font-medium text-center hover:bg-gray-800 transition">
+                        Analyze Video
+                      </Link>
+                    </div>
                   </div>
-                </Link>
+                </div>
               )
             })}
           </div>

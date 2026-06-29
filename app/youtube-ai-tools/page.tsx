@@ -3,10 +3,15 @@ import Link from 'next/link'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 
+
 export const metadata: Metadata = {
   title: 'Best AI Tools for YouTube 2026 | Creator AI Software',
   description: 'Discover the best AI tools for YouTube creators. From script writing to video editing, these AI tools will revolutionize your content creation workflow.',
   keywords: 'ai tools for youtube, youtube ai tools, ai video editing, ai script writing, ai thumbnail generator',
+  robots: {
+    index: false,
+    follow: true,
+  },
 }
 
 const AI_CATEGORIES = [
@@ -124,7 +129,6 @@ export default async function YouTubeAIToolsPage() {
           </p>
         </div>
 
-        {/* Featured AI Tool */}
         <div className="mb-12">
           <div className="glass-panel neon-border rounded-2xl p-6 sm:p-8 glow-hover bg-gradient-to-br from-purple-50 to-blue-50">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
@@ -146,7 +150,6 @@ export default async function YouTubeAIToolsPage() {
           </div>
         </div>
 
-        {/* AI Tools Grid */}
         <div className="mb-12">
           <h2 className="text-xl font-bold mb-4 text-gray-900">AI Tools by Category</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -160,15 +163,11 @@ export default async function YouTubeAIToolsPage() {
                     <div key={tool.name} className="border-b border-gray-100 last:border-0 pb-3 last:pb-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium text-gray-900">{tool.name}</span>
-                        {tool.popular && (
-                          <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[10px] font-bold">POPULAR</span>
-                        )}
-                        <div className="flex gap-1">
-                          {tool.free && <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold">FREE</span>}
-                          {tool.paid && <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">PRO</span>}
-                        </div>
+                        {tool.popular && <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">HOT</span>}
+                        {tool.free && <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">FREE</span>}
+                        {tool.paid && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">PAID</span>}
                       </div>
-                      <div className="text-gray-500 text-xs">{tool.desc}</div>
+                      <p className="text-sm text-gray-600">{tool.desc}</p>
                     </div>
                   ))}
                 </div>
@@ -177,90 +176,30 @@ export default async function YouTubeAIToolsPage() {
           </div>
         </div>
 
-        {/* AI Workflow */}
         <div className="mb-12">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">The AI Creator Workflow</h2>
-          <div className="glass-panel rounded-2xl p-6">
-            <div className="space-y-4">
-              {AI_WORKFLOW.map((step) => (
-                <div key={step.step} className="flex gap-4 pb-4 border-b border-gray-200 last:border-0 last:pb-0">
-                  <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm flex-shrink-0">
+          <h2 className="text-xl font-bold mb-4 text-gray-900">Recommended AI Workflow</h2>
+          <div className="space-y-4">
+            {AI_WORKFLOW.map((step) => (
+              <div key={step.step} className="glass-panel neon-border rounded-2xl p-5">
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold flex-shrink-0">
                     {step.step}
                   </div>
                   <div className="flex-1">
-                    <div className="font-bold text-gray-900 mb-1">{step.title}</div>
-                    <div className="text-gray-500 text-sm mb-2">{step.desc}</div>
-                    <div className="flex flex-wrap gap-1">
+                    <h3 className="font-bold text-gray-900 mb-1">{step.title}</h3>
+                    <p className="text-sm text-gray-600 mb-3">{step.desc}</p>
+                    <div className="flex flex-wrap gap-2">
                       {step.tools.map((tool) => (
-                        <span key={tool} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-medium">
+                        <span key={tool} className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">
                           {tool}
                         </span>
                       ))}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ROI Stats */}
-        <div className="mb-12">
-          <div className="glass-panel rounded-2xl p-6 text-center">
-            <h2 className="text-xl font-bold mb-2 text-gray-900">Time Saved with AI</h2>
-            <p className="text-gray-500 mb-4">
-              Creators using AI tools report significant time savings across their workflow.
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-black text-purple-600">70%</div>
-                <div className="text-xs text-gray-500">Faster Script Writing</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-black text-purple-600">50%</div>
-                <div className="text-xs text-gray-500">Less Editing Time</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-black text-purple-600">3x</div>
-                <div className="text-xs text-gray-500">More Content Output</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-black text-purple-600">85%</div>
-                <div className="text-xs text-gray-500">CTR Improvement</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* FAQ */}
-        <div className="mb-8">
-          <h2 className="text-lg font-bold mb-4 text-gray-900">AI Tools FAQ</h2>
-          <div className="space-y-3">
-            {[
-              { q: 'Which AI tool is best for YouTube scripts?', a: 'Claude and ChatGPT are excellent for scripts. For YouTube-specific optimization, TubeFission AI generates scripts optimized for trending topics and engagement.' },
-              { q: 'Can AI completely replace video editing?', a: 'AI speeds up editing significantly but human creativity is still essential. Tools like Descript can handle 70-80% of basic editing tasks automatically.' },
-              { q: 'Are free AI tools good enough for YouTube?', a: 'Free versions of ChatGPT, Canva, and CapCut are powerful enough for most creators. Upgrade when you need advanced features or higher usage limits.' },
-            ].map((item, i) => (
-              <div key={i} className="glass-panel rounded-xl p-4">
-                <div className="font-bold text-sm mb-1 text-gray-900">{item.q}</div>
-                <div className="text-gray-500 text-xs leading-relaxed">{item.a}</div>
               </div>
             ))}
           </div>
-        </div>
-
-        {/* CTA */}
-        <div className="glass-panel neon-border rounded-2xl p-6 sm:p-8 text-center glow-hover">
-          <h2 className="text-xl font-bold mb-2 text-gray-900">Start Creating with AI</h2>
-          <p className="text-gray-500 text-sm mb-4 max-w-xl mx-auto">
-            Join thousands of creators using TubeFission AI to predict trends and create better content faster.
-          </p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition"
-          >
-            Try AI Features Free →
-          </Link>
         </div>
       </div>
     </main>

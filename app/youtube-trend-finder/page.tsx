@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://tubefission.com/youtube-trend-finder',
   },
+  robots: {
+    index: false,
+    follow: true,
+  },
 }
 
 const FAQ_ITEMS = [
@@ -47,7 +51,7 @@ export default function Page() {
       <article className="max-w-3xl mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold mb-6">What Is a YouTube Trend Finder?</h2>
         <p className="text-gray-700 mb-6">
-          A Trend Finder analyzes real-time YouTube data to identify topics that are gaining 
+          A Trend Finder analyzes real-time YouTube data to identify topics that are gaining
           momentum before they become saturated. Get early access to viral opportunities.
         </p>
 

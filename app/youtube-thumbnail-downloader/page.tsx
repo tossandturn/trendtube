@@ -7,6 +7,10 @@ import { fetchTrendingVideos } from '@/lib/api-client'
 export const metadata: Metadata = {
   title: 'YouTube Thumbnail Downloader — Free HD Thumbnail Saver',
   description: 'Download YouTube video thumbnails in HD quality for free. Save cover images without watermark. Works for all videos and Shorts.',
+  robots: {
+    index: false,
+    follow: true,
+  },
   keywords: [
     'YouTube thumbnail downloader',
     'download YouTube thumbnail',

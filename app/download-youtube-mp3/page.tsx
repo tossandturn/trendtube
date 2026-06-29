@@ -6,6 +6,10 @@ import { FAQPageSchema, BreadcrumbSchema, ArticleSchema } from '@/app/components
 export const metadata: Metadata = {
   title: 'Download YouTube to MP3 — Free Audio Converter',
   description: 'Convert YouTube videos to MP3 for free. Extract audio in high quality. Fast, secure, no registration required.',
+  robots: {
+    index: false,
+    follow: true,
+  },
   keywords: [
     'download YouTube MP3',
     'YouTube to MP3 converter',

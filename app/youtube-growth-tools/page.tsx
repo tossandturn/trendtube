@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   title: 'Best YouTube Growth Tools 2026 | Creator Resources & Software',
   description: 'Discover the best YouTube growth tools for creators. From analytics to AI-powered content creation, these tools will accelerate your channel growth.',
   keywords: 'youtube growth tools, youtube creator tools, youtube analytics tools, youtube seo tools, channel growth software',
+  robots: {
+    index: false,
+    follow: true,
+  },
 }
 
 const GROWTH_TOOLS = [

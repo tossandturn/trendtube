@@ -7,6 +7,10 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'System Status | TubeFission',
   description: 'Real-time system health, API quota, and data freshness monitoring for TubeFission.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 function StatusBadge({ status }: { status: string }) {

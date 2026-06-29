@@ -6,6 +6,10 @@ import { FAQPageSchema, BreadcrumbSchema, ArticleSchema } from '@/app/components
 export const metadata: Metadata = {
   title: 'Free YouTube Video Downloader — Download YouTube MP4 Without Watermark',
   description: 'Download YouTube videos in MP4 format without watermark. Fast, free, and secure. No login required. Paste a URL and save your video in seconds.',
+  robots: {
+    index: false,
+    follow: true,
+  },
   keywords: [
     'YouTube video download',
     'free YouTube download',

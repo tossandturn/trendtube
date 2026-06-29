@@ -90,24 +90,19 @@ export default function HomePage() {
           {/* CTA Input */}
           <AnalyzeHeroForm />
 
-          {/* Trust Indicators */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-gray-600">
-            <span className="inline-flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-              No Login Required
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-              Free To Use
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-              Real-Time Data
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-              AI-Powered Insights
-            </span>
+          <div className="mt-8 grid sm:grid-cols-3 gap-4 text-left max-w-5xl mx-auto">
+            <div className="bg-white/70 rounded-xl border border-gray-200 p-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Data source</div>
+              <div className="text-sm text-gray-700">Metrics are generated from real YouTube API data and live trend extraction, not static examples or guessed benchmarks.</div>
+            </div>
+            <div className="bg-white/70 rounded-xl border border-gray-200 p-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">What updates</div>
+              <div className="text-sm text-gray-700">Trending pages, keyword opportunities, and velocity signals refresh from active market data so users can act on current movement.</div>
+            </div>
+            <div className="bg-white/70 rounded-xl border border-gray-200 p-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Why it matters</div>
+              <div className="text-sm text-gray-700">The goal is not to summarize YouTube — it is to help creators decide what to test, what to copy, and what to ignore next.</div>
+            </div>
           </div>
         </div>
       </section>

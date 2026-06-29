@@ -6,6 +6,10 @@ import { FAQPageSchema, BreadcrumbSchema, ArticleSchema } from '@/app/components
 export const metadata: Metadata = {
   title: 'Download YouTube Shorts — Free Shorts Video Downloader',
   description: 'Download YouTube Shorts for free. Save vertical short videos without watermark. Fast, secure, no login required.',
+  robots: {
+    index: false,
+    follow: true,
+  },
   keywords: [
     'download YouTube Shorts',
     'YouTube Shorts downloader',
