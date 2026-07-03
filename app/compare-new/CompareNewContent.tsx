@@ -30,9 +30,7 @@ export default function CompareNewContent() {
   }, [searchParams])
 
   const handleCompare = () => {
-    if (leftId && rightId) {
-      setIsComparing(true)
-    }
+    if (leftId && rightId) setIsComparing(true)
   }
 
   const extractId = (input: string, type: 'channel' | 'video'): string => {
@@ -68,10 +66,10 @@ export default function CompareNewContent() {
   const modeCopy = mode === 'channels'
     ? {
         title: 'Compare YouTube Channels',
-        subtitle: 'See who leads on scale, engagement, and publishing consistency before you copy a strategy.',
+        subtitle: 'See who leads on scale, engagement, publishing consistency, and commercial fit before you copy a strategy.',
         learn: [
           'Which channel wins on reach vs efficiency',
-          'Who gets more views per upload',
+          'Which audience pattern is more valuable',
           'Which creator model is more repeatable',
         ],
       }
@@ -88,22 +86,22 @@ export default function CompareNewContent() {
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-gray-500 hover:text-gray-900">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <Link href="/" className="text-gray-500 hover:text-gray-900 shrink-0">
                 ← Back
               </Link>
-              <h1 className="text-xl font-bold text-gray-900">Compare Tool</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">Compare Tool</h1>
             </div>
 
-            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
               <button
                 onClick={() => {
                   setMode('channels')
                   setIsComparing(false)
                 }}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${
                   mode === 'channels'
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
@@ -116,7 +114,7 @@ export default function CompareNewContent() {
                   setMode('videos')
                   setIsComparing(false)
                 }}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${
                   mode === 'videos'
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
@@ -130,11 +128,11 @@ export default function CompareNewContent() {
       </div>
 
       {!isComparing && (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sm:p-8 mb-6">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">{modeCopy.title}</h2>
-              <p className="text-gray-500 max-w-2xl mx-auto">{modeCopy.subtitle}</p>
+              <p className="text-gray-500 max-w-2xl mx-auto text-sm sm:text-base">{modeCopy.subtitle}</p>
             </div>
 
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
@@ -146,7 +144,7 @@ export default function CompareNewContent() {
               ))}
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
                   {mode === 'channels' ? 'Channel A URL or ID' : 'Video A URL or ID'}
@@ -156,7 +154,7 @@ export default function CompareNewContent() {
                   value={leftId}
                   onChange={(e) => setLeftId(extractId(e.target.value, mode === 'channels' ? 'channel' : 'video'))}
                   placeholder={mode === 'channels' ? 'Paste a channel URL, handle, or ID' : 'Paste a video URL or ID'}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base"
                 />
               </div>
 
@@ -169,7 +167,7 @@ export default function CompareNewContent() {
                   value={rightId}
                   onChange={(e) => setRightId(extractId(e.target.value, mode === 'channels' ? 'channel' : 'video'))}
                   placeholder={mode === 'channels' ? 'Paste a second channel URL, handle, or ID' : 'Paste a second video URL or ID'}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm sm:text-base"
                 />
               </div>
             </div>
@@ -184,7 +182,7 @@ export default function CompareNewContent() {
               </button>
               <button
                 onClick={applyExamples}
-                className="px-5 py-4 bg-gray-100 text-gray-900 font-medium rounded-xl hover:bg-gray-200 transition"
+                className="w-full sm:w-auto px-5 py-4 bg-gray-100 text-gray-900 font-medium rounded-xl hover:bg-gray-200 transition"
               >
                 Use Example Inputs
               </button>

@@ -300,8 +300,8 @@ export default async function TrendingPage() {
                 .replace(/^-|-$/g, '') || 'trend'
 
               return (
-                <Link key={rec.id} href={`/trends/${trendKeyword}`} className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group block hover:no-underline">
-                  <div className="flex items-center justify-between mb-3">
+                <Link key={rec.id} href={`/trends/${trendKeyword}`} className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent group block hover:no-underline">
+                  <div className="flex items-center justify-between mb-3 gap-2">
                     <span className={`text-xs font-bold px-2 py-1 rounded ${
                       rec.potentialViews === 'viral' ? 'bg-red-100 text-red-600' :
                       rec.potentialViews === 'high' ? 'bg-orange-100 text-orange-600' :
@@ -310,14 +310,14 @@ export default async function TrendingPage() {
                     }`}>
                       {rec.potentialViews === 'viral' ? '🔥 VIRAL' : rec.potentialViews === 'high' ? '⚡ HIGH' : rec.potentialViews === 'medium' ? '💡 MEDIUM' : '📈 STEADY'}
                     </span>
-                    <span className="text-xs text-gray-400 data-mono">#{idx + 1}</span>
+                    <span className="text-xs text-gray-400 data-mono shrink-0">#{idx + 1}</span>
                   </div>
                   <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">{rec.title}</h3>
                   <div className="text-xs text-gray-500 mb-3 flex items-center gap-1"><span>🏷️</span> {rec.category}</div>
                   <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
+                    <div className="flex justify-between text-xs gap-2">
                       <span className="text-gray-500">Confidence</span>
-                      <span className="font-bold data-mono">{rec.confidence}%</span>
+                      <span className="font-bold data-mono shrink-0">{rec.confidence}%</span>
                     </div>
                     <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full" style={{ width: `${rec.confidence}%` }} />
@@ -325,10 +325,10 @@ export default async function TrendingPage() {
                   </div>
                   <div className="bg-gray-50 rounded-xl p-3 mb-4">
                     <div className="text-xs font-bold text-gray-700 mb-1">🧠 Why This Works</div>
-                    <p className="text-xs text-gray-500 leading-relaxed">{rec.whyTrending}</p>
+                    <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">{rec.whyTrending}</p>
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {rec.suggestedTags.slice(0, 4).map((tag, i) => (
+                    {rec.suggestedTags.slice(0, 3).map((tag, i) => (
                       <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">#{tag}</span>
                     ))}
                   </div>

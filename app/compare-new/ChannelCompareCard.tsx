@@ -39,13 +39,11 @@ export default function ChannelCompareCard({ channel, videos, label, color }: Ch
       border: 'border-blue-200',
       bg: 'bg-blue-50',
       text: 'text-blue-600',
-      badge: 'bg-blue-100 text-blue-700'
     },
     red: {
       border: 'border-red-200',
       bg: 'bg-red-50',
       text: 'text-red-600',
-      badge: 'bg-red-100 text-red-700'
     }
   }[color]
 
@@ -56,28 +54,26 @@ export default function ChannelCompareCard({ channel, videos, label, color }: Ch
 
   return (
     <div className={`bg-white rounded-2xl border-2 ${colorClasses.border} overflow-hidden`}>
-      {/* Header */}
-      <div className={`${colorClasses.bg} px-6 py-3 border-b ${colorClasses.border}`}>
+      <div className={`${colorClasses.bg} px-4 sm:px-6 py-3 border-b ${colorClasses.border}`}>
         <span className={`text-xs font-bold uppercase tracking-wider ${colorClasses.text}`}>
           {label}
         </span>
       </div>
 
-      {/* Channel Info */}
-      <div className="p-6">
-        <div className="flex items-start gap-4 mb-6">
+      <div className="p-4 sm:p-6">
+        <div className="flex items-start gap-3 sm:gap-4 mb-5 sm:mb-6">
           {snippet?.thumbnails?.high?.url && (
             <img
               src={snippet.thumbnails.high.url}
               alt={snippet.title}
-              className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
             />
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-lg text-gray-900 truncate mb-1">
+            <h3 className="font-bold text-base sm:text-lg text-gray-900 truncate mb-1">
               {snippet?.title}
             </h3>
-            <p className="text-gray-500 text-sm line-clamp-2 mb-2">
+            <p className="text-gray-500 text-xs sm:text-sm line-clamp-2 mb-2">
               {snippet?.description?.slice(0, 150)}...
             </p>
             <Link
@@ -89,35 +85,33 @@ export default function ChannelCompareCard({ channel, videos, label, color }: Ch
           </div>
         </div>
 
-        {/* Key Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-50 rounded-xl p-4">
-            <div className="text-xs text-gray-500 mb-1">Subscribers</div>
-            <div className="text-2xl font-bold text-gray-900">{formatNumber(stats?.subscriberCount)}</div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="bg-gray-50 rounded-xl p-3 sm:p-4">
+            <div className="text-[11px] sm:text-xs text-gray-500 mb-1">Subscribers</div>
+            <div className="text-lg sm:text-2xl font-bold text-gray-900 break-words">{formatNumber(stats?.subscriberCount)}</div>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4">
-            <div className="text-xs text-gray-500 mb-1">Total Views</div>
-            <div className="text-2xl font-bold text-gray-900">{formatNumber(stats?.viewCount)}</div>
+          <div className="bg-gray-50 rounded-xl p-3 sm:p-4">
+            <div className="text-[11px] sm:text-xs text-gray-500 mb-1">Total Views</div>
+            <div className="text-lg sm:text-2xl font-bold text-gray-900 break-words">{formatNumber(stats?.viewCount)}</div>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4">
-            <div className="text-xs text-gray-500 mb-1">Videos</div>
-            <div className="text-2xl font-bold text-gray-900">{formatNumber(stats?.videoCount)}</div>
+          <div className="bg-gray-50 rounded-xl p-3 sm:p-4">
+            <div className="text-[11px] sm:text-xs text-gray-500 mb-1">Videos</div>
+            <div className="text-lg sm:text-2xl font-bold text-gray-900 break-words">{formatNumber(stats?.videoCount)}</div>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4">
-            <div className="text-xs text-gray-500 mb-1">Avg Engagement</div>
-            <div className="text-2xl font-bold text-gray-900">{engagementRate}%</div>
+          <div className="bg-gray-50 rounded-xl p-3 sm:p-4">
+            <div className="text-[11px] sm:text-xs text-gray-500 mb-1">Avg Engagement</div>
+            <div className="text-lg sm:text-2xl font-bold text-gray-900 break-words">{engagementRate}%</div>
           </div>
         </div>
 
-        {/* Additional Metrics */}
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <div className="flex justify-between items-center">
+        <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+          <div className="flex justify-between items-center gap-3">
             <span className="text-sm text-gray-500">Avg Views/Video</span>
-            <span className="font-semibold text-gray-900">{formatNumber(avgViews)}</span>
+            <span className="font-semibold text-gray-900 text-sm sm:text-base text-right">{formatNumber(avgViews)}</span>
           </div>
-          <div className="flex justify-between items-center mt-2">
+          <div className="flex justify-between items-center gap-3">
             <span className="text-sm text-gray-500">Views/Subscriber</span>
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-gray-900 text-sm sm:text-base text-right">
               {stats?.subscriberCount && avgViews
                 ? (avgViews / Number(stats.subscriberCount) * 1000).toFixed(1) + 'x'
                 : 'N/A'

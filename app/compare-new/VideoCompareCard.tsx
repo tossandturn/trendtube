@@ -26,7 +26,6 @@ function calculateEngagementRate(video: any) {
 
 function formatDuration(duration: string) {
   if (!duration) return 'N/A'
-  // Parse PT#H#M#S format
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
   if (!match) return duration
   const hours = parseInt(match[1] || '0')
@@ -48,13 +47,11 @@ export default function VideoCompareCard({ video, label, color }: VideoCompareCa
       border: 'border-blue-200',
       bg: 'bg-blue-50',
       text: 'text-blue-600',
-      badge: 'bg-blue-100 text-blue-700'
     },
     red: {
       border: 'border-red-200',
       bg: 'bg-red-50',
       text: 'text-red-600',
-      badge: 'bg-red-100 text-red-700'
     }
   }[color]
 
@@ -66,16 +63,13 @@ export default function VideoCompareCard({ video, label, color }: VideoCompareCa
 
   return (
     <div className={`bg-white rounded-2xl border-2 ${colorClasses.border} overflow-hidden`}>
-      {/* Header */}
-      <div className={`${colorClasses.bg} px-6 py-3 border-b ${colorClasses.border}`}>
+      <div className={`${colorClasses.bg} px-4 sm:px-6 py-3 border-b ${colorClasses.border}`}>
         <span className={`text-xs font-bold uppercase tracking-wider ${colorClasses.text}`}>
           {label}
         </span>
       </div>
 
-      {/* Video Info */}
-      <div className="p-6">
-        {/* Thumbnail */}
+      <div className="p-4 sm:p-6">
         <div className="aspect-video rounded-xl overflow-hidden mb-4 bg-gray-100">
           <img
             src={snippet?.thumbnails?.high?.url || snippet?.thumbnails?.medium?.url}
@@ -84,45 +78,41 @@ export default function VideoCompareCard({ video, label, color }: VideoCompareCa
           />
         </div>
 
-        {/* Title */}
-        <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2">
+        <h3 className="font-bold text-base sm:text-lg text-gray-900 mb-2 line-clamp-2">
           {snippet?.title}
         </h3>
 
-        {/* Channel Info */}
-        <p className="text-gray-500 text-sm mb-4">
+        <p className="text-gray-500 text-xs sm:text-sm mb-4 line-clamp-2">
           {snippet?.channelTitle} • {publishDate}
         </p>
 
-        {/* Key Stats */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-gray-50 rounded-xl p-3">
-            <div className="text-xs text-gray-500 mb-1">Views</div>
-            <div className="text-xl font-bold text-gray-900">{formatNumber(stats?.viewCount)}</div>
+            <div className="text-[11px] sm:text-xs text-gray-500 mb-1">Views</div>
+            <div className="text-lg sm:text-xl font-bold text-gray-900 break-words">{formatNumber(stats?.viewCount)}</div>
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
-            <div className="text-xs text-gray-500 mb-1">Likes</div>
-            <div className="text-xl font-bold text-gray-900">{formatNumber(stats?.likeCount)}</div>
+            <div className="text-[11px] sm:text-xs text-gray-500 mb-1">Likes</div>
+            <div className="text-lg sm:text-xl font-bold text-gray-900 break-words">{formatNumber(stats?.likeCount)}</div>
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
-            <div className="text-xs text-gray-500 mb-1">Comments</div>
-            <div className="text-xl font-bold text-gray-900">{formatNumber(stats?.commentCount)}</div>
+            <div className="text-[11px] sm:text-xs text-gray-500 mb-1">Comments</div>
+            <div className="text-lg sm:text-xl font-bold text-gray-900 break-words">{formatNumber(stats?.commentCount)}</div>
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
-            <div className="text-xs text-gray-500 mb-1">Engagement</div>
-            <div className="text-xl font-bold text-gray-900">{engagementRate}%</div>
+            <div className="text-[11px] sm:text-xs text-gray-500 mb-1">Engagement</div>
+            <div className="text-lg sm:text-xl font-bold text-gray-900 break-words">{engagementRate}%</div>
           </div>
         </div>
 
-        {/* Additional Info */}
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <div className="flex justify-between items-center">
+        <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+          <div className="flex justify-between items-center gap-3">
             <span className="text-sm text-gray-500">Duration</span>
-            <span className="font-semibold text-gray-900">{duration}</span>
+            <span className="font-semibold text-gray-900 text-sm sm:text-base text-right">{duration}</span>
           </div>
-          <div className="flex justify-between items-center mt-2">
+          <div className="flex justify-between items-center gap-3">
             <span className="text-sm text-gray-500">Like Rate</span>
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-gray-900 text-sm sm:text-base text-right">
               {stats?.viewCount && stats?.likeCount
                 ? ((Number(stats.likeCount) / Number(stats.viewCount)) * 100).toFixed(2) + '%'
                 : 'N/A'
@@ -131,7 +121,6 @@ export default function VideoCompareCard({ video, label, color }: VideoCompareCa
           </div>
         </div>
 
-        {/* Action Button */}
         <Link
           href={`/video/${video.id}`}
           className={`mt-4 block w-full text-center py-3 rounded-xl font-medium transition ${
