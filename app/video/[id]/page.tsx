@@ -334,63 +334,52 @@ export default async function VideoPage({ params }: VideoPageProps) {
           <span className="text-sm font-medium">Back to Potential</span>
         </Link>
 
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
           <Link
             href="/trending"
-            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+            className="px-3 sm:px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
           >
             Back to Trending
           </Link>
           <Link
             href="/compare-new?type=videos"
-            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+            className="px-3 sm:px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
           >
             Compare Videos
           </Link>
         </div>
 
-        {/* Video Player */}
-        <div className="mb-6 sm:mb-8">
-          <VideoPlayer
-            videoId={id}
-            thumbnail={video.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
-          />
-        </div>
-
-        {/* Title & Channel */}
         <div className="mb-8 sm:mb-10">
-          <h1 className="text-xl sm:text-3xl font-bold leading-snug mb-3 text-glow text-gray-900">
+          <h1 className="text-lg sm:text-3xl font-bold leading-snug mb-3 text-glow text-gray-900">
             {video.snippet?.title}
           </h1>
-          <div className="flex items-center gap-3 text-gray-500">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-xs font-bold shadow-[0_0_15px_rgba(220,38,38,0.2)] text-white">
+          <div className="flex items-center gap-3 text-gray-500 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-xs font-bold shadow-[0_0_15px_rgba(220,38,38,0.2)] text-white shrink-0">
               {video.snippet?.channelTitle?.[0]}
             </div>
-            <span className="font-medium text-gray-700">{video.snippet?.channelTitle}</span>
+            <span className="font-medium text-gray-700 truncate">{video.snippet?.channelTitle}</span>
           </div>
         </div>
 
-        {/* Key Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
           <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
             <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">👁️ VIEWS</div>
-            <div className="text-xl sm:text-2xl font-black data-mono text-glow text-gray-900">{formatNumber(video.statistics?.viewCount)}</div>
+            <div className="text-lg sm:text-2xl font-black data-mono text-glow text-gray-900 break-words">{formatNumber(video.statistics?.viewCount)}</div>
           </div>
           <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
             <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">❤️ LIKES</div>
-            <div className="text-xl sm:text-2xl font-black text-red-600 data-mono text-glow-red">{formatNumber(video.statistics?.likeCount)}</div>
+            <div className="text-lg sm:text-2xl font-black text-red-600 data-mono text-glow-red break-words">{formatNumber(video.statistics?.likeCount)}</div>
           </div>
           <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
             <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">💬 COMMENTS</div>
-            <div className="text-xl sm:text-2xl font-black text-blue-600 data-mono">{formatNumber(video.statistics?.commentCount)}</div>
+            <div className="text-lg sm:text-2xl font-black text-blue-600 data-mono break-words">{formatNumber(video.statistics?.commentCount)}</div>
           </div>
           <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
             <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">⚡ ENGAGEMENT</div>
-            <div className="text-xl sm:text-2xl font-black text-green-600 data-mono text-glow-green">{engagement}%</div>
+            <div className="text-lg sm:text-2xl font-black text-green-600 data-mono text-glow-green break-words">{engagement}%</div>
           </div>
         </div>
 
-        {/* Action Plan */}
         <section className="mb-10">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-1 h-6 rounded-full bg-gradient-to-b from-emerald-400 to-emerald-600" />
@@ -400,10 +389,10 @@ export default async function VideoPage({ params }: VideoPageProps) {
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             {actionPlan.map((item) => (
-              <div key={item.title} className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <h3 className="font-bold text-gray-900">{item.title}</h3>
-                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
+              <div key={item.title} className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">{item.title}</h3>
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full w-fit ${
                     item.priority === 'High impact' ? 'bg-red-100 text-red-700' :
                     item.priority === 'Quick win' ? 'bg-green-100 text-green-700' :
                     item.priority === 'Scale this' ? 'bg-blue-100 text-blue-700' :
