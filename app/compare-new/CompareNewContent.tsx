@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import ChannelCompareView from './ChannelCompareView'
@@ -11,23 +11,14 @@ const VIDEO_EXAMPLES = ['dQw4w9WgXcQ', 'jNQXAC9IVRw']
 
 export default function CompareNewContent() {
   const searchParams = useSearchParams()
-  const [mode, setMode] = useState<'channels' | 'videos'>('channels')
-  const [leftId, setLeftId] = useState('')
-  const [rightId, setRightId] = useState('')
-  const [isComparing, setIsComparing] = useState(false)
-
-  useEffect(() => {
-    const type = searchParams.get('type') as 'channels' | 'videos'
-    const left = searchParams.get('left')
-    const right = searchParams.get('right')
-
-    if (type && (type === 'channels' || type === 'videos')) {
-      setMode(type)
-    }
-    if (left) setLeftId(left)
-    if (right) setRightId(right)
-    if (left && right) setIsComparing(true)
-  }, [searchParams])
+  const initialType = searchParams.get('type')
+  const initialMode = initialType === 'videos' ? 'videos' : 'channels'
+  const initialLeft = searchParams.get('left') || ''
+  const initialRight = searchParams.get('right') || ''
+  const [mode, setMode] = useState<'channels' | 'videos'>(initialMode)
+  const [leftId, setLeftId] = useState(initialLeft)
+  const [rightId, setRightId] = useState(initialRight)
+  const [isComparing, setIsComparing] = useState(Boolean(initialLeft && initialRight))
 
   const handleCompare = () => {
     if (leftId && rightId) setIsComparing(true)
@@ -85,7 +76,7 @@ export default function CompareNewContent() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-3 min-w-0">

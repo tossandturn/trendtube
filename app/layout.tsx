@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import RegionBar from "./components/RegionBar";
-import VideoAnalyzerBar from "./components/VideoAnalyzerBar";
+import ProductHeader from "./components/ProductHeader";
+import ProductFooter from "./components/ProductFooter";
 import PerformanceMonitor from "./components/PerformanceMonitor";
 import { getRegion } from "@/lib/region-server";
 import { REGION_META } from "@/lib/region";
@@ -109,9 +109,9 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900">
         <PerformanceMonitor />
-        <RegionBar />
-        <VideoAnalyzerBar />
-        {children}
+        <ProductHeader />
+        <div className="flex-1">{children}</div>
+        <ProductFooter />
       </body>
     </html>
   );
