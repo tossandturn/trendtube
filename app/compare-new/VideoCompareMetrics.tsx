@@ -293,6 +293,90 @@ function buildDecision(left: VideoAnalysis, right: VideoAnalysis) {
   return { headline, recommendation, overallWinner, commercialWinner, stickinessWinner, efficiencyWinner }
 }
 
+function getSideAnalysis(side: Side, left: VideoAnalysis, right: VideoAnalysis) {
+  if (side === 'right') return right
+  return left
+}
+
+function getBenchmarkSide(decision: ReturnType<typeof buildDecision>) {
+  if (decision.overallWinner !== 'tie') return decision.overallWinner
+  if (decision.commercialWinner !== 'tie') return decision.commercialWinner
+  if (decision.stickinessWinner !== 'tie') return decision.stickinessWinner
+  if (decision.efficiencyWinner !== 'tie') return decision.efficiencyWinner
+  return 'left'
+}
+
+function getPrimaryGoal(decision: ReturnType<typeof buildDecision>, benchmarkSide: Side) {
+  if (decision.commercialWinner === benchmarkSide) return 'Monetization and sponsor fit'
+  if (decision.stickinessWinner === benchmarkSide) return 'Audience loyalty and comments'
+  if (decision.efficiencyWinner === benchmarkSide) return 'Fast growth from a fresh upload'
+  return 'Balanced growth benchmark'
+}
+
+function getTitleAngle(analysis: VideoAnalysis) {
+  if (analysis.format === 'Review / comparison') {
+    return `Test a comparison title around "${analysis.topic}": "I tested [A] vs [B] for [specific audience]".`
+  }
+  if (analysis.topic === 'AI / productivity') {
+    return 'Frame the next title as a concrete workflow result: "I used [AI/tool] to get [specific outcome] in [timeframe]".'
+  }
+  if (analysis.topic === 'Business / finance') {
+    return 'Use a value-first promise: "How [audience] can get [business outcome] without [common pain]".'
+  }
+  if (analysis.format === 'Tutorial / evergreen') {
+    return 'Make the title solve one narrow job: "How to [result] without [mistake]".'
+  }
+  if (analysis.format === 'Short-form discovery') {
+    return 'Use a fast curiosity hook: "Watch what happens when [specific action/conflict]".'
+  }
+  return `Keep the topic close to "${analysis.topic}", but make the promise more specific than the original winner.`
+}
+
+function buildNextVideoBrief(left: VideoAnalysis, right: VideoAnalysis, decision: ReturnType<typeof buildDecision>) {
+  const benchmarkSide = getBenchmarkSide(decision)
+  const benchmark = getSideAnalysis(benchmarkSide, left, right)
+  const weaker = getSideAnalysis(benchmarkSide === 'left' ? 'right' : 'left', left, right)
+
+  const copyThis = [
+    `Copy the strategic angle: ${benchmark.topic} + ${benchmark.format}.`,
+    `Use the same audience lane: ${benchmark.audience.age}, ${benchmark.audience.geography}.`,
+    benchmark.scores.commercial >= 70
+      ? `Keep the offer path clear: ${benchmark.businessModel}.`
+      : 'Keep the first version awareness-focused before forcing monetization.',
+    benchmark.scores.stickiness >= weaker.scores.stickiness
+      ? 'Build in a comment trigger: ask for a choice, disagreement, or personal result.'
+      : 'Improve the comment trigger, because the benchmark wins more on reach than conversation.',
+  ]
+
+  const doNotCopy = [
+    benchmark.format === 'Challenge / spectacle'
+      ? 'Do not copy production scale; copy the promise and stakes first.'
+      : 'Do not copy the surface topic without copying the viewer promise.',
+    benchmark.audience.geography !== 'Broad English-speaking'
+      ? 'Do not assume the same region signal works for your target market.'
+      : 'Do not make the video too generic just because the benchmark is broad.',
+    'Do not assume revenue, retention, or geography beyond what public data can support.',
+  ]
+
+  const checklist = [
+    'One clear viewer promise in the title.',
+    'Thumbnail or opening frame shows the outcome, conflict, or comparison.',
+    'First 30 seconds proves why this topic matters now.',
+    'One explicit comment prompt tied to the core debate.',
+    'CTA matches the business model instead of feeling bolted on.',
+  ]
+
+  return {
+    benchmarkSide,
+    benchmark,
+    primaryGoal: getPrimaryGoal(decision, benchmarkSide),
+    titleAngle: getTitleAngle(benchmark),
+    copyThis,
+    doNotCopy,
+    checklist,
+  }
+}
+
 function DimensionCard({
   title,
   description,
@@ -351,6 +435,7 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
   const left = analyzeVideo(leftVideo)
   const right = analyzeVideo(rightVideo)
   const decision = buildDecision(left, right)
+  const brief = buildNextVideoBrief(left, right, decision)
 
   const scoreRows = [
     { dimension: 'Reach', A: left.scores.reach, B: right.scores.reach },
@@ -391,6 +476,82 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
                 <div className="mt-1 text-xs">{color === 'blue' ? left.monetizationFit : right.monetizationFit}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 sm:p-6">
+        <div className="mb-5">
+          <div className="mb-2 text-xs font-bold uppercase tracking-wider text-emerald-700">Next Video Brief</div>
+          <h3 className="text-xl font-bold text-gray-900">
+            Make your next video benchmark {winnerLabel(brief.benchmarkSide)}
+          </h3>
+          <p className="mt-2 text-sm text-gray-700">
+            Primary goal: <span className="font-semibold">{brief.primaryGoal}</span>. Use this as a production brief, not just a score summary.
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="rounded-xl border border-emerald-200 bg-white p-4">
+            <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Recommended benchmark</div>
+            <div className="mt-2 text-lg font-bold text-gray-900 line-clamp-2">{brief.benchmark.title}</div>
+            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-lg bg-gray-50 p-3">
+                <div className="text-xs text-gray-500">Copy for</div>
+                <div className="font-semibold text-gray-900">{brief.primaryGoal}</div>
+              </div>
+              <div className="rounded-lg bg-gray-50 p-3">
+                <div className="text-xs text-gray-500">Format</div>
+                <div className="font-semibold text-gray-900">{brief.benchmark.format}</div>
+              </div>
+              <div className="rounded-lg bg-gray-50 p-3">
+                <div className="text-xs text-gray-500">Audience</div>
+                <div className="font-semibold text-gray-900">{brief.benchmark.audience.age}</div>
+              </div>
+              <div className="rounded-lg bg-gray-50 p-3">
+                <div className="text-xs text-gray-500">Market</div>
+                <div className="font-semibold text-gray-900">{brief.benchmark.audience.geography}</div>
+              </div>
+            </div>
+            <div className="mt-4 rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+              <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">Next title angle</div>
+              <p className="mt-1 text-sm font-medium text-gray-900">{brief.titleAngle}</p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-emerald-200 bg-white p-4">
+              <div className="mb-3 font-semibold text-gray-900">Copy This</div>
+              <ul className="space-y-2 text-sm text-gray-700">
+                {brief.copyThis.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-xl border border-amber-200 bg-white p-4">
+              <div className="mb-3 font-semibold text-gray-900">Do Not Copy</div>
+              <ul className="space-y-2 text-sm text-gray-700">
+                {brief.doNotCopy.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4 sm:col-span-2">
+              <div className="mb-3 font-semibold text-gray-900">Production Checklist</div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {brief.checklist.map((item) => (
+                  <div key={item} className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
