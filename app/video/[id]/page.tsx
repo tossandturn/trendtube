@@ -357,7 +357,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
           </a>
         </div>
 
-        <div className="mb-8 sm:mb-10">
+        <div className="mb-4 sm:mb-5">
           <h1 className="text-lg sm:text-3xl font-bold leading-snug mb-3 text-glow text-gray-900">
             {video.snippet?.title}
           </h1>

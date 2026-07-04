@@ -9,31 +9,29 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ videoId, thumbnail, title = 'YouTube video' }: VideoPlayerProps) {
-  const [started, setStarted] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const [loadFailed, setLoadFailed] = useState(false)
 
   const embedUrl = useMemo(() => {
     const params = new URLSearchParams({
-      autoplay: started ? '1' : '0',
+      autoplay: '0',
       rel: '0',
       modestbranding: '1',
       playsinline: '1',
     })
 
     return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`
-  }, [started, videoId])
+  }, [videoId])
 
   function retryPlayer() {
     setLoadFailed(false)
-    setStarted(true)
     setReloadKey((key) => key + 1)
   }
 
   return (
-    <section aria-label="Video player" className="rounded-2xl border border-gray-200 bg-gray-950 shadow-sm overflow-hidden">
+    <section aria-label="Video player" className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-gray-950 shadow-sm">
       <div className="relative aspect-video w-full bg-gray-950">
-        {started && !loadFailed ? (
+        {!loadFailed ? (
           <iframe
             key={reloadKey}
             className="absolute inset-0 h-full w-full"
@@ -45,24 +43,14 @@ export default function VideoPlayer({ videoId, thumbnail, title = 'YouTube video
             onError={() => setLoadFailed(true)}
           />
         ) : (
-          <button
-            type="button"
-            onClick={() => setStarted(true)}
-            className="group absolute inset-0 flex h-full w-full items-center justify-center overflow-hidden text-left"
-            aria-label={`Play ${title}`}
-          >
+          <div className="absolute inset-0 flex h-full w-full items-center justify-center overflow-hidden text-center">
             <img
               src={thumbnail}
               alt=""
-              className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+              className="absolute inset-0 h-full w-full object-cover opacity-45"
             />
-            <div className="absolute inset-0 bg-black/35" />
-            <div className="relative z-10 flex h-20 w-20 items-center justify-center rounded-full bg-red-600 text-white shadow-2xl shadow-black/30 transition group-hover:scale-105 group-hover:bg-red-500 sm:h-24 sm:w-24">
-              <svg className="h-9 w-9 translate-x-0.5 fill-current sm:h-11 sm:w-11" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-          </button>
+            <div className="absolute inset-0 bg-gray-950/70" />
+          </div>
         )}
 
         {loadFailed && (
