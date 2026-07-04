@@ -342,22 +342,43 @@ export default async function VideoPage({ params }: VideoPageProps) {
             Back to Trending
           </Link>
           <Link
-            href="/compare-new?type=videos"
+            href={`/compare-new?type=videos&left=${encodeURIComponent(id)}`}
             className="px-3 sm:px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
           >
-            Compare Videos
+            Compare This Video
           </Link>
+          <a
+            href={`https://www.youtube.com/watch?v=${id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 sm:px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+          >
+            Open on YouTube
+          </a>
         </div>
 
         <div className="mb-8 sm:mb-10">
           <h1 className="text-lg sm:text-3xl font-bold leading-snug mb-3 text-glow text-gray-900">
             {video.snippet?.title}
           </h1>
-          <div className="flex items-center gap-3 text-gray-500 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-xs font-bold shadow-[0_0_15px_rgba(220,38,38,0.2)] text-white shrink-0">
-              {video.snippet?.channelTitle?.[0]}
+          <div className="flex flex-col gap-3 sm:gap-2">
+            <div className="flex items-center gap-3 text-gray-500 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-xs font-bold shadow-[0_0_15px_rgba(220,38,38,0.2)] text-white shrink-0">
+                {video.snippet?.channelTitle?.[0]}
+              </div>
+              <span className="font-medium text-gray-700 truncate">{video.snippet?.channelTitle}</span>
             </div>
-            <span className="font-medium text-gray-700 truncate">{video.snippet?.channelTitle}</span>
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs sm:text-sm text-gray-600 break-all">
+              <span className="font-medium text-gray-900">Video link:</span>{' '}
+              <a
+                href={`https://www.youtube.com/watch?v=${id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-red-600 hover:text-red-700 underline break-all"
+              >
+                https://www.youtube.com/watch?v={id}
+              </a>
+            </div>
           </div>
         </div>
 
