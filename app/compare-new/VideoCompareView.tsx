@@ -10,7 +10,20 @@ interface VideoCompareViewProps {
   rightId: string
 }
 
-function getVideoWinnerSummary(leftVideo: any, rightVideo: any) {
+interface CompareVideo {
+  id?: string
+  snippet?: {
+    title?: string
+    description?: string
+  }
+  statistics?: {
+    viewCount?: string
+    likeCount?: string
+    commentCount?: string
+  }
+}
+
+function getVideoWinnerSummary(leftVideo: CompareVideo, rightVideo: CompareVideo) {
   const leftViews = Number(leftVideo?.statistics?.viewCount || 0)
   const rightViews = Number(rightVideo?.statistics?.viewCount || 0)
   const leftLikes = Number(leftVideo?.statistics?.likeCount || 0)
@@ -27,25 +40,47 @@ function getVideoWinnerSummary(leftVideo: any, rightVideo: any) {
   const rightEngagement = getEngagement(rightViews, rightLikes, rightComments)
   const leftLikeRate = leftViews ? (leftLikes / leftViews) * 100 : 0
   const rightLikeRate = rightViews ? (rightLikes / rightViews) * 100 : 0
+  const leftCommentRate = leftViews ? (leftComments / leftViews) * 100 : 0
+  const rightCommentRate = rightViews ? (rightComments / rightViews) * 100 : 0
+
+  const inferCommercialScore = (video: CompareVideo, engagement: number) => {
+    const text = `${video?.snippet?.title || ''} ${video?.snippet?.description || ''}`.toLowerCase()
+    let score = Math.log10(Number(video?.statistics?.viewCount || 0) + 1) * 6 + engagement * 6
+    if (/ai|software|business|finance|marketing|startup|tool|review|vs|comparison|tutorial|course/.test(text)) score += 34
+    if (/beauty|fashion|gaming|tech|camera|phone|laptop/.test(text)) score += 18
+    return score
+  }
+
+  const inferRegionScore = (video: CompareVideo) => {
+    const text = `${video?.snippet?.title || ''} ${video?.snippet?.description || ''}`.toLowerCase()
+    let score = 65
+    if (/usa|american|uk|india|japan|korea|brazil|mexico|spanish|hindi|k-pop|anime/.test(text)) score += 12
+    if (/english|global|world|international/.test(text)) score += 10
+    if (/shorts|music|gaming|football|soccer/.test(text)) score += 8
+    return score
+  }
 
   const reachWinner = leftViews >= rightViews ? 'A' : 'B'
   const engagementWinner = leftEngagement >= rightEngagement ? 'A' : 'B'
   const packagingWinner = leftLikeRate >= rightLikeRate ? 'A' : 'B'
+  const stickinessWinner = leftCommentRate >= rightCommentRate ? 'A' : 'B'
+  const commercialWinner = inferCommercialScore(leftVideo, leftEngagement) >= inferCommercialScore(rightVideo, rightEngagement) ? 'A' : 'B'
+  const regionWinner = inferRegionScore(leftVideo) >= inferRegionScore(rightVideo) ? 'A' : 'B'
 
-  const aWins = [reachWinner, engagementWinner, packagingWinner].filter(v => v === 'A').length
-  const bWins = 3 - aWins
+  const aWins = [reachWinner, engagementWinner, packagingWinner, stickinessWinner, commercialWinner, regionWinner].filter(v => v === 'A').length
+  const bWins = 6 - aWins
   const overallWinner = aWins === bWins ? 'Tie' : aWins > bWins ? 'Video A' : 'Video B'
 
-  let recommendation = 'Use this comparison to decide which packaging and audience response pattern is more worth testing.'
+  let recommendation = 'Use this comparison to decide which video is worth benchmarking for reach, audience quality, commercial value, and regional expansion.'
   if (overallWinner === 'Video A') {
-    recommendation = engagementWinner === 'A'
-      ? 'Video A is the better benchmark if you want stronger audience response, not just more exposure.'
-      : 'Video A wins on overall result, but separate raw reach from replicable strategy before copying it.'
+    recommendation = commercialWinner === 'A'
+      ? 'Video A is the better business benchmark: it combines stronger public performance with better monetization signals.'
+      : 'Video A wins overall, but separate raw reach from commercial intent before copying it.'
   }
   if (overallWinner === 'Video B') {
-    recommendation = packagingWinner === 'B'
-      ? 'Video B likely has the stronger title-thumbnail conversion pattern and is worth studying for packaging ideas.'
-      : 'Video B wins overall, but compare format and timing before using it as your main template.'
+    recommendation = stickinessWinner === 'B'
+      ? 'Video B is the better audience-quality benchmark: viewers appear more willing to react and participate.'
+      : 'Video B wins overall, but compare region and format fit before using it as your main template.'
   }
 
   return {
@@ -53,13 +88,16 @@ function getVideoWinnerSummary(leftVideo: any, rightVideo: any) {
     reachWinner: reachWinner === 'A' ? leftVideo?.snippet?.title || 'Video A' : rightVideo?.snippet?.title || 'Video B',
     engagementWinner: engagementWinner === 'A' ? leftVideo?.snippet?.title || 'Video A' : rightVideo?.snippet?.title || 'Video B',
     packagingWinner: packagingWinner === 'A' ? leftVideo?.snippet?.title || 'Video A' : rightVideo?.snippet?.title || 'Video B',
+    stickinessWinner: stickinessWinner === 'A' ? leftVideo?.snippet?.title || 'Video A' : rightVideo?.snippet?.title || 'Video B',
+    commercialWinner: commercialWinner === 'A' ? leftVideo?.snippet?.title || 'Video A' : rightVideo?.snippet?.title || 'Video B',
+    regionWinner: regionWinner === 'A' ? leftVideo?.snippet?.title || 'Video A' : rightVideo?.snippet?.title || 'Video B',
     recommendation,
   }
 }
 
 export default function VideoCompareView({ leftId, rightId }: VideoCompareViewProps) {
-  const [leftVideo, setLeftVideo] = useState<any>(null)
-  const [rightVideo, setRightVideo] = useState<any>(null)
+  const [leftVideo, setLeftVideo] = useState<CompareVideo | null>(null)
+  const [rightVideo, setRightVideo] = useState<CompareVideo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -140,6 +178,20 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
     )
   }
 
+  if (!leftVideo || !rightVideo) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Comparison data is incomplete</h2>
+          <p className="text-gray-600 mb-5">Try the comparison again with two public YouTube video IDs.</p>
+          <Link href="/compare-new?type=videos" className="inline-block px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition">
+            Edit Inputs
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   const summary = getVideoWinnerSummary(leftVideo, rightVideo)
 
   return (
@@ -151,13 +203,13 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
           </Link>
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Video Comparison</h2>
-        <p className="text-gray-500">Compare reach, engagement, and packaging efficiency side by side.</p>
+        <p className="text-gray-500">Compare reach, engagement quality, commercial value, regional fit, and repeatable content strategy.</p>
       </div>
 
       <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6 mb-8">
         <div className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-2">Summary verdict</div>
         <h3 className="text-2xl font-bold text-gray-900 mb-3">{summary.overallWinner} shows the stronger overall performance pattern</h3>
-        <div className="grid sm:grid-cols-3 gap-4 mb-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div className="bg-white rounded-xl p-4 border border-amber-100">
             <div className="text-xs text-gray-500 mb-1">Reach winner</div>
             <div className="font-semibold text-gray-900 line-clamp-2">{summary.reachWinner}</div>
@@ -169,6 +221,18 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
           <div className="bg-white rounded-xl p-4 border border-amber-100">
             <div className="text-xs text-gray-500 mb-1">Packaging winner</div>
             <div className="font-semibold text-gray-900 line-clamp-2">{summary.packagingWinner}</div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-amber-100">
+            <div className="text-xs text-gray-500 mb-1">Commercial value winner</div>
+            <div className="font-semibold text-gray-900 line-clamp-2">{summary.commercialWinner}</div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-amber-100">
+            <div className="text-xs text-gray-500 mb-1">Fan stickiness winner</div>
+            <div className="font-semibold text-gray-900 line-clamp-2">{summary.stickinessWinner}</div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-amber-100">
+            <div className="text-xs text-gray-500 mb-1">Region fit winner</div>
+            <div className="font-semibold text-gray-900 line-clamp-2">{summary.regionWinner}</div>
           </div>
         </div>
         <p className="text-sm text-gray-700">{summary.recommendation}</p>
@@ -204,9 +268,7 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
         <VideoCompareCard video={rightVideo} label="Video B" color="red" />
       </div>
 
-      {leftVideo && rightVideo && (
-        <VideoCompareMetrics leftVideo={leftVideo} rightVideo={rightVideo} />
-      )}
+      <VideoCompareMetrics leftVideo={leftVideo} rightVideo={rightVideo} />
     </div>
   )
 }
