@@ -7,6 +7,7 @@ import ChannelValueAnalysis from '@/app/components/ChannelValueAnalysis'
 import EnhancedChannelAnalytics from '@/app/components/EnhancedChannelAnalytics'
 import CreatorEcosystem from '@/app/components/CreatorEcosystem'
 import AudienceAnalytics from '@/app/components/AudienceAnalytics'
+import AddToVideoCompareButton from '@/app/components/AddToVideoCompareButton'
 import { fetchChannelById, fetchChannelVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { analyzeChannelIntelligence } from '@/lib/ai-insights'
@@ -981,19 +982,19 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {analysis.recentVideos.slice(0, 6).map((video: any) => (
-                <Link
+                <div
                   key={video.id}
-                  href={`/video/${video.id}`}
-                  className="group block bg-gray-50 rounded-xl overflow-hidden border border-gray-100 hover:border-gray-300 transition-colors"
+                  className="group bg-gray-50 rounded-xl overflow-hidden border border-gray-100 hover:border-gray-300 transition-colors"
                 >
-                  <div className="aspect-video overflow-hidden">
-                    <img
-                      src={video.snippet?.thumbnails?.medium?.url}
-                      alt={video.snippet?.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                    />
-                  </div>
-                  <div className="p-4">
+                  <Link href={`/video/${video.id}`} className="block">
+                    <div className="aspect-video overflow-hidden">
+                      <img
+                        src={video.snippet?.thumbnails?.medium?.url}
+                        alt={video.snippet?.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      />
+                    </div>
+                  <div className="p-4 pb-2">
                     <h3 className="font-bold text-sm line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
                       {video.snippet?.title}
                     </h3>
@@ -1002,7 +1003,11 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
                       <span>{calculateEngagementRate(video).toFixed(1)}% engagement</span>
                     </div>
                   </div>
-                </Link>
+                  </Link>
+                  <div className="px-4 pb-4">
+                    <AddToVideoCompareButton videoId={video.id} compact fullWidth />
+                  </div>
+                </div>
               ))}
             </div>
           </section>
@@ -1014,39 +1019,41 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
               <span>👑</span> Best Performing Video
             </h2>
-            <Link
-              href={`/video/${analysis.bestVideo.id}`}
-              className="group block bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 border border-gray-200 hover:border-blue-300 transition-colors"
-            >
-              <div className="flex gap-4">
-                <div className="w-32 sm:w-40 aspect-video rounded-lg overflow-hidden flex-shrink-0">
-                  <img
-                    src={analysis.bestVideo.snippet?.thumbnails?.medium?.url}
-                    alt={analysis.bestVideo.snippet?.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-base sm:text-lg mb-2 group-hover:text-blue-600 transition-colors">
-                    {analysis.bestVideo.snippet?.title}
-                  </h3>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <div className="text-gray-500 text-xs">Views</div>
-                      <div className="font-bold">{formatNumber(analysis.bestVideo.statistics?.viewCount)}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500 text-xs">Likes</div>
-                      <div className="font-bold">{formatNumber(analysis.bestVideo.statistics?.likeCount)}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500 text-xs">Engagement</div>
-                      <div className="font-bold">{calculateEngagementRate(analysis.bestVideo).toFixed(1)}%</div>
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 border border-gray-200 hover:border-blue-300 transition-colors">
+              <Link href={`/video/${analysis.bestVideo.id}`} className="group block">
+                <div className="flex gap-4">
+                  <div className="w-32 sm:w-40 aspect-video rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                      src={analysis.bestVideo.snippet?.thumbnails?.medium?.url}
+                      alt={analysis.bestVideo.snippet?.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-base sm:text-lg mb-2 group-hover:text-blue-600 transition-colors">
+                      {analysis.bestVideo.snippet?.title}
+                    </h3>
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <div className="text-gray-500 text-xs">Views</div>
+                        <div className="font-bold">{formatNumber(analysis.bestVideo.statistics?.viewCount)}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500 text-xs">Likes</div>
+                        <div className="font-bold">{formatNumber(analysis.bestVideo.statistics?.likeCount)}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500 text-xs">Engagement</div>
+                        <div className="font-bold">{calculateEngagementRate(analysis.bestVideo).toFixed(1)}%</div>
+                      </div>
                     </div>
                   </div>
                 </div>
+              </Link>
+              <div className="mt-4">
+                <AddToVideoCompareButton videoId={analysis.bestVideo.id} compact fullWidth />
               </div>
-            </Link>
+            </div>
           </section>
         )}
 

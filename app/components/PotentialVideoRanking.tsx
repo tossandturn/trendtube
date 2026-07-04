@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import AddToVideoCompareButton from './AddToVideoCompareButton'
 
 interface Video {
   id: string
@@ -176,15 +177,15 @@ export default function PotentialVideoRanking({ videos, region = 'US' }: Potenti
             const video = item.video
 
             return (
-              <Link
+              <div
                 key={video.id}
-                href={`/video/${video.id}`}
-                className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors group"
+                className="flex flex-col gap-3 p-4 hover:bg-gray-50 transition-colors group sm:flex-row sm:items-center sm:gap-4"
               >
-                {/* Rank */}
-                <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm ${getRankColor(rank)}`}>
-                  {rank}
-                </div>
+                <Link href={`/video/${video.id}`} className="flex min-w-0 flex-1 items-center gap-4">
+                  {/* Rank */}
+                  <div className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm ${getRankColor(rank)}`}>
+                    {rank}
+                  </div>
 
                 {/* Thumbnail */}
                 <div className="relative w-24 h-16 sm:w-32 sm:h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
@@ -218,16 +219,21 @@ export default function PotentialVideoRanking({ videos, region = 'US' }: Potenti
                   </div>
                 </div>
 
+                </Link>
+
                 {/* Score */}
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end sm:gap-2">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getScoreColor(score)} flex items-center justify-center text-white font-bold text-sm shadow-lg`}>
                     {Math.round(score)}
                   </div>
-                  <span className="text-[10px] text-gray-500 whitespace-nowrap">
-                    {getScoreLabel(score)}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                      {getScoreLabel(score)}
+                    </span>
+                    <AddToVideoCompareButton videoId={video.id} compact />
+                  </div>
                 </div>
-              </Link>
+              </div>
             )
           })
         )}

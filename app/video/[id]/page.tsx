@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import VideoPlayer from '@/app/components/VideoPlayer'
+import AddToVideoCompareButton from '@/app/components/AddToVideoCompareButton'
 import AdBanner from '@/app/components/AdBanner'
 import { MetricChart } from '@/app/components/charts/MetricChart'
 import ContentQualityScore from '@/app/components/ContentQualityScore'
@@ -347,6 +348,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
           >
             Compare This Video
           </Link>
+          <AddToVideoCompareButton videoId={id} />
           <a
             href={`https://www.youtube.com/watch?v=${id}`}
             target="_blank"
@@ -765,19 +767,19 @@ export default async function VideoPage({ params }: VideoPageProps) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {related.slice(0, 6).map((v: any) => (
-                <Link
+                <div
                   key={v.id}
-                  href={`/video/${v.id}`}
-                  className="group block glass-panel neon-border rounded-2xl overflow-hidden glow-hover corner-accent"
+                  className="group glass-panel neon-border rounded-2xl overflow-hidden glow-hover corner-accent"
                 >
-                  <div className="aspect-video overflow-hidden">
-                    <img
-                      src={v.snippet?.thumbnails?.medium?.url}
-                      alt={v.snippet?.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                    />
-                  </div>
-                  <div className="p-3 sm:p-4">
+                  <Link href={`/video/${v.id}`} className="block">
+                    <div className="aspect-video overflow-hidden">
+                      <img
+                        src={v.snippet?.thumbnails?.medium?.url}
+                        alt={v.snippet?.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      />
+                    </div>
+                  <div className="p-3 sm:p-4 pb-2">
                     <h3 className="font-bold text-sm line-clamp-2 mb-1 group-hover:text-red-600 transition-colors text-gray-900">
                       {v.snippet?.title}
                     </h3>
@@ -785,7 +787,11 @@ export default async function VideoPage({ params }: VideoPageProps) {
                       {v.snippet?.channelTitle} · {formatNumber(v.statistics?.viewCount)} views
                     </div>
                   </div>
-                </Link>
+                  </Link>
+                  <div className="px-3 pb-3 sm:px-4 sm:pb-4">
+                    <AddToVideoCompareButton videoId={v.id} compact fullWidth />
+                  </div>
+                </div>
               ))}
             </div>
           </div>

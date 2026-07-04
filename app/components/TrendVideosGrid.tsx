@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { getViewVelocity, getEngagementRate, getVideoAgeDays } from '@/lib/analytics'
+import AddToVideoCompareButton from './AddToVideoCompareButton'
 
 /* =========================================================
    TYPES
@@ -321,47 +322,47 @@ export default function TrendVideosGrid({ videos, keyword, initialRegion = 'US',
               const rank = index + 1
 
               return (
-                <Link
+                <div
                   key={video.id}
-                  href={`/video/${video.id}`}
-                  className="group block bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-red-300 hover:shadow-md transition-all duration-200"
+                  className="group bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-red-300 hover:shadow-md transition-all duration-200"
                 >
-                  {/* Thumbnail */}
-                  <div className="relative aspect-video overflow-hidden">
-                    <img
-                      src={getThumbnailUrl(video)}
-                      alt={video.snippet?.title || 'Video thumbnail'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    {/* Rank Badge */}
-                    {showRanks && (
-                      <div className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-bold shadow-lg ${
-                        rank === 1
-                          ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900'
-                          : rank === 2
-                          ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-900'
-                          : rank === 3
-                          ? 'bg-gradient-to-r from-orange-300 to-orange-400 text-orange-900'
-                          : 'bg-gray-900/80 text-white'
-                      }`}>
-                        #{rank}
+                  <Link href={`/video/${video.id}`} className="block">
+                    {/* Thumbnail */}
+                    <div className="relative aspect-video overflow-hidden">
+                      <img
+                        src={getThumbnailUrl(video)}
+                        alt={video.snippet?.title || 'Video thumbnail'}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      {/* Rank Badge */}
+                      {showRanks && (
+                        <div className={`absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-bold shadow-lg ${
+                          rank === 1
+                            ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900'
+                            : rank === 2
+                            ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-900'
+                            : rank === 3
+                            ? 'bg-gradient-to-r from-orange-300 to-orange-400 text-orange-900'
+                            : 'bg-gray-900/80 text-white'
+                        }`}>
+                          #{rank}
+                        </div>
+                      )}
+                      {/* View count overlay */}
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium">
+                        {formatNumber(views)} views
                       </div>
-                    )}
-                    {/* View count overlay */}
-                    <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium">
-                      {formatNumber(views)} views
+                      {/* Age badge for recent videos */}
+                      {videoAge <= 7 && (
+                        <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">
+                          NEW
+                        </div>
+                      )}
                     </div>
-                    {/* Age badge for recent videos */}
-                    {videoAge <= 7 && (
-                      <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">
-                        NEW
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Content */}
-                  <div className="p-3 sm:p-4">
+                    {/* Content */}
+                    <div className="p-3 sm:p-4 pb-2">
                     {/* Title */}
                     <h3 className="font-semibold text-xs sm:text-sm text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors mb-1.5 sm:mb-2">
                       {video.snippet?.title || 'Untitled Video'}
@@ -408,8 +409,12 @@ export default function TrendVideosGrid({ videos, keyword, initialRegion = 'US',
                         {engagement >= 5 ? 'High' : engagement >= 3 ? 'Good' : engagement >= 1 ? 'Avg' : 'Low'}
                       </span>
                     </div>
+                    </div>
+                  </Link>
+                  <div className="px-3 pb-3 sm:px-4 sm:pb-4">
+                    <AddToVideoCompareButton videoId={video.id} compact fullWidth />
                   </div>
-                </Link>
+                </div>
               )
             })}
           </div>

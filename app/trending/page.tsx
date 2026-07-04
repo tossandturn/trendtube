@@ -5,6 +5,7 @@ import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getRegionLabels, REGION_META } from '@/lib/region'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
+import AddToVideoCompareButton from '@/app/components/AddToVideoCompareButton'
 
 export async function generateMetadata(): Promise<Metadata> {
   const region = await getRegion()
@@ -414,6 +415,7 @@ export default async function TrendingPage() {
                       <Link href={`/video/${video.id}`} className="flex-1 px-3 py-2 bg-gray-900 text-white rounded-lg text-xs font-medium text-center hover:bg-gray-800 transition">
                         Analyze Video
                       </Link>
+                      <AddToVideoCompareButton videoId={video.id} compact />
                     </div>
                   </div>
                 </div>

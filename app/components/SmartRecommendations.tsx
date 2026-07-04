@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import AddToVideoCompareButton from './AddToVideoCompareButton'
 
 interface YouTubeVideo {
   id: string
@@ -191,11 +192,11 @@ export default function SmartRecommendations({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {recommendations.map((video) => (
-          <Link
+          <div
             key={video.id}
-            href={`/video/${video.id}`}
             className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
           >
+            <Link href={`/video/${video.id}`} className="block">
             <div className="flex gap-3 p-3">
               {/* Thumbnail */}
               <div className="relative w-28 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
@@ -230,7 +231,11 @@ export default function SmartRecommendations({
                 </div>
               </div>
             </div>
-          </Link>
+            </Link>
+            <div className="px-3 pb-3">
+              <AddToVideoCompareButton videoId={video.id} compact fullWidth />
+            </div>
+          </div>
         ))}
       </div>
 

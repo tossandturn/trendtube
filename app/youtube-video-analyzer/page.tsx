@@ -5,6 +5,7 @@ import { BreadcrumbSchema, FAQPageSchema } from '@/app/components/JsonLd'
 import { fetchTrendingVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
+import AddToVideoCompareButton from '@/app/components/AddToVideoCompareButton'
 
 export const metadata: Metadata = {
   title: 'YouTube Video Analyzer — Free Video Performance Analytics',
@@ -92,34 +93,39 @@ export default async function Page() {
           </div>
           <div className="grid md:grid-cols-2 gap-4">
             {samples.map(({ video, engagement, velocity }: any, index: number) => (
-              <Link key={video.id} href={`/video/${video.id}`} className="block bg-white rounded-xl border border-gray-200 p-4 hover:border-green-300 hover:shadow-sm transition">
-                <div className="flex gap-4 items-start">
-                  <img
-                    src={video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.high?.url}
-                    alt={video.snippet?.title}
-                    className="w-32 aspect-video object-cover rounded-lg border border-gray-100"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Sample #{index + 1}</div>
-                    <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2">{video.snippet?.title}</h3>
-                    <div className="text-sm text-gray-500 mb-3">{video.snippet?.channelTitle}</div>
-                    <div className="grid grid-cols-3 gap-3 text-sm">
-                      <div>
-                        <div className="text-gray-400 text-xs uppercase tracking-wider">Views</div>
-                        <div className="font-bold text-gray-900">{formatNumber(Number(video.statistics?.viewCount || 0))}</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-400 text-xs uppercase tracking-wider">Engagement</div>
-                        <div className="font-bold text-gray-900">{engagement.toFixed(2)}%</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-400 text-xs uppercase tracking-wider">Velocity</div>
-                        <div className="font-bold text-gray-900">{velocity >= 1e6 ? (velocity / 1e6).toFixed(1) + 'M/d' : velocity >= 1e3 ? (velocity / 1e3).toFixed(1) + 'K/d' : Math.round(velocity) + '/d'}</div>
+              <div key={video.id} className="bg-white rounded-xl border border-gray-200 p-4 hover:border-green-300 hover:shadow-sm transition">
+                <Link href={`/video/${video.id}`} className="block">
+                  <div className="flex gap-4 items-start">
+                    <img
+                      src={video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.high?.url}
+                      alt={video.snippet?.title}
+                      className="w-32 aspect-video object-cover rounded-lg border border-gray-100"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Sample #{index + 1}</div>
+                      <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2">{video.snippet?.title}</h3>
+                      <div className="text-sm text-gray-500 mb-3">{video.snippet?.channelTitle}</div>
+                      <div className="grid grid-cols-3 gap-3 text-sm">
+                        <div>
+                          <div className="text-gray-400 text-xs uppercase tracking-wider">Views</div>
+                          <div className="font-bold text-gray-900">{formatNumber(Number(video.statistics?.viewCount || 0))}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-400 text-xs uppercase tracking-wider">Engagement</div>
+                          <div className="font-bold text-gray-900">{engagement.toFixed(2)}%</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-400 text-xs uppercase tracking-wider">Velocity</div>
+                          <div className="font-bold text-gray-900">{velocity >= 1e6 ? (velocity / 1e6).toFixed(1) + 'M/d' : velocity >= 1e3 ? (velocity / 1e3).toFixed(1) + 'K/d' : Math.round(velocity) + '/d'}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
+                </Link>
+                <div className="mt-4">
+                  <AddToVideoCompareButton videoId={video.id} compact fullWidth />
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
