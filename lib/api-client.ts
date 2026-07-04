@@ -149,7 +149,7 @@ async function fetchGlobalTrendingVideos(maxResults = 50): Promise<YouTubeVideo[
 
 /* ---- Fetch single video by ID ---- */
 export async function fetchVideoById(id: string): Promise<YouTubeVideo | null> {
-  if (!API_KEY) return null
+  if (!API_KEY) return loadFallbackVideoById(id)
 
   const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${id}&key=${API_KEY}`
 
@@ -160,11 +160,11 @@ export async function fetchVideoById(id: string): Promise<YouTubeVideo | null> {
       retries: 2,
     })
 
-    if (!res.ok) return null
+    if (!res.ok) return loadFallbackVideoById(id)
     const data = await res.json()
-    return data.items?.[0] || null
+    return data.items?.[0] || loadFallbackVideoById(id)
   } catch {
-    return null
+    return loadFallbackVideoById(id)
   }
 }
 
@@ -208,6 +208,11 @@ async function loadFallbackVideos(region: string): Promise<YouTubeVideo[]> {
   }
 
   return []
+}
+
+async function loadFallbackVideoById(id: string): Promise<YouTubeVideo | null> {
+  const videos = await loadFallbackVideos('cached')
+  return videos.find((video) => video.id === id) || null
 }
 
 /* ---- Fetch channel by ID or Handle ---- */

@@ -382,6 +382,14 @@ export default async function VideoPage({ params }: VideoPageProps) {
           </div>
         </div>
 
+        <div className="mb-8 sm:mb-10">
+          <VideoPlayer
+            videoId={id}
+            thumbnail={video.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+            title={video.snippet?.title || 'YouTube video'}
+          />
+        </div>
+
         <div className="sm:hidden mb-6 overflow-x-auto">
           <div className="flex gap-2 min-w-max pb-1">
             <a href="#next-moves" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Next moves</a>
