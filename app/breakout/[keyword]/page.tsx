@@ -255,7 +255,7 @@ export default async function BreakoutKeywordPage({ params }: PageProps) {
             <ol className="flex items-center space-x-2 text-sm text-red-100">
               <li><Link href="/" className="hover:text-white transition-colors">Home</Link></li>
               <li><span className="text-red-300">/</span></li>
-              <li><Link href="/breakout" className="hover:text-white transition-colors">Breakout</Link></li>
+              <li><Link href="/trending" className="hover:text-white transition-colors">Breakout</Link></li>
               <li><span className="text-red-300">/</span></li>
               <li className="text-white font-medium capitalize">{decodedKeyword}</li>
             </ol>

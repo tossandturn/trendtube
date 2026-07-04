@@ -130,7 +130,7 @@ export default async function InsightArticlePage({ params }: PageProps) {
               <ol className="flex items-center space-x-2 text-sm text-gray-400 flex-wrap">
                 <li><Link href="/" className="hover:text-white transition-colors">Home</Link></li>
                 <li><span className="text-gray-500">/</span></li>
-                <li><Link href="/insights" className="hover:text-white transition-colors">Insights</Link></li>
+                <li><Link href="/trends" className="hover:text-white transition-colors">Insights</Link></li>
                 <li><span className="text-gray-500">/</span></li>
                 <li className="text-white font-medium truncate">{article.title}</li>
               </ol>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { extractVideoId, isValidYouTubeUrl } from '@/lib/youtube-parser'
 
 export default function VideoAnalyzerBar() {
   const [url, setUrl] = useState('')
@@ -12,6 +13,10 @@ export default function VideoAnalyzerBar() {
     e.preventDefault()
     if (!url.trim()) return
 
+    const trimmed = url.trim()
+    const videoId = extractVideoId(trimmed)
+    if (!videoId || !isValidYouTubeUrl(trimmed)) return
+
     setLoading(true)
     try {
       const response = await fetch('/api/analyze/track', {
@@ -19,12 +24,12 @@ export default function VideoAnalyzerBar() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'video',
-          targetUrl: url.trim()
+          targetUrl: trimmed,
         }),
       })
 
       if (response.ok) {
-        router.push(`/video/analyze?url=${encodeURIComponent(url.trim())}`)
+        router.push(`/video/${videoId}`)
       }
     } catch (error) {
       console.error('Analysis error:', error)
