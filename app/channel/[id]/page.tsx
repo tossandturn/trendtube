@@ -430,6 +430,15 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
           </Link>
         </div>
 
+        <div className="sm:hidden mb-6 overflow-x-auto">
+          <div className="flex gap-2 min-w-max pb-1">
+            <a href="#next-moves" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Next moves</a>
+            <a href="#benchmarks" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Benchmarks</a>
+            <a href="#ai-insights" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">AI insights</a>
+            <a href="#uploads" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Uploads</a>
+          </div>
+        </div>
+
         {/* Channel Header */}
 
         <div className="mb-8 sm:mb-10">
@@ -520,7 +529,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
         {/* Professional Analytics Dashboard */}
         {analysis && (
-          <section className="mb-10">
+          <section id="benchmarks" className="mb-10">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
               <span>📊</span> Professional Analytics
             </h2>
@@ -701,7 +710,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
         {/* Recommended Next Moves */}
         {analysis && (
-          <section className="mb-10">
+          <section id="next-moves" className="mb-10">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
               <span>🎯</span> Recommended Next Moves
             </h2>
@@ -729,7 +738,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
         {/* AI Insights */}
         {insights && insights.length > 0 && (
-          <section className="mb-10">
+          <section id="ai-insights" className="mb-10">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
               <span>🧠</span> AI Channel Insights
             </h2>
@@ -966,7 +975,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
         {/* Recent Videos */}
         {analysis?.recentVideos && analysis.recentVideos.length > 0 && (
-          <section className="mb-10">
+          <section id="uploads" className="mb-10">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
               <span>🎥</span> Recent Uploads
             </h2>

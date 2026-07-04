@@ -361,26 +361,16 @@ export default async function VideoPage({ params }: VideoPageProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
-          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
-            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">👁️ VIEWS</div>
-            <div className="text-lg sm:text-2xl font-black data-mono text-glow text-gray-900 break-words">{formatNumber(video.statistics?.viewCount)}</div>
-          </div>
-          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
-            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">❤️ LIKES</div>
-            <div className="text-lg sm:text-2xl font-black text-red-600 data-mono text-glow-red break-words">{formatNumber(video.statistics?.likeCount)}</div>
-          </div>
-          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
-            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">💬 COMMENTS</div>
-            <div className="text-lg sm:text-2xl font-black text-blue-600 data-mono break-words">{formatNumber(video.statistics?.commentCount)}</div>
-          </div>
-          <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
-            <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">⚡ ENGAGEMENT</div>
-            <div className="text-lg sm:text-2xl font-black text-green-600 data-mono text-glow-green break-words">{engagement}%</div>
+        <div className="sm:hidden mb-6 overflow-x-auto">
+          <div className="flex gap-2 min-w-max pb-1">
+            <a href="#next-moves" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Next moves</a>
+            <a href="#analytics" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Analytics</a>
+            <a href="#insights" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Insights</a>
+            <a href="#replication" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Checklist</a>
           </div>
         </div>
 
-        <section className="mb-10">
+        <section id="next-moves" className="mb-10">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-1 h-6 rounded-full bg-gradient-to-b from-emerald-400 to-emerald-600" />
             <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
@@ -436,13 +426,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
         </section>
 
         {/* Professional Analytics Dashboard */}
-        <section className="mb-10">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-blue-400 to-blue-600" />
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-              <span className="text-blue-600">📊</span> Performance Analytics
-            </h2>
-          </div>
+        <section id="analytics" className="mb-10">
 
           {/* Velocity & Engagement Trend */}
           <div className="grid lg:grid-cols-2 gap-6 mb-6">
@@ -623,13 +607,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
         <AdBanner slot="3456789012" className="my-8" />
 
         {/* AI Insights */}
-        <div className="mb-8 sm:mb-10">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-yellow-400 to-yellow-600" />
-            <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-              <span className="text-yellow-600">🧠</span> What The Data Says
-            </h2>
-          </div>
+        <div id="insights" className="mb-8 sm:mb-10">
           <p className="text-sm text-gray-500 mb-4 max-w-3xl">
             Read this as the explanation layer. The action plan above tells you what to change first; this section explains why the video likely behaved this way.
           </p>
