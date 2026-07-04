@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import VideoPlayer from '@/app/components/VideoPlayer'
+import DeepVideoAnalysis from '@/app/components/DeepVideoAnalysis'
 import AddToVideoCompareButton from '@/app/components/AddToVideoCompareButton'
 import AdBanner from '@/app/components/AdBanner'
 import { MetricChart } from '@/app/components/charts/MetricChart'
@@ -392,8 +393,15 @@ export default async function VideoPage({ params }: VideoPageProps) {
           />
         </div>
 
+        <DeepVideoAnalysis
+          video={video}
+          velocity={velocity}
+          engagementRate={engagementRate}
+        />
+
         <div className="sm:hidden mb-6 overflow-x-auto">
           <div className="flex gap-2 min-w-max pb-1">
+            <a href="#deep-analysis" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Deep analysis</a>
             <a href="#next-moves" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Next moves</a>
             <a href="#analytics" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Analytics</a>
             <a href="#insights" className="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700">Insights</a>
