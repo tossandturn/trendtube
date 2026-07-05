@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { REGIONS, REGION_META, type Region } from '@/lib/region'
 
 interface User {
-  id: number
+  id: string
   username: string
   email: string
 }
@@ -15,19 +15,22 @@ function UserNav() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-    const userJson = localStorage.getItem('user')
-    if (userJson) {
-      try {
-        setUser(JSON.parse(userJson))
-      } catch {
-        localStorage.removeItem('user')
+    queueMicrotask(() => {
+      setMounted(true)
+      const userJson = localStorage.getItem('user')
+      if (userJson) {
+        try {
+          setUser(JSON.parse(userJson))
+        } catch {
+          localStorage.removeItem('user')
+        }
       }
-    }
+    })
   }, [])
 
   function logout() {
     localStorage.removeItem('user')
+    localStorage.removeItem('authToken')
     setUser(null)
     window.location.reload()
   }
@@ -76,16 +79,21 @@ export default function RegionBar() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-    const match = document.cookie.match(/region=([A-Z]{2,6})/)
-    if (match && REGIONS.includes(match[1] as Region)) {
-      setRegion(match[1] as Region)
-    }
+    queueMicrotask(() => {
+      setMounted(true)
+      const match = document.cookie.match(/region=([A-Z]{2,6})/)
+      if (match && REGIONS.includes(match[1] as Region)) {
+        setRegion(match[1] as Region)
+      }
+    })
   }, [])
 
   function switchRegion(r: Region) {
     if (r === region) return
+    // Cookie updates are event-driven here so the selected region survives reloads.
+    // eslint-disable-next-line react-hooks/purity
     const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString()
+    // eslint-disable-next-line react-hooks/immutability
     document.cookie = `region=${r};path=/;expires=${expires}`
     window.location.reload()
   }

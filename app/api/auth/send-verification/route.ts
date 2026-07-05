@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createEmailVerification, getUserByEmail, deleteExpiredVerifications } from '@/lib/db'
+import { createEmailVerification, getUserByEmail, deleteExpiredVerifications } from '@/lib/auth-db'
 import { randomBytes } from 'crypto'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
@@ -15,14 +15,14 @@ async function sendVerificationEmail(email: string, username: string, token: str
   if (!RESEND_API_KEY) {
     console.log('RESEND_API_KEY not configured, skipping email send')
     console.log(`Verification link: ${APP_URL}/verify-email?token=${token}`)
-    return true
+    return process.env.NODE_ENV === 'development'
   }
 
   const verificationUrl = `${APP_URL}/verify-email?token=${token}`
   console.log('Generating verification URL:', verificationUrl)
 
   // Use environment variable for sender
-  const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev'
+  const FROM_EMAIL = process.env.FROM_EMAIL || 'verify@tubefission.com'
   const FROM_NAME = process.env.FROM_NAME || 'TubeFission'
 
   console.log('Sending email with from:', `${FROM_NAME} <${FROM_EMAIL}>`)
@@ -135,7 +135,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    if (user.email_verified) {
+    if (user.emailVerified) {
       return NextResponse.json({ error: 'Email already verified' }, { status: 400 })
     }
 

@@ -4,7 +4,7 @@ import { createUser, getUserByEmail, getUserByUsername, createEmailVerification 
 import { randomBytes } from 'crypto'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://tubefission.com'
 
 function generateToken(): string {
   return randomBytes(16).toString('hex')
@@ -14,10 +14,16 @@ async function sendVerificationEmail(email: string, username: string, token: str
   if (!RESEND_API_KEY) {
     console.log('RESEND_API_KEY not configured, skipping email send')
     console.log(`Verification link: ${APP_URL}/verify-email?token=${token}`)
-    return { success: true, devMode: true }
+    return {
+      success: process.env.NODE_ENV === 'development',
+      devMode: process.env.NODE_ENV === 'development',
+      error: 'Email provider is not configured',
+    }
   }
 
   const verificationUrl = `${APP_URL}/verify-email?token=${token}`
+  const FROM_EMAIL = process.env.FROM_EMAIL || 'verify@tubefission.com'
+  const FROM_NAME = process.env.FROM_NAME || 'TubeFission'
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -27,7 +33,7 @@ async function sendVerificationEmail(email: string, username: string, token: str
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'TubeFission <verify@tubefission.com>',
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
         to: email,
         subject: 'Verify your TubeFission account',
         html: `
@@ -97,20 +103,24 @@ export async function POST(req: Request) {
     await createEmailVerification(user.id, token, expiresAt)
 
     // Send verification email
-    await sendVerificationEmail(email, username, token)
+    const emailResult = await sendVerificationEmail(email, username, token)
 
     return NextResponse.json({
       success: true,
-      message: 'Registration successful. Please check your email to verify your account.',
+      emailSent: emailResult.success && !emailResult.devMode,
+      message: emailResult.success
+        ? 'Registration successful. Please check your email to verify your account.'
+        : 'Registration successful, but the verification email could not be sent. Please use resend or contact support.',
       user: { id: user.id, username: user.username, email: user.email, emailVerified: false },
       // Include token in development for testing
       ...(process.env.NODE_ENV === 'development' && !RESEND_API_KEY ? { devToken: token } : {})
     })
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Registration error:', err)
+    const detail = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json({
       error: 'Registration failed',
-      detail: err?.message || 'Unknown error'
+      detail,
     }, { status: 500 })
   }
 }

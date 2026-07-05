@@ -38,8 +38,9 @@ export default function LoginPage() {
       } else {
         // Store user in localStorage and redirect
         localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('authToken', data.token)
         localStorage.setItem('analyzeSessionId', generateSessionId())
-        window.location.href = '/trending'
+        window.location.href = '/workspace'
       }
     } catch {
       setError('Network error')

@@ -148,3 +148,17 @@ export async function deleteSession(token: string): Promise<void> {
     where: { token },
   })
 }
+
+export async function getValidSessionByToken(token: string) {
+  const db = getPrisma()
+  const session = await db.session.findUnique({
+    where: { token },
+    include: { user: true },
+  })
+
+  if (!session || session.expiresAt < new Date()) {
+    return null
+  }
+
+  return session
+}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 
 interface User {
-  id: number
+  id: string
   username: string
   email: string
 }
@@ -22,6 +22,22 @@ export function useAuth() {
     analyzeCount: 0,
     isLoading: true
   })
+
+  const fetchAnalyzeCount = useCallback(async (sessionId: string, userId?: string) => {
+    try {
+      const params = new URLSearchParams({ sessionId })
+      if (userId) params.append('userId', userId.toString())
+
+      const res = await fetch(`/api/analyze/track?${params}`)
+      const data = await res.json()
+
+      if (res.ok) {
+        setAuthState(prev => ({ ...prev, analyzeCount: data.totalAttempts }))
+      }
+    } catch {
+      // Silently fail
+    }
+  }, [])
 
   // Generate or retrieve session ID
   const getSessionId = useCallback((): string => {
@@ -62,23 +78,7 @@ export function useAuth() {
     }
 
     loadAuth()
-  }, [getSessionId])
-
-  const fetchAnalyzeCount = async (sessionId: string, userId?: number) => {
-    try {
-      const params = new URLSearchParams({ sessionId })
-      if (userId) params.append('userId', userId.toString())
-
-      const res = await fetch(`/api/analyze/track?${params}`)
-      const data = await res.json()
-
-      if (res.ok) {
-        setAuthState(prev => ({ ...prev, analyzeCount: data.totalAttempts }))
-      }
-    } catch {
-      // Silently fail
-    }
-  }
+  }, [fetchAnalyzeCount, getSessionId])
 
   const recordAnalyze = async (): Promise<{ success: boolean; requiresLogin: boolean }> => {
     const { sessionId, user } = authState
@@ -118,6 +118,7 @@ export function useAuth() {
 
       if (res.ok) {
         localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('authToken', data.token)
         setAuthState(prev => ({
           ...prev,
           user: data.user,
@@ -134,6 +135,7 @@ export function useAuth() {
 
   const logout = () => {
     localStorage.removeItem('user')
+    localStorage.removeItem('authToken')
     setAuthState(prev => ({
       ...prev,
       user: null,

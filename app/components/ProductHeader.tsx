@@ -9,7 +9,7 @@ import { extractChannelId, extractVideoId, isValidYouTubeUrl } from '@/lib/youtu
 import { REGIONS, REGION_META, type Region } from '@/lib/region'
 
 interface User {
-  id: number
+  id: string
   username: string
   email: string
 }
@@ -92,6 +92,7 @@ function UserNav({ compact = false }: { compact?: boolean }) {
 
   function logout() {
     localStorage.removeItem('user')
+    localStorage.removeItem('authToken')
     setUser(null)
     window.location.reload()
   }

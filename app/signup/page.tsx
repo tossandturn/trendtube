@@ -11,6 +11,8 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [devToken, setDevToken] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [emailSent, setEmailSent] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -42,9 +44,10 @@ export default function SignupPage() {
       const data = await res.json()
       if (!res.ok) {
         setError(data.error || 'Registration failed')
-        setLoading(false)
       } else {
         setSuccess(true)
+        setSuccessMessage(data.message || 'Registration successful. Please check your email to verify your account.')
+        setEmailSent(!!data.emailSent)
         if (data.devToken) {
           setDevToken(data.devToken)
         }
@@ -55,55 +58,52 @@ export default function SignupPage() {
     setLoading(false)
   }
 
+  async function resendVerification() {
+    try {
+      const res = await fetch('/api/auth/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      alert(res.ok ? 'Verification email resent!' : data.error || 'Failed to resend verification email')
+    } catch {
+      alert('Network error')
+    }
+  }
+
   if (success) {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full">
-          <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm text-center">
-            <div className="text-4xl mb-4">📧</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Verify your email</h1>
-            <p className="text-gray-600 mb-4">
-              We&apos;ve sent a verification link to <strong>{email}</strong>
+      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-md">
+          <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+            <div className={`mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full text-sm font-black ${emailSent ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+              {emailSent ? 'OK' : '!'}
+            </div>
+            <h1 className="mb-2 text-2xl font-bold text-gray-900">Verify your email</h1>
+            <p className="mb-4 text-gray-600">
+              {emailSent ? 'We sent a verification link to ' : 'Your account was created for '}
+              <strong>{email}</strong>
             </p>
-            <p className="text-gray-500 text-sm mb-6">
-              Please check your inbox and click the link to activate your account. The link will expire in 24 hours.
-            </p>
+            <p className="mb-6 text-sm text-gray-500">{successMessage}</p>
 
             {devToken && (
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-yellow-800 text-sm font-medium mb-2">Development Mode</p>
-                <p className="text-yellow-700 text-xs mb-2">
-                  Email not configured. Use this link to verify:
-                </p>
-                <a
-                  href={`/verify-email?token=${devToken}`}
-                  className="text-blue-600 hover:text-blue-700 text-xs break-all"
-                >
+              <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                <p className="mb-2 text-sm font-medium text-yellow-800">Development Mode</p>
+                <p className="mb-2 text-xs text-yellow-700">Email not configured. Use this link to verify:</p>
+                <a href={`/verify-email?token=${devToken}`} className="break-all text-xs text-blue-600 hover:text-blue-700">
                   {`http://localhost:3000/verify-email?token=${devToken}`}
                 </a>
               </div>
             )}
 
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center px-6 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800"
-            >
+            <Link href="/login" className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-6 py-2.5 font-medium text-white hover:bg-gray-800">
               Go to Login
             </Link>
 
             <div className="mt-6 text-sm text-gray-500">
               Didn&apos;t receive the email?{' '}
-              <button
-                onClick={() => {
-                  fetch('/api/auth/send-verification', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                  })
-                  alert('Verification email resent!')
-                }}
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
+              <button onClick={resendVerification} className="font-medium text-blue-600 hover:text-blue-700">
                 Resend
               </button>
             </div>
@@ -114,67 +114,59 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Create account</h1>
-          <p className="text-gray-600 mb-6">Start tracking viral opportunities today.</p>
+    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md">
+        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+          <h1 className="mb-2 text-2xl font-bold text-gray-900">Create account</h1>
+          <p className="mb-6 text-gray-600">Start tracking viral opportunities today.</p>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
+          {error && <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Username</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                 required
                 minLength={3}
                 maxLength={20}
                 pattern="^[a-zA-Z0-9_]+$"
                 placeholder="Choose a username"
               />
-              <p className="text-xs text-gray-500 mt-1">3-20 characters, letters, numbers, underscores only</p>
+              <p className="mt-1 text-xs text-gray-500">3-20 characters, letters, numbers, underscores only</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">At least 6 characters</p>
+              <p className="mt-1 text-xs text-gray-500">At least 6 characters</p>
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
-            >
+            <button type="submit" disabled={loading} className="w-full rounded-lg bg-gray-900 py-2.5 font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50">
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
           <div className="mt-6 text-center text-sm">
             <span className="text-gray-500">Already have an account? </span>
-            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-700">
               Sign in
             </Link>
           </div>

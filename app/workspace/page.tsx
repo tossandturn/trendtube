@@ -1,8 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Bell, BookmarkCheck, GitCompare, History, Plus, Rocket } from 'lucide-react'
+import { Bell, BookmarkCheck, CheckCircle2, Cloud, GitCompare, History, Plus, Rocket } from 'lucide-react'
 
 interface OpportunityHistoryItem {
   id: string
@@ -27,6 +27,20 @@ interface AlertConfig {
   isActive: boolean
 }
 
+interface User {
+  id: string
+  username: string
+  email: string
+  emailVerified?: boolean
+}
+
+interface WorkspaceSnapshot {
+  opportunities?: OpportunityHistoryItem[]
+  watchlist?: WatchlistItem[]
+  alerts?: AlertConfig[]
+  compareIds?: string[]
+}
+
 const STORAGE_KEYS = {
   opportunities: 'tubefission:opportunityHistory',
   watchlist: 'tubefission_watchlist',
@@ -44,14 +58,112 @@ function readArray<T>(key: string): T[] {
   }
 }
 
+function writeArray<T>(key: string, value: T[]) {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(key, JSON.stringify(value))
+}
+
+function readUser(): User | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem('user') || 'null')
+    return parsed?.id && parsed?.email ? parsed : null
+  } catch {
+    window.localStorage.removeItem('user')
+    return null
+  }
+}
+
+function mergeByStableKey<T>(localItems: T[], cloudItems: T[] = []): T[] {
+  const seen = new Set<string>()
+  return [...localItems, ...cloudItems].filter((item) => {
+    const record = item as { id?: string }
+    const key = record.id || JSON.stringify(item)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 export default function WorkspacePage() {
-  const [opportunities] = useState<OpportunityHistoryItem[]>(() => readArray<OpportunityHistoryItem>(STORAGE_KEYS.opportunities))
-  const [watchlist] = useState<WatchlistItem[]>(() => readArray<WatchlistItem>(STORAGE_KEYS.watchlist))
-  const [alerts] = useState<AlertConfig[]>(() => readArray<AlertConfig>(STORAGE_KEYS.alerts))
-  const [compareIds] = useState<string[]>(() => readArray<string>(STORAGE_KEYS.compare))
+  const initialWorkspace = useMemo(() => ({
+    opportunities: readArray<OpportunityHistoryItem>(STORAGE_KEYS.opportunities),
+    watchlist: readArray<WatchlistItem>(STORAGE_KEYS.watchlist),
+    alerts: readArray<AlertConfig>(STORAGE_KEYS.alerts),
+    compareIds: readArray<string>(STORAGE_KEYS.compare),
+  }), [])
+  const [opportunities, setOpportunities] = useState<OpportunityHistoryItem[]>(() => readArray<OpportunityHistoryItem>(STORAGE_KEYS.opportunities))
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => readArray<WatchlistItem>(STORAGE_KEYS.watchlist))
+  const [alerts, setAlerts] = useState<AlertConfig[]>(() => readArray<AlertConfig>(STORAGE_KEYS.alerts))
+  const [compareIds, setCompareIds] = useState<string[]>(() => readArray<string>(STORAGE_KEYS.compare))
+  const [user] = useState<User | null>(() => readUser())
+  const [syncStatus, setSyncStatus] = useState<'local' | 'syncing' | 'synced' | 'error'>('local')
+  const [syncedAt, setSyncedAt] = useState<string | null>(null)
+
+  useEffect(() => {
+    const token = window.localStorage.getItem('authToken')
+
+    if (!user || !token) {
+      return
+    }
+
+    async function syncWorkspace() {
+      setSyncStatus('syncing')
+      try {
+        const res = await fetch('/api/workspace/sync', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to load workspace')
+
+        const cloud = (data.workspace || {}) as WorkspaceSnapshot
+        const merged = {
+          opportunities: mergeByStableKey(initialWorkspace.opportunities, cloud.opportunities),
+          watchlist: mergeByStableKey(initialWorkspace.watchlist, cloud.watchlist),
+          alerts: mergeByStableKey(initialWorkspace.alerts, cloud.alerts),
+          compareIds: Array.from(new Set([...initialWorkspace.compareIds, ...(cloud.compareIds || [])])),
+        }
+
+        setOpportunities(merged.opportunities)
+        setWatchlist(merged.watchlist)
+        setAlerts(merged.alerts)
+        setCompareIds(merged.compareIds)
+        writeArray(STORAGE_KEYS.opportunities, merged.opportunities)
+        writeArray(STORAGE_KEYS.watchlist, merged.watchlist)
+        writeArray(STORAGE_KEYS.alerts, merged.alerts)
+        writeArray(STORAGE_KEYS.compare, merged.compareIds)
+
+        const saveRes = await fetch('/api/workspace/sync', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(merged),
+        })
+        const saved = await saveRes.json()
+        if (!saveRes.ok) throw new Error(saved.error || 'Failed to save workspace')
+
+        setSyncedAt(saved.syncedAt || data.syncedAt || new Date().toISOString())
+        setSyncStatus('synced')
+      } catch (error) {
+        console.error('Workspace sync failed:', error)
+        setSyncStatus('error')
+      }
+    }
+
+    syncWorkspace()
+  }, [initialWorkspace, user])
 
   const activeAlerts = alerts.filter((alert) => alert.isActive).length
   const topOpportunity = opportunities[0]
+  const syncLabel = syncStatus === 'synced'
+    ? `Synced${syncedAt ? ` ${new Date(syncedAt).toLocaleDateString()}` : ''}`
+    : syncStatus === 'syncing'
+      ? 'Syncing account workspace'
+      : syncStatus === 'error'
+        ? 'Local saved, cloud sync needs retry'
+        : 'Local workspace only'
   const nextAction = useMemo(() => {
     if (topOpportunity) return { label: 'Continue best saved opportunity', href: topOpportunity.href }
     if (compareIds.length > 0) return { label: 'Open comparison queue', href: `/compare-new?type=videos&left=${encodeURIComponent(compareIds[0])}${compareIds[1] ? `&right=${encodeURIComponent(compareIds[1])}` : ''}` }
@@ -71,11 +183,29 @@ export default function WorkspacePage() {
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-500 sm:text-base">
               Your saved opportunities, watchlist, alerts, and comparison queue live here so TubeFission becomes a recurring workflow, not a one-time lookup.
             </p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${syncStatus === 'synced' ? 'bg-green-50 text-green-700' : syncStatus === 'error' ? 'bg-yellow-50 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>
+                {syncStatus === 'synced' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Cloud className="h-3.5 w-3.5" />}
+                {syncLabel}
+              </span>
+              {user ? (
+                <span className="text-xs font-semibold text-gray-500">Linked to {user.email}</span>
+              ) : (
+                <span className="text-xs font-semibold text-gray-500">Sign in to connect this workspace across devices.</span>
+              )}
+            </div>
           </div>
-          <Link href={nextAction.href} className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700">
-            <Rocket className="h-4 w-4" />
-            {nextAction.label}
-          </Link>
+          <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+            <Link href={nextAction.href} className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700">
+              <Rocket className="h-4 w-4" />
+              {nextAction.label}
+            </Link>
+            {!user && (
+              <Link href="/signup" className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-bold text-gray-800 hover:bg-gray-50">
+                Create account to sync
+              </Link>
+            )}
+          </div>
         </section>
 
         <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
