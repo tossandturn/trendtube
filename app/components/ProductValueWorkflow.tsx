@@ -33,13 +33,19 @@ const STORAGE_KEYS = {
   token: 'authToken',
 }
 
-const PRODUCT_DIMENSIONS: ProductValueDimension[] = [
-  { label: 'Painkiller', score: 88, note: 'Fast next-move clarity.' },
-  { label: 'Workflow Fit', score: 86, note: 'One loop from discovery to tracking.' },
-  { label: 'Data Advantage', score: 84, note: 'Real signals plus saved history.' },
-  { label: 'Decision Power', score: 85, note: 'Benchmarks become actions.' },
-  { label: 'SEO Acquisition', score: 87, note: 'Search-led entry pages.' },
-  { label: 'Retention System', score: 82, note: 'Watchlist, alerts, workspace.' },
+const ADVANTAGE_DIMENSIONS: ProductValueDimension[] = [
+  { label: 'Workflow depth', score: 90, note: 'Beyond one-off URL reports.' },
+  { label: 'Action guidance', score: 88, note: 'Turns metrics into next moves.' },
+  { label: 'Live trend signal', score: 86, note: 'Regional momentum and velocity.' },
+  { label: 'Compare layer', score: 89, note: 'Video and channel benchmarks.' },
+  { label: 'Retention loop', score: 84, note: 'Watchlist, alerts, workspace.' },
+  { label: 'SEO surface', score: 87, note: 'Analyzer, trends, keywords.' },
+]
+
+const COMPETITOR_COMPARISON = [
+  { type: 'Generic analyzers', gap: 'Report metrics, then stop.', edge: 'TubeFission guides the next action.' },
+  { type: 'SEO tools', gap: 'Focus on keywords only.', edge: 'TubeFission connects topic, video, and channel signals.' },
+  { type: 'Trend lists', gap: 'Show what is hot now.', edge: 'TubeFission adds velocity, saturation, and watchlists.' },
 ]
 
 const EMPTY_WORKSPACE: WorkspaceState = {
@@ -75,8 +81,8 @@ function readWorkspaceState(): WorkspaceState {
 }
 
 function getBaseProductScore() {
-  const total = PRODUCT_DIMENSIONS.reduce((sum, item) => sum + item.score, 0)
-  return Math.round(total / PRODUCT_DIMENSIONS.length)
+  const total = ADVANTAGE_DIMENSIONS.reduce((sum, item) => sum + item.score, 0)
+  return Math.round(total / ADVANTAGE_DIMENSIONS.length)
 }
 
 function getGrade(score: number) {
@@ -136,7 +142,7 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
 
   const completedMilestones = milestones.filter((milestone) => milestone.done).length
   const baseScore = getBaseProductScore()
-  const productScore = Math.min(90, baseScore + completedMilestones)
+  const advantageScore = Math.min(90, baseScore + Math.floor(completedMilestones / 2))
   const nextMilestone = milestones.find((milestone) => !milestone.done)
 
   return (
@@ -145,17 +151,20 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
         <div className="rounded-xl bg-gray-950 p-5 text-white">
           <div className="text-xs font-bold uppercase tracking-wider text-red-600">Competitive Advantage</div>
           <div className="mt-2 flex items-end gap-3">
-            <div className="text-5xl font-black">{productScore}</div>
-            <div className="pb-2 text-sm font-bold text-gray-400">/100 {getGrade(productScore)}</div>
+            <div className="text-5xl font-black">{advantageScore}</div>
+            <div className="pb-2 text-sm font-bold text-gray-400">/100 {getGrade(advantageScore)}</div>
           </div>
+          <p className="mt-3 text-sm text-gray-300">
+            Edge against one-off analyzers, keyword tools, and static trend lists.
+          </p>
 
           <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Path to 90</div>
-                <div className="mt-1 text-sm font-bold">{completedMilestones}/6 signals active</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Proof points</div>
+                <div className="mt-1 text-sm font-bold">{completedMilestones}/6 workflow signals active</div>
               </div>
-              <div className="text-right text-xs font-bold text-gray-400">Base {baseScore}</div>
+              <div className="text-right text-xs font-bold text-gray-400">Index {baseScore}</div>
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
               <div className="h-full rounded-full bg-red-500" style={{ width: `${(completedMilestones / milestones.length) * 100}%` }} />
@@ -171,7 +180,7 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {PRODUCT_DIMENSIONS.map((dimension) => (
+          {ADVANTAGE_DIMENSIONS.map((dimension) => (
             <div key={dimension.label} className="rounded-xl bg-gray-50 p-3">
               <div className="mb-1 flex items-center justify-between gap-3">
                 <span className="text-sm font-bold text-gray-800">{dimension.label}</span>
@@ -189,12 +198,22 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
       <div className="mt-4 border-t border-gray-100 pt-4">
         <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="text-sm font-bold text-gray-900">Activation workflow</div>
-            <div className="text-xs text-gray-500">Score rises when the workflow is actually used.</div>
+            <div className="text-sm font-bold text-gray-900">Why users choose it</div>
+            <div className="text-xs text-gray-500">The advantage is workflow plus guidance, not just more charts.</div>
           </div>
           <Link href="/workspace" className="text-xs font-bold text-red-600 hover:text-red-700">Open workspace</Link>
         </div>
-        <div className="grid gap-2 md:grid-cols-3">
+        <div className="grid gap-2 lg:grid-cols-3">
+          {COMPETITOR_COMPARISON.map((item) => (
+            <div key={item.type} className="rounded-xl border border-gray-200 bg-white p-3">
+              <div className="text-sm font-black text-gray-900">{item.type}</div>
+              <div className="mt-2 rounded-lg bg-gray-50 p-2 text-xs text-gray-500">{item.gap}</div>
+              <div className="mt-2 rounded-lg bg-red-50 p-2 text-xs font-semibold text-red-700">{item.edge}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 grid gap-2 md:grid-cols-3">
           {milestones.map((step, index) => (
             <Link key={step.label} href={step.href} className="rounded-xl border border-gray-200 bg-white p-3 hover:border-red-200 hover:bg-red-50">
               <div className="flex items-center gap-2">

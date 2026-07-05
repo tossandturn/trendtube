@@ -133,9 +133,9 @@ export default function HomePage() {
                 ))}
               </div>
               <div className="rounded-xl bg-gray-950 p-4 text-white">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Opportunity</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Advantage</div>
                 <div className="mt-2 text-3xl font-black">90</div>
-                <div className="mt-1 text-sm text-gray-300">Reachable when the workflow is active.</div>
+                <div className="mt-1 text-sm text-gray-300">Stronger than one-off analysis tools.</div>
               </div>
             </div>
           </div>
