@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { searchYouTubeMulti } from '@/lib/api-client'
+import OpportunityHistoryPanel from '@/app/components/OpportunityHistoryPanel'
+import ProductValueWorkflow from '@/app/components/ProductValueWorkflow'
 
 export const metadata: Metadata = {
   title: 'Low Competition YouTube Keywords 2026 | Find Underserved Niches',
@@ -302,6 +304,20 @@ function getTopVideoHref(videos: YouTubeVideo[]) {
   return id ? `/video/${encodeURIComponent(id)}` : '/youtube-video-analyzer'
 }
 
+function getOpportunityHistoryItem(niche: NicheAnalysis) {
+  return {
+    id: niche.query.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+    niche: niche.niche,
+    query: niche.query,
+    score: niche.valueScore.total,
+    grade: niche.valueScore.grade,
+    verdict: niche.valueScore.verdict,
+    recommendation: niche.valueScore.recommendation,
+    href: getTopVideoHref(niche.videos),
+    compareHref: getCompareHref(niche.videos),
+  }
+}
+
 export default async function LowCompetitionKeywordsPage() {
   const nicheAnalysis: NicheAnalysis[] = await Promise.all(
     NICHE_QUERIES.map(async ({ niche, query }) => {
@@ -402,6 +418,14 @@ export default async function LowCompetitionKeywordsPage() {
             </p>
           </div>
         </section>
+
+        <div className="mb-8">
+          <ProductValueWorkflow compact />
+        </div>
+
+        <div className="mb-8">
+          <OpportunityHistoryPanel current={featuredNiche ? getOpportunityHistoryItem(featuredNiche) : undefined} />
+        </div>
 
         <section id="opportunities" className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] mb-12">
           <div className="glass-panel rounded-2xl overflow-hidden border border-gray-200">
