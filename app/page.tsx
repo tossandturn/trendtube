@@ -74,57 +74,69 @@ export default function HomePage() {
       ]} />
 
       {/* ===== HERO SECTION ===== */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white pt-10 pb-12 sm:pt-18 sm:pb-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mb-4 inline-flex rounded-full border border-red-100 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
-            Analyze. Discover. Compare. Plan.
-          </div>
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-5 leading-tight">
-            YouTube Intelligence<br className="hidden sm:block" /> for Faster Creator Decisions
-          </h1>
-          <p className="text-base sm:text-xl text-gray-600 max-w-3xl mx-auto mb-6 leading-relaxed">
-            Paste a YouTube URL to diagnose performance, scan live trends before they peak, or compare competitors before copying a strategy.
-          </p>
-          {/* CTA Input */}
-          <AnalyzeHeroForm />
-
-          <div className="mt-8 grid grid-cols-1 gap-3 text-left sm:grid-cols-3">
-            <Link href="/youtube-video-analyzer" className="rounded-xl border border-gray-200 bg-white p-4 transition hover:border-blue-300 hover:shadow-sm">
-              <div className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Analyze</div>
-              <div className="font-semibold text-gray-900">Understand what worked</div>
-              <div className="mt-1 text-sm text-gray-600">Video and channel diagnostics with action recommendations.</div>
-            </Link>
-            <Link href="/trending" className="rounded-xl border border-gray-200 bg-white p-4 transition hover:border-red-300 hover:shadow-sm">
-              <div className="text-xs font-bold uppercase tracking-wider text-red-600 mb-2">Discover</div>
-              <div className="font-semibold text-gray-900">Find momentum early</div>
-              <div className="mt-1 text-sm text-gray-600">Trending videos, topic velocity, and regional breakout signals.</div>
-            </Link>
-            <Link href="/compare-new" className="rounded-xl border border-gray-200 bg-white p-4 transition hover:border-amber-300 hover:shadow-sm">
-              <div className="text-xs font-bold uppercase tracking-wider text-amber-600 mb-2">Compare</div>
-              <div className="font-semibold text-gray-900">Pick the better model</div>
-              <div className="mt-1 text-sm text-gray-600">Benchmark two videos or channels before copying a strategy.</div>
-            </Link>
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
-            <Link href="/youtube-channel-analytics" className="rounded-full bg-blue-50 px-3 py-1.5 font-medium text-blue-700 hover:bg-blue-100">Channel analytics</Link>
-            <Link href="/youtube-keyword-research" className="rounded-full bg-emerald-50 px-3 py-1.5 font-medium text-emerald-700 hover:bg-emerald-100">Keyword research</Link>
-            <Link href="/youtube-ai-trends" className="rounded-full bg-purple-50 px-3 py-1.5 font-medium text-purple-700 hover:bg-purple-100">AI trends</Link>
-            <Link href="/youtube-shorts-trends" className="rounded-full bg-red-50 px-3 py-1.5 font-medium text-red-700 hover:bg-red-100">Shorts trends</Link>
-          </div>
-
-          <div className="mt-8 grid sm:grid-cols-3 gap-4 text-left max-w-5xl mx-auto">
-            <div className="bg-white/70 rounded-xl border border-gray-200 p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Data source</div>
-              <div className="text-sm text-gray-700">Real YouTube API metrics and live trend extraction, not static examples or guessed benchmarks.</div>
+      <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,#fff1f2,transparent_34%),linear-gradient(180deg,#f9fafb_0%,#fff_72%)] pt-8 pb-10 sm:pt-14 sm:pb-14">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:px-8">
+          <div>
+            <div className="mb-4 inline-flex rounded-full border border-red-100 bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-red-600 shadow-sm">
+              Creator decision OS
             </div>
-            <div className="bg-white/70 rounded-xl border border-gray-200 p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Decision layer</div>
-              <div className="text-sm text-gray-700">Every core page points toward the next practical move: analyze, discover, compare, or plan.</div>
+            <h1 className="text-4xl font-black tracking-tight text-gray-950 sm:text-6xl">
+              Decide your next YouTube move faster.
+            </h1>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg">
+              Paste a video or channel URL. Get the signal, the benchmark, and the next action.
+            </p>
+            <div className="mt-6">
+              <AnalyzeHeroForm />
             </div>
-            <div className="bg-white/70 rounded-xl border border-gray-200 p-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Why it matters</div>
-              <div className="text-sm text-gray-700">The goal is not to summarize YouTube - it is to help creators decide what to test, what to copy, and what to ignore next.</div>
+            <div className="mt-5 flex flex-wrap gap-2 text-sm">
+              <Link href="/trending" className="rounded-full bg-gray-900 px-4 py-2 font-bold text-white hover:bg-gray-800">Trending</Link>
+              <Link href="/compare-new" className="rounded-full border border-gray-200 bg-white px-4 py-2 font-bold text-gray-900 hover:bg-gray-50">Compare</Link>
+              <Link href="/workspace" className="rounded-full border border-gray-200 bg-white px-4 py-2 font-bold text-gray-900 hover:bg-gray-50">Workspace</Link>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xl shadow-gray-200/70">
+            <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Live workflow</div>
+                <div className="text-lg font-black text-gray-950">Analyze / Compare / Track</div>
+              </div>
+              <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Ready</div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { label: 'Velocity', value: '4.2M/d', color: 'bg-red-500' },
+                { label: 'Engage', value: '6.8%', color: 'bg-amber-500' },
+                { label: 'Fit', value: 'A-', color: 'bg-emerald-500' },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-gray-500">{item.label}</div>
+                  <div className="mt-2 text-2xl font-black text-gray-950">{item.value}</div>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-200">
+                    <div className={`h-full w-4/5 rounded-full ${item.color}`} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-[1.25fr_0.75fr]">
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-sm font-bold text-gray-900">Next moves</span>
+                  <span className="text-xs font-bold text-red-600">3 actions</span>
+                </div>
+                {['Tighten title promise', 'Compare against 2 winners', 'Save to watchlist'].map((item) => (
+                  <div key={item} className="flex items-center gap-2 border-t border-gray-200 py-2 text-sm text-gray-700 first:border-t-0">
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl bg-gray-950 p-4 text-white">
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Opportunity</div>
+                <div className="mt-2 text-3xl font-black">90</div>
+                <div className="mt-1 text-sm text-gray-300">Reachable when the workflow is active.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -143,24 +155,24 @@ export default function HomePage() {
           <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
             <div>
               <div className="text-xs font-bold uppercase tracking-wider text-red-600">Retention workspace</div>
-              <h2 className="mt-2 text-2xl font-black text-gray-900 sm:text-3xl">Do not lose the next good idea</h2>
-              <p className="mt-3 text-sm leading-relaxed text-gray-600 sm:text-base">
-                TubeFission now gives creators a place to return: saved opportunities, watchlists, alerts, comparison queues, and historical analysis all point back to one project workflow.
+              <h2 className="mt-2 text-2xl font-black text-gray-900 sm:text-3xl">Save the ideas worth revisiting.</h2>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-gray-600 sm:text-base">
+                Watchlist, alerts, history, and compare queues turn one-off analysis into a repeatable workflow.
               </p>
               <Link href="/workspace" className="mt-5 inline-flex rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700">
-                Open Creator Workspace
+                Open Workspace
               </Link>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {[
-                { title: 'Watchlist', copy: 'Track channels, trends, and niches worth revisiting.', href: '/watchlist' },
-                { title: 'Alerts', copy: 'Set up triggers when momentum changes.', href: '/alerts' },
-                { title: 'History', copy: 'Resume saved opportunities and previous analysis paths.', href: '/workspace' },
-                { title: 'Project flow', copy: 'Move from saved idea to compare, brief, and next upload.', href: '/workspace' },
+                { title: 'Watchlist', copy: 'Track channels and trends.', href: '/watchlist' },
+                { title: 'Alerts', copy: 'Catch momentum changes.', href: '/alerts' },
+                { title: 'History', copy: 'Resume past research.', href: '/workspace' },
+                { title: 'Project flow', copy: 'Move idea -> brief -> upload.', href: '/workspace' },
               ].map((item) => (
-                <Link key={item.title} href={item.href} className="rounded-2xl border border-gray-200 bg-white p-5 hover:border-red-200 hover:bg-red-50">
+                <Link key={item.title} href={item.href} className="rounded-xl border border-gray-200 bg-white p-4 hover:border-red-200 hover:bg-red-50">
                   <h3 className="font-bold text-gray-900">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-500">{item.copy}</p>
+                  <p className="mt-1 text-sm text-gray-500">{item.copy}</p>
                 </Link>
               ))}
             </div>
@@ -169,264 +181,40 @@ export default function HomePage() {
       </section>
 
       {/* ===== DECISION ENTRY POINTS ===== */}
-      <section className="border-y border-gray-200 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 text-center">Start With The Job You Need To Get Done</h2>
-          <p className="text-gray-600 text-center mb-10 max-w-2xl mx-auto">
-            TubeFission works best when you start from the decision you need to make, not from a generic tool list.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/youtube-channel-analytics" className="group bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200">
-              <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-lg font-bold text-blue-700 mb-3 group-hover:scale-110 transition-transform">A</div>
-              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">Audit a Channel</h3>
-              <p className="text-gray-500 text-xs">Check growth, engagement quality, posting rhythm, and what the creator should improve next.</p>
-            </Link>
-            <Link href="/trending" className="group bg-white rounded-xl p-5 border border-gray-200 hover:border-red-400 hover:shadow-lg transition-all duration-200">
-              <div className="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center text-lg font-bold text-red-700 mb-3 group-hover:scale-110 transition-transform">D</div>
-              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-red-600 transition-colors">Find What Is Rising</h3>
-              <p className="text-gray-500 text-xs">See which videos and topics are moving fastest so you can react before the market saturates.</p>
-            </Link>
-            <Link href="/compare-new" className="group bg-white rounded-xl p-5 border-2 border-amber-300 bg-amber-50/50 hover:border-amber-400 hover:shadow-lg transition-all duration-200 relative">
-              <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">HOT</div>
-              <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-lg font-bold text-amber-700 mb-3 group-hover:scale-110 transition-transform">C</div>
-              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-amber-600 transition-colors">Compare Two Players</h3>
-              <p className="text-gray-500 text-xs">Benchmark two channels or videos side by side and see who wins on scale, efficiency, and engagement.</p>
-            </Link>
-            <Link href="/ai-assistant" className="group bg-white rounded-xl p-5 border border-gray-200 hover:border-yellow-400 hover:shadow-lg transition-all duration-200">
-              <div className="w-12 h-12 rounded-lg bg-yellow-50 flex items-center justify-center text-lg font-bold text-yellow-700 mb-3 group-hover:scale-110 transition-transform">P</div>
-              <h3 className="font-bold text-gray-900 mb-1 group-hover:text-yellow-600 transition-colors">Turn Data Into Ideas</h3>
-              <p className="text-gray-500 text-xs">Generate stronger titles, hooks, thumbnail angles, and content direction from real winning patterns.</p>
-            </Link>
+      <section className="border-y border-gray-200 bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Start here</div>
+              <h2 className="mt-1 text-2xl font-black text-gray-950">Choose the job.</h2>
+            </div>
+            <Link href="/compare-new" className="text-sm font-bold text-red-600 hover:text-red-700">Open comparison</Link>
+          </div>
+          <div className="grid gap-3 md:grid-cols-4">
+            {[
+              { href: '/youtube-channel-analytics', label: 'Audit', title: 'Channel health', color: 'text-blue-600 bg-blue-50' },
+              { href: '/trending', label: 'Spot', title: 'Rising topics', color: 'text-red-600 bg-red-50' },
+              { href: '/compare-new', label: 'Pick', title: 'Better model', color: 'text-amber-700 bg-amber-50' },
+              { href: '/ai-assistant', label: 'Plan', title: 'Next brief', color: 'text-emerald-700 bg-emerald-50' },
+            ].map((item) => (
+              <Link key={item.href} href={item.href} className="group rounded-xl border border-gray-200 bg-white p-4 hover:border-gray-300 hover:shadow-sm">
+                <div className={`mb-4 inline-flex rounded-lg px-3 py-1 text-xs font-black uppercase tracking-wider ${item.color}`}>{item.label}</div>
+                <div className="text-lg font-black text-gray-950 group-hover:text-red-600">{item.title}</div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ===== COMPARE TOOL SPOTLIGHT ===== */}
-      <section className="bg-gradient-to-br from-amber-50 to-orange-50 border-y border-amber-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-          <div className="text-center mb-10">
-            <span className="inline-block bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-4">FEATURED TOOL</span>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">YouTube Competitor Comparison</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Compare two YouTube channels or videos side-by-side. See who leads in subscribers, engagement, views, and more - with AI-powered insights.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div className="bg-white rounded-xl p-6 border border-amber-100 text-center">
-              <div className="text-3xl mb-3 font-bold text-amber-600">VS</div>
-              <h3 className="font-bold text-gray-900 mb-2">Head-to-Head</h3>
-              <p className="text-gray-600 text-sm">Compare any two channels or videos with detailed metric breakdowns and winner analysis.</p>
-            </div>
-            <div className="bg-white rounded-xl p-6 border border-amber-100 text-center">
-              <div className="text-3xl mb-3 font-bold text-blue-600">Data</div>
-              <h3 className="font-bold text-gray-900 mb-2">Visual Analytics</h3>
-              <p className="text-gray-600 text-sm">Interactive charts and progress bars make it easy to spot strengths and weaknesses at a glance.</p>
-            </div>
-            <div className="bg-white rounded-xl p-6 border border-amber-100 text-center">
-              <div className="text-3xl mb-3 font-bold text-amber-600">AI</div>
-              <h3 className="font-bold text-gray-900 mb-2">AI Insights</h3>
-              <p className="text-gray-600 text-sm">Get smart recommendations on which channel strategy performs better and why.</p>
-            </div>
-          </div>
-          <div className="text-center">
-            <Link href="/compare-new" className="inline-flex items-center justify-center px-8 py-4 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-colors shadow-lg shadow-amber-200 text-lg">
-              Start Comparing
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== EXAMPLE OUTPUT ===== */}
-      <section className="bg-gradient-to-b from-gray-50 to-white border-y border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Example Output</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              See what detailed analytics look like when you analyze a YouTube channel
-            </p>
-          </div>
-
-          {/* Example Channel Card */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-8">
-            {/* Channel Header */}
-            <div className="p-6 sm:p-8 border-b border-gray-100">
-              <div className="flex items-start gap-4 sm:gap-6">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
-                  MR
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">MrBeast</h3>
-                  <p className="text-gray-500 text-sm mb-2 line-clamp-1">SUBSCRIBE FOR A FREE CAR!</p>
-                  <a href="#" className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 text-sm font-medium">
-                    View on YouTube
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Key Metrics */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-100">
-              <div className="bg-white p-5">
-                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Subscribers</div>
-                <div className="text-2xl font-bold text-gray-900">335M</div>
-                <div className="text-xs text-green-600 mt-1">Total subscribers</div>
-              </div>
-              <div className="bg-white p-5">
-                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Views</div>
-                <div className="text-2xl font-bold text-gray-900">65.2B</div>
-                <div className="text-xs text-blue-600 mt-1">Lifetime views</div>
-              </div>
-              <div className="bg-white p-5">
-                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Videos</div>
-                <div className="text-2xl font-bold text-gray-900">835</div>
-                <div className="text-xs text-purple-600 mt-1">Published</div>
-              </div>
-              <div className="bg-white p-5">
-                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Avg Views</div>
-                <div className="text-2xl font-bold text-gray-900">78M</div>
-                <div className="text-xs text-orange-600 mt-1">Per video</div>
-              </div>
-            </div>
-          </div>
-
-          {/* AI Insights Preview */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="bg-green-50 rounded-xl p-5 border border-green-200">
-              <div className="flex items-start gap-3">
-                <div className="text-sm font-bold text-green-700">Viral</div>
-                <div>
-                  <div className="font-bold text-gray-900 mb-1">Viral Content Producer</div>
-                  <div className="text-sm text-gray-600">156 videos with 1M+ views demonstrate viral potential.</div>
-                </div>
-              </div>
-            </div>
-            <div className="bg-red-50 rounded-xl p-5 border border-red-200">
-              <div className="flex items-start gap-3">
-                <div className="text-sm font-bold text-red-700">Hot</div>
-                <div>
-                  <div className="font-bold text-gray-900 mb-1">Exceptional Engagement</div>
-                  <div className="text-sm text-gray-600">Engagement rate of 8.5% is well above YouTube average.</div>
-                </div>
-              </div>
-            </div>
-            <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
-              <div className="flex items-start gap-3">
-                <div className="text-2xl">Fast</div>
-                <div>
-                  <div className="font-bold text-gray-900 mb-1">Consistent Upload</div>
-                  <div className="text-sm text-gray-600">Publishing 2 videos/week shows dedication.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="mt-10 text-center">
-            <Link href="/youtube-channel-analytics" className="inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors">
-              Analyze Your Channel
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== WHO SHOULD START WHERE ===== */}
-      <section className="bg-white border-y border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 text-center">Choose The Fastest Path</h2>
-          <p className="text-gray-600 text-center mb-10 max-w-2xl mx-auto">
-            Most users do not need every feature. Start from the workflow that matches the decision you need to make today.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
-              <div className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">For creators</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Improve your next upload</h3>
-              <p className="text-sm text-gray-600 mb-4">Start with video or channel analysis if you want to understand what worked, what underperformed, and what to test next.</p>
-              <div className="flex gap-2">
-                <Link href="/youtube-channel-analytics" className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">Analyze Channel</Link>
-                <Link href="/ai-assistant" className="px-4 py-2 bg-white text-gray-900 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">Get Ideas</Link>
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
-              <div className="text-xs font-bold uppercase tracking-wider text-red-600 mb-2">For trend hunters</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Find momentum before it peaks</h3>
-              <p className="text-sm text-gray-600 mb-4">Use trending and trend database views when your main question is what is rising right now and where the next content gap is.</p>
-              <div className="flex gap-2">
-                <Link href="/trending" className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">See Trending</Link>
-                <Link href="/trends" className="px-4 py-2 bg-white text-gray-900 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">Open Database</Link>
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
-              <div className="text-xs font-bold uppercase tracking-wider text-amber-600 mb-2">For competitor research</div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Benchmark before you copy</h3>
-              <p className="text-sm text-gray-600 mb-4">Use compare when you already have two channels or videos in mind and need a faster conclusion on who is actually worth studying.</p>
-              <div className="flex gap-2">
-                <Link href="/compare-new" className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">Start Comparing</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-
-      {/* ===== QUICK START SUMMARY ===== */}
-      <section className="bg-white border-y border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            <div className="lg:col-span-2">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">What You Get In 60 Seconds</h2>
-              <p className="text-gray-600 mb-6 max-w-2xl">
-                Tubefission helps you answer three practical questions fast: what worked, what is rising, and who is actually worth benchmarking.
-              </p>
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
-                  <div className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Analyze</div>
-                  <div className="font-semibold text-gray-900 mb-1">Why something worked</div>
-                  <p className="text-sm text-gray-600">See title, engagement, timing, and performance signals in one place.</p>
-                </div>
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
-                  <div className="text-xs font-bold uppercase tracking-wider text-red-600 mb-2">Discover</div>
-                  <div className="font-semibold text-gray-900 mb-1">What is rising now</div>
-                  <p className="text-sm text-gray-600">Track breakout topics and video momentum before the niche gets crowded.</p>
-                </div>
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
-                  <div className="text-xs font-bold uppercase tracking-wider text-amber-600 mb-2">Compare</div>
-                  <div className="font-semibold text-gray-900 mb-1">Who is the better model</div>
-                  <p className="text-sm text-gray-600">Separate raw size from repeatable strategy before you copy a competitor.</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5">
-              <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Best pages to start with</div>
-              <div className="space-y-3 text-sm">
-                <Link href="/youtube-channel-analytics" className="block rounded-lg border border-gray-200 bg-white px-4 py-3 hover:border-gray-300 hover:bg-gray-50 transition">
-                  <div className="font-semibold text-gray-900">Channel Analytics</div>
-                  <div className="text-gray-500">Best for diagnosing your channel or a competitor channel</div>
-                </Link>
-                <Link href="/trending" className="block rounded-lg border border-gray-200 bg-white px-4 py-3 hover:border-gray-300 hover:bg-gray-50 transition">
-                  <div className="font-semibold text-gray-900">Trending</div>
-                  <div className="text-gray-500">Best for fast-moving opportunities and what is taking off</div>
-                </Link>
-                <Link href="/compare-new" className="block rounded-lg border border-gray-200 bg-white px-4 py-3 hover:border-gray-300 hover:bg-gray-50 transition">
-                  <div className="font-semibold text-gray-900">Compare</div>
-                  <div className="text-gray-500">Best when you already have two channels or videos to benchmark</div>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== LONG-FORM CONTENT ===== */}
-      <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center border-b border-gray-100 mb-10">
-          <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Prefer to read first?</div>
-          <p className="text-sm text-gray-600">
-            The detailed product explanation below is for users who want a deeper understanding of how TubeFission works. If you are ready to act, use the quick-start sections above.
-          </p>
-        </div>
-
-
+      {/* ===== SEO CONTENT ===== */}
+      <article className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+        <details className="group rounded-2xl border border-gray-200 bg-gray-50 p-5">
+          <summary className="cursor-pointer list-none text-sm font-black uppercase tracking-wider text-gray-700">
+            SEO notes and product details
+            <span className="float-right text-gray-400 group-open:hidden">Show</span>
+            <span className="float-right hidden text-gray-400 group-open:inline">Hide</span>
+          </summary>
+          <div className="mt-6 border-t border-gray-200 pt-6">
         <p className="text-gray-700 leading-relaxed mb-6">
           Tubefission is a free <strong>AI-powered YouTube analytics platform</strong> designed for creators, marketers, and researchers who want data-driven insights into YouTube performance and trends. Whether you need to analyze a competitor channel, study viral content patterns, or discover trending topics before they peak, Tubefission gives you the intelligence to make informed decisions.
         </p>
@@ -537,20 +325,28 @@ export default function HomePage() {
             Analyze Channel
           </Link>
         </div>
+          </div>
+        </details>
       </article>
 
       {/* ===== FAQ SECTION ===== */}
-      <section className="bg-gray-50 border-y border-gray-200">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-          <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">Frequently Asked Questions</h2>
-          <div className="space-y-6">
+      <section className="bg-white border-y border-gray-200">
+        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+          <details className="group rounded-2xl border border-gray-200 bg-white p-5">
+            <summary className="cursor-pointer list-none text-sm font-black uppercase tracking-wider text-gray-700">
+              Frequently asked questions
+              <span className="float-right text-gray-400 group-open:hidden">Show</span>
+              <span className="float-right hidden text-gray-400 group-open:inline">Hide</span>
+            </summary>
+            <div className="mt-5 space-y-3">
             {FAQ_ITEMS.map((item, i) => (
-              <div key={i} className="bg-white rounded-lg border border-gray-200 p-6">
+              <div key={i} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <h3 className="font-semibold text-gray-900 mb-2">{item.question}</h3>
-                <p className="text-gray-600 leading-relaxed">{item.answer}</p>
+                <p className="text-sm leading-relaxed text-gray-600">{item.answer}</p>
               </div>
             ))}
-          </div>
+            </div>
+          </details>
         </div>
       </section>
 
@@ -559,7 +355,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <p className="text-sm text-gray-600 flex-1 text-center sm:text-left">
-              Start with a URL if you want diagnosis, or jump into compare/trending if you already know the decision you need to make.
+              Paste a URL, or jump straight to compare.
             </p>
             <div className="flex w-full sm:w-auto gap-2">
               <Link
