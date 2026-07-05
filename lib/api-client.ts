@@ -35,6 +35,7 @@ interface FetchTrendingOptions {
 
 const DEFAULT_TRENDING_RETRIES = 0
 const DEFAULT_TRENDING_TIMEOUT_MS = 4000
+const DEFAULT_SEARCH_TIMEOUT_MS = 2500
 
 export async function fetchTrendingVideos(region = 'US', maxResults = 50, options: FetchTrendingOptions = {}): Promise<YouTubeVideo[]> {
   if (IS_PRODUCTION_BUILD) {
@@ -446,7 +447,7 @@ export async function searchYouTube(query: string, maxResults = 25, order: 'rele
       next: { revalidate: 1800 },
       quotaUnits: 100, // search.list costs 100 units
       retries: 0,
-      timeoutMs: DEFAULT_TRENDING_TIMEOUT_MS,
+      timeoutMs: DEFAULT_SEARCH_TIMEOUT_MS,
     })
 
     if (!res.ok) return filterFallbackVideos(query, maxResults)
@@ -466,7 +467,7 @@ export async function searchYouTube(query: string, maxResults = 25, order: 'rele
       next: { revalidate: 1800 },
       quotaUnits: 1,
       retries: 0,
-      timeoutMs: DEFAULT_TRENDING_TIMEOUT_MS,
+      timeoutMs: DEFAULT_SEARCH_TIMEOUT_MS,
     })
 
     if (!statsRes.ok) {

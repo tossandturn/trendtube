@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { fetchTrendingVideos } from '@/lib/api-client'
+import { fetchTrendingVideos, searchYouTube, type YouTubeVideo } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate, getTagColor, getTagEmoji } from '@/lib/analytics'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
@@ -374,38 +374,128 @@ function formatNumber(n: string | undefined) {
   return num.toLocaleString()
 }
 
+const TREND_RELEVANCE_STOP_WORDS = new Set([
+  'the', 'and', 'for', 'with', 'from', 'this', 'that', 'your', 'you', 'are',
+  'video', 'videos', 'youtube', 'short', 'shorts', 'trend', 'trends', 'viral',
+  'content', 'creator', 'creators', 'guide', 'latest', 'best', 'new', '2026',
+])
+
+function normalizeTrendKeyword(keyword: string) {
+  return keyword.replace(/-/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function trendTitleBase(title: string) {
+  return title.replace(/\btrends?\b|\b2026\b/gi, '').replace(/\s+/g, ' ').trim()
+}
+
+function buildTrendSearchQuery(keyword: string, title: string) {
+  const normalized = normalizeTrendKeyword(keyword)
+  const titleBase = trendTitleBase(title)
+  return normalized.length > 2 ? normalized : titleBase
+}
+
+function mergeUniqueVideos(...videoLists: YouTubeVideo[][]) {
+  const seen = new Set<string>()
+  const merged: YouTubeVideo[] = []
+
+  for (const videos of videoLists) {
+    for (const video of videos) {
+      if (!video?.id || seen.has(video.id)) continue
+      seen.add(video.id)
+      merged.push(video)
+    }
+  }
+
+  return merged
+}
+
+function getTrendTerms(keyword: string, title: string) {
+  const rawTerms = `${normalizeTrendKeyword(keyword)} ${trendTitleBase(title)}`
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .map((term) => term.trim())
+    .filter(Boolean)
+
+  return Array.from(new Set(rawTerms.filter((term) => {
+    if (term === 'ai') return true
+    return term.length > 2 && !TREND_RELEVANCE_STOP_WORDS.has(term)
+  })))
+}
+
+function textContainsTerm(text: string, term: string) {
+  if (term.length <= 2) {
+    return new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text)
+  }
+
+  return text.includes(term)
+}
+
+function getTrendRelevanceScore(video: YouTubeVideo, keyword: string, title: string) {
+  const normalizedKeyword = normalizeTrendKeyword(keyword).toLowerCase()
+  const titleBase = trendTitleBase(title).toLowerCase()
+  const terms = getTrendTerms(keyword, title)
+  const text = [
+    video.snippet?.title || '',
+    video.snippet?.description || '',
+    video.snippet?.channelTitle || '',
+  ].join(' ').toLowerCase()
+
+  let score = 0
+  if (normalizedKeyword.length > 2 && text.includes(normalizedKeyword)) score += 12
+  if (titleBase.length > 2 && titleBase !== normalizedKeyword && text.includes(titleBase)) score += 8
+
+  for (const term of terms) {
+    if (textContainsTerm(text, term)) score += term.length <= 3 ? 2 : 4
+  }
+
+  if (keyword.includes('gaming') || keyword.includes('game')) {
+    const gamingKeywords = ['gaming', 'minecraft', 'gta', 'fortnite', 'game', 'speedrun', 'walkthrough', 'gameplay', 'valorant', 'roblox', 'call of duty', 'esports', 'nintendo', 'playstation', 'xbox', 'steam', 'twitch', 'mobile game', 'rpg', 'fps', 'mmo']
+    if (!gamingKeywords.some((term) => text.includes(term))) return 0
+    score += 4
+  }
+
+  if (keyword.includes('ai') || keyword.includes('chatgpt') || keyword.includes('artificial-intelligence') || keyword.includes('midjourney') || keyword.includes('openai')) {
+    const aiKeywords = ['ai', 'artificial intelligence', 'chatgpt', 'gpt', 'openai', 'claude', 'midjourney', 'dall-e', 'stable diffusion', 'llm', 'machine learning', 'neural network', 'automation', 'bard', 'copilot']
+    if (!aiKeywords.some((term) => textContainsTerm(text, term))) return 0
+    score += 4
+  }
+
+  return score
+}
+
+function selectTrendSpecificVideos(searchVideos: YouTubeVideo[], regionalVideos: YouTubeVideo[], keyword: string, title: string) {
+  const searchIds = new Set(searchVideos.map((video) => video.id))
+  const candidates = mergeUniqueVideos(searchVideos, regionalVideos)
+
+  const ranked = candidates
+    .map((video) => {
+      const relevanceScore = getTrendRelevanceScore(video, keyword, title)
+      const searchBoost = searchIds.has(video.id) ? 6 : 0
+      const views = Number(video.statistics?.viewCount || 0)
+      return { video, score: relevanceScore + searchBoost, relevanceScore, views }
+    })
+    .filter((item) => item.relevanceScore > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      return b.views - a.views
+    })
+    .map((item) => item.video)
+
+  return ranked.slice(0, 24)
+}
+
 export default async function TrendPage({ params }: TrendPageProps) {
   const { keyword } = await params
   const trendData = TREND_KNOWLEDGE[keyword] || generateTrendData(keyword)
 
   const region = await getRegion()
-  const videos = await fetchTrendingVideos(region, 50)
+  const searchQuery = buildTrendSearchQuery(keyword, trendData.title)
+  const [videos, searchVideos] = await Promise.all([
+    fetchTrendingVideos(region, 50),
+    searchYouTube(searchQuery, 24, 'relevance'),
+  ])
 
-  // Filter videos relevant to this trend
-  const relevantVideos = videos.filter((v: any) => {
-    const text = `${v.snippet?.title || ''} ${v.snippet?.description || ''}`.toLowerCase()
-    const keywordParts = keyword.split('-')
-    const matchesKeyword = keywordParts.some((part: string) => text.includes(part))
-
-    // For gaming-related trends, ensure video is actually gaming content
-    if (keyword.includes('gaming') || keyword.includes('game')) {
-      const gamingKeywords = ['gaming', 'minecraft', 'gta', 'fortnite', 'game', 'speedrun', 'walkthrough', 'gameplay', 'valorant', 'roblox', 'call of duty', 'esports', 'nintendo', 'playstation', 'xbox', 'steam', 'twitch', 'mobile game', 'rpg', 'fps', 'mmo']
-      const isGamingContent = gamingKeywords.some((k: string) => text.includes(k))
-      return matchesKeyword && isGamingContent
-    }
-
-    // For AI-related trends, ensure video is actually AI content
-    if (keyword.includes('ai') || keyword.includes('chatgpt') || keyword.includes('artificial-intelligence') || keyword.includes('midjourney') || keyword.includes('openai')) {
-      const aiKeywords = ['ai', 'artificial intelligence', 'chatgpt', 'gpt', 'openai', 'claude', 'midjourney', 'dall-e', 'stable diffusion', 'llm', 'machine learning', 'neural network', 'automation', 'bard', 'copilot']
-      const isAiContent = aiKeywords.some((k: string) => text.includes(k))
-      return matchesKeyword && isAiContent
-    }
-
-    return matchesKeyword
-  }).slice(0, 24)
-
-  // Use top videos if no direct matches
-  const displayVideos = relevantVideos.length > 0 ? relevantVideos : videos.slice(0, 24)
+  const displayVideos = selectTrendSpecificVideos(searchVideos, videos, keyword, trendData.title)
 
   // Generate daily recommendations for this trend
   const dailyRecommendations = generateDailyRecommendations(displayVideos, region, 3)
