@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { getViewVelocity, getEngagementRate, getTagEmoji } from '@/lib/analytics'
-import { fetchTrendingVideos } from '@/lib/api-client'
+import { fetchTrendingVideos, type YouTubeVideo } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getRegionLabels, REGION_META } from '@/lib/region'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
@@ -26,7 +27,7 @@ function formatNumber(n: string | undefined) {
   return num.toLocaleString()
 }
 
-function calculateViralityScore(video: any): number {
+function calculateViralityScore(video: YouTubeVideo): number {
   const views = Number(video.statistics?.viewCount || 0)
   const likes = Number(video.statistics?.likeCount || 0)
   const comments = Number(video.statistics?.commentCount || 0)
@@ -56,25 +57,26 @@ function getDecisionHint(score: number, engagement: number) {
 export default async function TrendingPage() {
   const region = await getRegion()
   const labels = getRegionLabels(region)
-  const videos = await fetchTrendingVideos(region, 50)
+  const videos = await fetchTrendingVideos(region, 30, { retries: 0, timeoutMs: 3500 })
 
-  const sorted = [...videos].sort((a: any, b: any) =>
+  const sorted = [...videos].sort((a, b) =>
     Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0)
   )
 
-  const dailyRecommendations = generateDailyRecommendations(sorted.slice(0, 30), region, 5)
+  const visibleVideos = sorted.slice(0, 18)
+  const dailyRecommendations = generateDailyRecommendations(sorted.slice(0, 12), region, 4)
   const regionalPrefs = REGIONAL_PREFERENCES[region] || REGIONAL_PREFERENCES.US
 
-  const totalViews = sorted.reduce((sum: number, v: any) => sum + Number(v.statistics?.viewCount || 0), 0)
+  const totalViews = sorted.reduce((sum, v) => sum + Number(v.statistics?.viewCount || 0), 0)
   const avgEngagement = sorted.length > 0
-    ? sorted.reduce((sum: number, v: any) => sum + getEngagementRate(v), 0) / sorted.length
+    ? sorted.reduce((sum, v) => sum + getEngagementRate(v), 0) / sorted.length
     : 0
   const avgVelocity = sorted.length > 0
-    ? sorted.reduce((sum: number, v: any) => sum + getViewVelocity(v), 0) / sorted.length
+    ? sorted.reduce((sum, v) => sum + getViewVelocity(v), 0) / sorted.length
     : 0
 
-  const categoryMap = new Map()
-  sorted.forEach((v: any) => {
+  const categoryMap = new Map<string, number>()
+  sorted.forEach((v) => {
     const title = v.snippet?.title?.toLowerCase() || ''
     if (title.includes('ai') || title.includes('chatgpt')) categoryMap.set('AI', (categoryMap.get('AI') || 0) + 1)
     if (title.includes('shorts')) categoryMap.set('Shorts', (categoryMap.get('Shorts') || 0) + 1)
@@ -121,24 +123,24 @@ export default async function TrendingPage() {
 
         <section className="mb-12">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
               <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">🎬 VIDEOS TRACKED</div>
               <div className="text-2xl sm:text-3xl font-black data-mono text-glow text-gray-900">{sorted.length}</div>
               <div className="text-xs text-gray-500 mt-1">Live from {labels.full}</div>
             </div>
-            <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
               <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">👁️ TOTAL VIEWS</div>
               <div className="text-2xl sm:text-3xl font-black data-mono text-glow-red text-red-600">{formatNumber(totalViews.toString())}</div>
               <div className="text-xs text-green-600 mt-1">Across current leaders</div>
             </div>
-            <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
               <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">⚡ AVG VELOCITY</div>
               <div className="text-2xl sm:text-3xl font-black data-mono text-glow-green text-green-600">
                 {avgVelocity >= 1e6 ? (avgVelocity / 1e6).toFixed(1) + 'M' : avgVelocity >= 1e3 ? (avgVelocity / 1e3).toFixed(1) + 'K' : Math.round(avgVelocity)}
               </div>
               <div className="text-xs text-gray-500 mt-1">views/day</div>
             </div>
-            <div className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
               <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">📈 AVG ENGAGEMENT</div>
               <div className="text-2xl sm:text-3xl font-black data-mono text-glow-yellow text-yellow-600">{avgEngagement.toFixed(2)}%</div>
               <div className="text-xs text-gray-500 mt-1">likes + comments</div>
@@ -146,7 +148,7 @@ export default async function TrendingPage() {
           </div>
 
           <div className="grid lg:grid-cols-[1.3fr_0.7fr] gap-6 mb-8">
-            <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent border-gradient-to-r from-purple-500 via-pink-500 to-red-500">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🔥</span>
@@ -161,7 +163,7 @@ export default async function TrendingPage() {
                 const keywordCounts = new Map<string, { count: number; totalViews: number; velocity: number }>()
                 const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'between', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'should', 'now'])
 
-                sorted.forEach((v: any) => {
+                sorted.forEach((v) => {
                   const title = v.snippet?.title?.toLowerCase() || ''
                   const words = title.split(/\s+/).filter((w: string) => w.length > 3 && !stopWords.has(w) && !/^\d+$/.test(w))
                   const velocity = getViewVelocity(v)
@@ -213,7 +215,7 @@ export default async function TrendingPage() {
               })()}
             </div>
 
-            <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
               <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono mb-4">HOW TO USE THIS PAGE</h3>
               <div className="space-y-3 text-sm text-gray-600">
                 <p>1. Open videos with strong velocity and strong engagement first.</p>
@@ -224,7 +226,7 @@ export default async function TrendingPage() {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
-            <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">🏷️ CATEGORY DISTRIBUTION</h3>
                 <span className="text-[10px] text-gray-500 data-mono">by video count</span>
@@ -255,7 +257,7 @@ export default async function TrendingPage() {
               )}
             </div>
 
-            <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
               <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono mb-4">REGIONAL INTELLIGENCE</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
@@ -301,7 +303,7 @@ export default async function TrendingPage() {
                 .replace(/^-|-$/g, '') || 'trend'
 
               return (
-                <Link key={rec.id} href={`/trends/${trendKeyword}`} className="glass-panel neon-border rounded-2xl p-4 sm:p-5 glow-hover corner-accent group block hover:no-underline">
+                <Link key={rec.id} href={`/trends/${trendKeyword}`} className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 group block hover:border-purple-200 hover:no-underline">
                   <div className="flex items-center justify-between mb-3 gap-2">
                     <span className={`text-xs font-bold px-2 py-1 rounded ${
                       rec.potentialViews === 'viral' ? 'bg-red-100 text-red-600' :
@@ -351,7 +353,7 @@ export default async function TrendingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {sorted.map((video: any, idx: number) => {
+            {visibleVideos.map((video, idx) => {
               const velocity = getViewVelocity(video)
               const engagement = getEngagementRate(video)
               const viralityScore = calculateViralityScore(video)
@@ -359,16 +361,19 @@ export default async function TrendingPage() {
               const decisionHint = getDecisionHint(viralityScore, engagement)
 
               return (
-                <div key={video.id} className="glass-panel neon-border rounded-xl sm:rounded-2xl overflow-hidden glow-hover corner-accent">
+                <div key={video.id} className="glass-panel rounded-xl border border-gray-200 sm:rounded-2xl overflow-hidden">
                   <Link href={`/video/${video.id}`} className="group block">
                     <div className="relative aspect-video overflow-hidden">
-                      <img
-                        src={video.snippet?.thumbnails?.high?.url}
-                        alt={video.snippet?.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      <Image
+                        src={video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`}
+                        alt={video.snippet?.title || 'Trending YouTube video thumbnail'}
+                        fill
+                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        unoptimized
+                        className="object-cover"
                         loading="lazy"
                       />
-                      <div className="absolute top-2 left-2 bg-red-500/20 border border-red-500/30 text-red-600 px-2.5 py-1 rounded-lg text-[10px] font-bold backdrop-blur data-mono">
+                      <div className="absolute top-2 left-2 bg-red-50/95 border border-red-100 text-red-600 px-2.5 py-1 rounded-lg text-[10px] font-bold data-mono">
                         #{idx + 1} TRENDING
                       </div>
                       <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-lg text-[10px] font-bold">
@@ -400,13 +405,13 @@ export default async function TrendingPage() {
                       <span className="truncate">{video.snippet?.channelTitle}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 mb-3">
-                      <div className="glass-panel rounded-lg p-2 text-center">
+                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-2 text-center">
                         <div className="text-gray-500 text-[10px] data-mono tracking-wider">⚡ VELOCITY</div>
                         <div className="text-green-600 font-bold text-xs data-mono text-glow-green">
                           {velocity >= 1e6 ? (velocity / 1e6).toFixed(1) + 'M/d' : velocity >= 1e3 ? (velocity / 1e3).toFixed(1) + 'K/d' : Math.round(velocity) + '/d'}
                         </div>
                       </div>
-                      <div className="glass-panel rounded-lg p-2 text-center">
+                      <div className="rounded-lg border border-gray-100 bg-gray-50 p-2 text-center">
                         <div className="text-gray-500 text-[10px] data-mono tracking-wider">📈 ENGAGEMENT</div>
                         <div className="text-yellow-600 font-bold text-xs data-mono text-glow-yellow">{engagement.toFixed(2)}%</div>
                       </div>
@@ -422,6 +427,12 @@ export default async function TrendingPage() {
               )
             })}
           </div>
+          {sorted.length > visibleVideos.length && (
+            <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 text-center text-sm text-gray-600">
+              Showing the top {visibleVideos.length} videos for faster browsing. Open the Trend Database for the full research list.
+              <Link href="/trends" className="ml-2 font-bold text-red-600 hover:text-red-700">Open Trend Database</Link>
+            </div>
+          )}
         </section>
       </div>
     </main>

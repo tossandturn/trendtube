@@ -5,6 +5,7 @@
 export interface FetchOptions extends RequestInit {
   quotaUnits?: number
   retries?: number
+  timeoutMs?: number
 }
 
 /* ---- Enhanced fetch with monitoring (client-safe) ---- */
@@ -12,13 +13,33 @@ export async function monitoredFetch(
   url: string,
   options?: FetchOptions
 ): Promise<Response> {
-  const { retries = 2, ...fetchOptions } = options || {}
+  const { retries = 2, timeoutMs, ...fetchOptions } = options || {}
   const start = Date.now()
   let lastError: Error | undefined
 
   for (let attempt = 0; attempt <= retries; attempt++) {
+    const timeoutController = timeoutMs ? new AbortController() : undefined
+    const upstreamSignal = fetchOptions.signal
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    let removeUpstreamAbort: (() => void) | undefined
+
+    if (timeoutController) {
+      timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs)
+
+      if (upstreamSignal?.aborted) {
+        timeoutController.abort()
+      } else if (upstreamSignal) {
+        const onAbort = () => timeoutController.abort()
+        upstreamSignal.addEventListener('abort', onAbort, { once: true })
+        removeUpstreamAbort = () => upstreamSignal.removeEventListener('abort', onAbort)
+      }
+    }
+
     try {
-      const res = await fetch(url, fetchOptions)
+      const res = await fetch(url, {
+        ...fetchOptions,
+        signal: timeoutController?.signal || upstreamSignal,
+      })
       const latency = Date.now() - start
 
       if (!res.ok) {
@@ -41,6 +62,9 @@ export async function monitoredFetch(
       if (attempt < retries) {
         await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)))
       }
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId)
+      removeUpstreamAbort?.()
     }
   }
 

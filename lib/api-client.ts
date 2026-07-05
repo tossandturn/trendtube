@@ -2,9 +2,10 @@
    YOUTUBE API CLIENT — Resilient, monitored, with fallback
 ========================================================= */
 
-import { monitoredFetch, trackQuotaUsage, sendAlert } from './monitored-fetch'
+import { monitoredFetch, sendAlert } from './monitored-fetch'
 
 const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
+const IS_PRODUCTION_BUILD = process.env.NEXT_PHASE === 'phase-production-build'
 
 export interface YouTubeVideo {
   id: string
@@ -27,15 +28,27 @@ export interface YouTubeVideo {
 }
 
 /* ---- Fetch trending videos with full resilience ---- */
-export async function fetchTrendingVideos(region = 'US', maxResults = 50): Promise<YouTubeVideo[]> {
+interface FetchTrendingOptions {
+  retries?: number
+  timeoutMs?: number
+}
+
+const DEFAULT_TRENDING_RETRIES = 0
+const DEFAULT_TRENDING_TIMEOUT_MS = 4000
+
+export async function fetchTrendingVideos(region = 'US', maxResults = 50, options: FetchTrendingOptions = {}): Promise<YouTubeVideo[]> {
+  if (IS_PRODUCTION_BUILD) {
+    return loadFallbackVideos(region)
+  }
+
   if (!API_KEY) {
     console.error('YouTube API Key is missing')
-    return []
+    return loadFallbackVideos(region)
   }
 
   // Handle GLOBAL region - fetch from multiple major regions and merge
   if (region === 'GLOBAL') {
-    return fetchGlobalTrendingVideos(maxResults)
+    return fetchGlobalTrendingVideos(maxResults, options)
   }
 
   const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=${maxResults}&regionCode=${region}&key=${API_KEY}`
@@ -44,7 +57,8 @@ export async function fetchTrendingVideos(region = 'US', maxResults = 50): Promi
     const res = await monitoredFetch(url, {
       next: { revalidate: 3600 },
       quotaUnits: Math.ceil(maxResults / 50) * 1, // videos.list costs 1 unit per 50 items
-      retries: 2,
+      retries: options.retries ?? DEFAULT_TRENDING_RETRIES,
+      timeoutMs: options.timeoutMs ?? DEFAULT_TRENDING_TIMEOUT_MS,
     })
 
     if (!res.ok) {
@@ -80,7 +94,7 @@ export async function fetchTrendingVideos(region = 'US', maxResults = 50): Promi
 }
 
 /* ---- Fetch global trending videos from multiple regions ---- */
-async function fetchGlobalTrendingVideos(maxResults = 50): Promise<YouTubeVideo[]> {
+async function fetchGlobalTrendingVideos(maxResults = 50, options: FetchTrendingOptions = {}): Promise<YouTubeVideo[]> {
   // Fetch from major regions and merge results
   const majorRegions = ['US', 'GB', 'JP', 'KR', 'DE', 'FR', 'IN', 'BR', 'AU', 'CA', 'MX', 'ES', 'IT', 'NL', 'SE']
   const allVideos: YouTubeVideo[] = []
@@ -100,7 +114,8 @@ async function fetchGlobalTrendingVideos(maxResults = 50): Promise<YouTubeVideo[
         const res = await monitoredFetch(url, {
           next: { revalidate: 3600 },
           quotaUnits: 1,
-          retries: 1,
+          retries: options.retries ?? DEFAULT_TRENDING_RETRIES,
+          timeoutMs: options.timeoutMs ?? DEFAULT_TRENDING_TIMEOUT_MS,
         })
 
         if (!res.ok) {
@@ -168,6 +183,64 @@ export async function fetchVideoById(id: string): Promise<YouTubeVideo | null> {
   }
 }
 
+interface YouTubeThumbnail {
+  url: string
+  width?: number
+  height?: number
+}
+
+export interface YouTubeChannel {
+  id: string
+  snippet?: {
+    title?: string
+    description?: string
+    customUrl?: string
+    publishedAt?: string
+    categoryId?: string
+    country?: string
+    thumbnails?: {
+      default?: YouTubeThumbnail
+      medium?: YouTubeThumbnail
+      high?: YouTubeThumbnail
+    }
+    localized?: {
+      title?: string
+      description?: string
+    }
+  }
+  statistics?: {
+    viewCount?: string
+    subscriberCount?: string
+    hiddenSubscriberCount?: boolean
+    videoCount?: string
+  }
+  brandingSettings?: {
+    channel?: {
+      title?: string
+      description?: string
+      keywords?: string
+      country?: string
+      unsubscribedTrailer?: string
+    }
+    image?: {
+      bannerExternalUrl?: string
+    }
+  }
+  contentDetails?: {
+    relatedPlaylists?: {
+      likes?: string
+      uploads?: string
+    }
+  }
+}
+
+interface YouTubeSearchItem {
+  id?: {
+    videoId?: string
+  }
+  snippet?: YouTubeVideo['snippet']
+}
+
 /* ---- Fetch related/popular videos (used on video detail page) ---- */
 export async function fetchRelatedVideos(region = 'US', maxResults = 12): Promise<YouTubeVideo[]> {
   return fetchTrendingVideos(region, maxResults)
@@ -181,12 +254,14 @@ async function loadFallbackVideos(region: string): Promise<YouTubeVideo[]> {
     const last = history[history.length - 1]
 
     if (last && last.videos.length > 0) {
-      await sendAlert({
-        level: 'info',
-        source: 'Fallback',
-        message: `Serving stale data from ${last.date} for region ${region}`,
-        timestamp: new Date().toISOString(),
-      })
+      if (!IS_PRODUCTION_BUILD) {
+        await sendAlert({
+          level: 'info',
+          source: 'Fallback',
+          message: `Serving stale data from ${last.date} for region ${region}`,
+          timestamp: new Date().toISOString(),
+        })
+      }
 
       return last.videos.map((v) => ({
         id: v.id,
@@ -216,7 +291,7 @@ async function loadFallbackVideoById(id: string): Promise<YouTubeVideo | null> {
 }
 
 /* ---- Fetch channel by ID or Handle ---- */
-export async function fetchChannelById(channelId: string): Promise<any | null> {
+export async function fetchChannelById(channelId: string): Promise<YouTubeChannel | null> {
   if (!API_KEY) return null
 
   // Decode URL-encoded characters (e.g., %40 -> @)
@@ -235,7 +310,7 @@ export async function fetchChannelById(channelId: string): Promise<any | null> {
     })
 
     if (!res.ok) return null
-    const data = await res.json()
+    const data = await res.json() as { items?: YouTubeChannel[] }
     return data.items?.[0] || null
   } catch {
     return null
@@ -269,8 +344,10 @@ export async function fetchChannelVideos(channelId: string, maxResults = 50): Pr
 
     if (!searchRes.ok) return []
 
-    const searchData = await searchRes.json()
-    const videoIds = searchData.items?.map((item: any) => item.id?.videoId).filter(Boolean)
+    const searchData = await searchRes.json() as { items?: YouTubeSearchItem[] }
+    const videoIds = searchData.items
+      ?.map((item) => item.id?.videoId)
+      .filter((id): id is string => Boolean(id))
 
     if (!videoIds || videoIds.length === 0) return []
 
@@ -292,7 +369,7 @@ export async function fetchChannelVideos(channelId: string, maxResults = 50): Pr
 }
 
 /* ---- Fetch channel by username/custom URL ---- */
-export async function fetchChannelByUsername(username: string): Promise<any | null> {
+export async function fetchChannelByUsername(username: string): Promise<YouTubeChannel | null> {
   if (!API_KEY) return null
 
   const url = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings&forUsername=${username}&key=${API_KEY}`
@@ -305,7 +382,7 @@ export async function fetchChannelByUsername(username: string): Promise<any | nu
     })
 
     if (!res.ok) return null
-    const data = await res.json()
+    const data = await res.json() as { items?: YouTubeChannel[] }
     return data.items?.[0] || null
   } catch {
     return null
@@ -356,7 +433,11 @@ export async function fetchVideoComments(videoId: string, maxResults = 100): Pro
 
 /* ---- Search YouTube by keyword ---- */
 export async function searchYouTube(query: string, maxResults = 25, order: 'relevance' | 'viewCount' | 'date' = 'relevance'): Promise<YouTubeVideo[]> {
-  if (!API_KEY) return []
+  if (IS_PRODUCTION_BUILD) {
+    return filterFallbackVideos(query, maxResults)
+  }
+
+  if (!API_KEY) return filterFallbackVideos(query, maxResults)
 
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=${maxResults}&order=${order}&key=${API_KEY}`
 
@@ -364,29 +445,33 @@ export async function searchYouTube(query: string, maxResults = 25, order: 'rele
     const res = await monitoredFetch(url, {
       next: { revalidate: 1800 },
       quotaUnits: 100, // search.list costs 100 units
-      retries: 2,
+      retries: 0,
+      timeoutMs: DEFAULT_TRENDING_TIMEOUT_MS,
     })
 
-    if (!res.ok) return []
-    const data = await res.json()
+    if (!res.ok) return filterFallbackVideos(query, maxResults)
+    const data = await res.json() as { items?: YouTubeSearchItem[] }
     const items = data.items || []
 
     if (items.length === 0) return []
 
     // Fetch statistics for found videos
-    const videoIds = items.map((item: any) => item.id?.videoId).filter(Boolean)
+    const videoIds = items
+      .map((item) => item.id?.videoId)
+      .filter((id): id is string => Boolean(id))
     if (videoIds.length === 0) return []
 
     const statsUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds.join(',')}&key=${API_KEY}`
     const statsRes = await monitoredFetch(statsUrl, {
       next: { revalidate: 1800 },
       quotaUnits: 1,
-      retries: 2,
+      retries: 0,
+      timeoutMs: DEFAULT_TRENDING_TIMEOUT_MS,
     })
 
     if (!statsRes.ok) {
       // Return search results without stats
-      return items.map((item: any) => ({
+      return items.map((item) => ({
         id: item.id?.videoId || '',
         snippet: item.snippet,
         statistics: {},
@@ -396,8 +481,26 @@ export async function searchYouTube(query: string, maxResults = 25, order: 'rele
     const statsData = await statsRes.json()
     return statsData.items || []
   } catch {
-    return []
+    return filterFallbackVideos(query, maxResults)
   }
+}
+
+async function filterFallbackVideos(query: string, maxResults: number): Promise<YouTubeVideo[]> {
+  const videos = await loadFallbackVideos('search')
+  if (videos.length === 0) return []
+
+  const terms = query
+    .toLowerCase()
+    .split(/\s+/)
+    .map((term) => term.replace(/[^a-z0-9]/g, ''))
+    .filter((term) => term.length > 2)
+
+  const matches = videos.filter((video) => {
+    const text = `${video.snippet?.title || ''} ${video.snippet?.description || ''} ${video.snippet?.channelTitle || ''}`.toLowerCase()
+    return terms.some((term) => text.includes(term))
+  })
+
+  return (matches.length > 0 ? matches : videos).slice(0, maxResults)
 }
 
 /* ---- Batch search multiple keywords and deduplicate ---- */
