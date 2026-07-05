@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SoftwareApplicationSchema, FAQPageSchema, BreadcrumbSchema } from '@/app/components/JsonLd'
 import { AnalyzeHeroForm } from '@/app/components/AnalyzeHeroForm'
+import ProductValueWorkflow from '@/app/components/ProductValueWorkflow'
 
 export const metadata: Metadata = {
   title: 'YouTube AI Analytics & Trend Intelligence Platform | Tubefission',
@@ -126,6 +127,13 @@ export default function HomePage() {
               <div className="text-sm text-gray-700">The goal is not to summarize YouTube - it is to help creators decide what to test, what to copy, and what to ignore next.</div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ===== PRODUCT VALUE SCORE ===== */}
+      <section className="bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+          <ProductValueWorkflow />
         </div>
       </section>
 
