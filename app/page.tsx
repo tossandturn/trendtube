@@ -99,33 +99,33 @@ export default function HomePage() {
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xl shadow-gray-200/70">
             <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Live workflow</div>
-                <div className="text-lg font-black text-gray-950">Analyze / Compare / Track</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Decision workflow</div>
+                <div className="text-lg font-black text-gray-950">URL to next move</div>
               </div>
-              <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Ready</div>
+              <div className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">Core flow</div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3">
               {[
-                { label: 'Velocity', value: '4.2M/d', color: 'bg-red-500' },
-                { label: 'Engage', value: '6.8%', color: 'bg-amber-500' },
-                { label: 'Fit', value: 'A-', color: 'bg-emerald-500' },
+                { href: '/youtube-video-analyzer', step: '01', title: 'Analyze a URL', copy: 'Read performance, audience response, SEO, and content signals.' },
+                { href: '/compare-new?type=videos', step: '02', title: 'Compare winners', copy: 'Benchmark videos or channels before copying a strategy.' },
+                { href: '/workspace', step: '03', title: 'Track opportunity', copy: 'Save watchlists, alerts, history, and next content ideas.' },
               ].map((item) => (
-                <div key={item.label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                  <div className="text-xs font-bold uppercase tracking-wider text-gray-500">{item.label}</div>
-                  <div className="mt-2 text-2xl font-black text-gray-950">{item.value}</div>
-                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-200">
-                    <div className={`h-full w-4/5 rounded-full ${item.color}`} />
+                <Link key={item.step} href={item.href} className="group grid grid-cols-[44px_1fr] gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3 hover:border-red-200 hover:bg-red-50">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-sm font-black text-red-600 shadow-sm">{item.step}</div>
+                  <div>
+                    <div className="font-black text-gray-950 group-hover:text-red-600">{item.title}</div>
+                    <div className="mt-1 text-sm leading-relaxed text-gray-600">{item.copy}</div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-[1.25fr_0.75fr]">
               <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="text-sm font-bold text-gray-900">Next moves</span>
-                  <span className="text-xs font-bold text-red-600">3 actions</span>
+                  <span className="text-sm font-bold text-gray-900">Decision output</span>
+                  <span className="text-xs font-bold text-red-600">After analysis</span>
                 </div>
-                {['Tighten title promise', 'Compare against 2 winners', 'Save to watchlist'].map((item) => (
+                {['Content signal', 'Competitor benchmark', 'Saved next action'].map((item) => (
                   <div key={item} className="flex items-center gap-2 border-t border-gray-200 py-2 text-sm text-gray-700 first:border-t-0">
                     <span className="h-2 w-2 rounded-full bg-red-500" />
                     {item}
@@ -135,7 +135,7 @@ export default function HomePage() {
               <div className="rounded-xl bg-gray-950 p-4 text-white">
                 <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Advantage</div>
                 <div className="mt-2 text-3xl font-black">90</div>
-                <div className="mt-1 text-sm text-gray-300">Stronger than one-off analysis tools.</div>
+                <div className="mt-1 text-sm text-gray-300">Workflow beats one-off reports.</div>
               </div>
             </div>
           </div>
