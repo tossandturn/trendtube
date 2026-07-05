@@ -5,7 +5,7 @@ import { fetchTrendingVideos, searchYouTube, type YouTubeVideo } from '@/lib/api
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate, getTagColor, getTagEmoji } from '@/lib/analytics'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
-import { REGION_META } from '@/lib/region'
+import { REGION_META, type Region } from '@/lib/region'
 import TrendVideosGrid from '@/app/components/TrendVideosGrid'
 import { WordCloud } from '@/app/components/WordCloud'
 import PotentialVideoRanking from '@/app/components/PotentialVideoRanking'
@@ -314,8 +314,9 @@ export const TREND_KEYWORDS = [
 // Default trend data generator
 function generateTrendData(keyword: string) {
   const normalized = keyword.replace(/-/g, ' ')
+  const title = normalized.replace(/\b\w/g, (char) => char.toUpperCase())
   return {
-    title: `${normalized.charAt(0).toUpperCase() + normalized.slice(1)} Trends 2026`,
+    title: `${title} Trends 2026`,
     description: `Discover the latest trends in ${normalized}. Real-time analysis of what's working for creators right now.`,
     whyGrowing: `The ${normalized} space is experiencing significant growth due to changing viewer preferences and platform algorithm shifts. Early adopters are seeing exceptional results.`,
     audienceProfile: 'Mixed demographic with high engagement rates. Active community with strong sharing behavior.',
@@ -350,7 +351,7 @@ Content in this category is resonating with audiences due to its relevance and t
 export async function generateMetadata({ params }: TrendPageProps): Promise<Metadata> {
   const { keyword } = await params
   const trendData = TREND_KNOWLEDGE[keyword] || generateTrendData(keyword)
-  const region = await getRegion()
+  const region = getTrendAnalysisRegion(await getRegion())
   const regionLabel = REGION_META[region]?.label || region
   const today = new Date().toISOString().split('T')[0].replace(/-/g, '.')
 
@@ -372,6 +373,10 @@ function formatNumber(n: string | undefined) {
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + 'M'
   if (num >= 1_000) return (num / 1_000).toFixed(1) + 'K'
   return num.toLocaleString()
+}
+
+function getTrendAnalysisRegion(region: Region): Region {
+  return region === 'GLOBAL' ? 'US' : region
 }
 
 const TREND_RELEVANCE_STOP_WORDS = new Set([
@@ -416,10 +421,34 @@ function getTrendTerms(keyword: string, title: string) {
     .map((term) => term.trim())
     .filter(Boolean)
 
-  return Array.from(new Set(rawTerms.filter((term) => {
+  const baseTerms = rawTerms.filter((term) => {
     if (term === 'ai') return true
     return term.length > 2 && !TREND_RELEVANCE_STOP_WORDS.has(term)
-  })))
+  })
+
+  const expandedTerms: string[] = []
+  const joined = `${keyword} ${title}`.toLowerCase()
+
+  if (joined.includes('trailer') || joined.includes('teaser')) {
+    expandedTerms.push(
+      'trailer', 'teaser', 'movie', 'film', 'cinema', 'series', 'episode',
+      'season', 'official', 'breakdown', 'clues', 'netflix', 'crunchyroll',
+      'disney', 'universal', 'anime',
+    )
+  }
+
+  if (joined.includes('challenge')) {
+    expandedTerms.push(
+      'challenge', 'challenged', 'testing', 'test', 'try', 'tried', 'vs',
+      'survive', 'last', 'hide', 'seek', 'tournament', 'experiment',
+    )
+  }
+
+  if (joined.includes('reaction') || joined.includes('react')) {
+    expandedTerms.push('reaction', 'reacts', 'reacting', 'breakdown', 'review', 'analysis')
+  }
+
+  return Array.from(new Set([...baseTerms, ...expandedTerms]))
 }
 
 function textContainsTerm(text: string, term: string) {
@@ -428,6 +457,17 @@ function textContainsTerm(text: string, term: string) {
   }
 
   return text.includes(term)
+}
+
+function isAiTrendKeyword(keyword: string) {
+  const normalized = normalizeTrendKeyword(keyword).toLowerCase()
+  const terms = normalized.split(/[^a-z0-9]+/).filter(Boolean)
+
+  return terms.includes('ai')
+    || normalized.includes('chatgpt')
+    || normalized.includes('artificial intelligence')
+    || normalized.includes('midjourney')
+    || normalized.includes('openai')
 }
 
 function getTrendRelevanceScore(video: YouTubeVideo, keyword: string, title: string) {
@@ -454,7 +494,7 @@ function getTrendRelevanceScore(video: YouTubeVideo, keyword: string, title: str
     score += 4
   }
 
-  if (keyword.includes('ai') || keyword.includes('chatgpt') || keyword.includes('artificial-intelligence') || keyword.includes('midjourney') || keyword.includes('openai')) {
+  if (isAiTrendKeyword(keyword)) {
     const aiKeywords = ['ai', 'artificial intelligence', 'chatgpt', 'gpt', 'openai', 'claude', 'midjourney', 'dall-e', 'stable diffusion', 'llm', 'machine learning', 'neural network', 'automation', 'bard', 'copilot']
     if (!aiKeywords.some((term) => textContainsTerm(text, term))) return 0
     score += 4
@@ -488,10 +528,10 @@ export default async function TrendPage({ params }: TrendPageProps) {
   const { keyword } = await params
   const trendData = TREND_KNOWLEDGE[keyword] || generateTrendData(keyword)
 
-  const region = await getRegion()
+  const region = getTrendAnalysisRegion(await getRegion())
   const searchQuery = buildTrendSearchQuery(keyword, trendData.title)
   const [videos, searchVideos] = await Promise.all([
-    fetchTrendingVideos(region, 50),
+    fetchTrendingVideos(region, 50, { cache: 'no-store', timeoutMs: 3500 }),
     searchYouTube(searchQuery, 24, 'relevance'),
   ])
 

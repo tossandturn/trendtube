@@ -31,6 +31,8 @@ export interface YouTubeVideo {
 interface FetchTrendingOptions {
   retries?: number
   timeoutMs?: number
+  revalidateSeconds?: number
+  cache?: RequestCache
 }
 
 const DEFAULT_TRENDING_RETRIES = 0
@@ -56,7 +58,7 @@ export async function fetchTrendingVideos(region = 'US', maxResults = 50, option
 
   try {
     const res = await monitoredFetch(url, {
-      next: { revalidate: 3600 },
+      ...(options.cache ? { cache: options.cache } : { next: { revalidate: options.revalidateSeconds ?? 3600 } }),
       quotaUnits: Math.ceil(maxResults / 50) * 1, // videos.list costs 1 unit per 50 items
       retries: options.retries ?? DEFAULT_TRENDING_RETRIES,
       timeoutMs: options.timeoutMs ?? DEFAULT_TRENDING_TIMEOUT_MS,
@@ -113,7 +115,7 @@ async function fetchGlobalTrendingVideos(maxResults = 50, options: FetchTrending
       try {
         const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&maxResults=${Math.ceil(maxResults / 3)}&regionCode=${region}&key=${API_KEY}`
         const res = await monitoredFetch(url, {
-          next: { revalidate: 3600 },
+          ...(options.cache ? { cache: options.cache } : { next: { revalidate: options.revalidateSeconds ?? 3600 } }),
           quotaUnits: 1,
           retries: options.retries ?? DEFAULT_TRENDING_RETRIES,
           timeoutMs: options.timeoutMs ?? DEFAULT_TRENDING_TIMEOUT_MS,
