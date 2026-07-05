@@ -137,6 +137,37 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== CREATOR WORKSPACE ===== */}
+      <section className="bg-gradient-to-b from-white to-gray-50">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+          <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-red-600">Retention workspace</div>
+              <h2 className="mt-2 text-2xl font-black text-gray-900 sm:text-3xl">Do not lose the next good idea</h2>
+              <p className="mt-3 text-sm leading-relaxed text-gray-600 sm:text-base">
+                TubeFission now gives creators a place to return: saved opportunities, watchlists, alerts, comparison queues, and historical analysis all point back to one project workflow.
+              </p>
+              <Link href="/workspace" className="mt-5 inline-flex rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700">
+                Open Creator Workspace
+              </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                { title: 'Watchlist', copy: 'Track channels, trends, and niches worth revisiting.', href: '/watchlist' },
+                { title: 'Alerts', copy: 'Set up triggers when momentum changes.', href: '/alerts' },
+                { title: 'History', copy: 'Resume saved opportunities and previous analysis paths.', href: '/workspace' },
+                { title: 'Project flow', copy: 'Move from saved idea to compare, brief, and next upload.', href: '/workspace' },
+              ].map((item) => (
+                <Link key={item.title} href={item.href} className="rounded-2xl border border-gray-200 bg-white p-5 hover:border-red-200 hover:bg-red-50">
+                  <h3 className="font-bold text-gray-900">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-500">{item.copy}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== DECISION ENTRY POINTS ===== */}
       <section className="border-y border-gray-200 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">

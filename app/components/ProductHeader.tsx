@@ -55,8 +55,9 @@ const navGroups = [
   },
   {
     label: 'Track',
-    href: '/watchlist',
+    href: '/workspace',
     links: [
+      { label: 'Workspace', href: '/workspace' },
       { label: 'Watchlist', href: '/watchlist' },
       { label: 'Alerts', href: '/alerts' },
       { label: 'Status', href: '/status' },
