@@ -20,7 +20,25 @@ interface YouTubeVideo {
   }
   statistics?: {
     viewCount?: string
+    likeCount?: string
+    commentCount?: string
   }
+}
+
+interface ValueScoreDimension {
+  key: string
+  label: string
+  score: number
+  weight: number
+  note: string
+}
+
+interface ValueScore {
+  total: number
+  grade: string
+  verdict: string
+  recommendation: string
+  dimensions: ValueScoreDimension[]
 }
 
 interface NicheAnalysis {
@@ -35,6 +53,7 @@ interface NicheAnalysis {
   difficulty: number
   videoCount: number
   opportunityScore: number
+  valueScore: ValueScore
 }
 
 const NICHE_QUERIES = [
@@ -151,10 +170,125 @@ function getSaturationLabel(saturation: number) {
   return 'Established'
 }
 
-function calculateOpportunityScore(difficulty: number, growth: string, competition: NicheAnalysis['competition']) {
+function clampScore(score: number) {
+  return Math.min(100, Math.max(0, Math.round(score)))
+}
+
+function parseGrowth(growth: string) {
   const growthValue = Number(growth.replace(/[^0-9]/g, '')) || 0
-  const competitionBonus = competition === 'Low' ? 24 : competition === 'Medium' ? 12 : 4
-  return Math.min(100, Math.max(10, 86 - difficulty * 7 + Math.round(growthValue / 3) + competitionBonus))
+  return Math.min(100, growthValue)
+}
+
+function parseCpmMidpoint(cpm: string) {
+  const numbers = cpm.match(/\d+/g)?.map(Number) || []
+  if (numbers.length === 0) return 3
+  if (numbers.length === 1) return numbers[0]
+  return (numbers[0] + numbers[1]) / 2
+}
+
+function calculateEngagementScore(videos: YouTubeVideo[]) {
+  if (videos.length === 0) return 35
+
+  const engagementRates = videos.slice(0, 10).map((video) => {
+    const views = Number(video.statistics?.viewCount || 0)
+    const likes = Number(video.statistics?.likeCount || 0)
+    const comments = Number(video.statistics?.commentCount || 0)
+    if (!views) return 0
+    return ((likes + comments * 2) / views) * 100
+  })
+
+  const averageEngagement = engagementRates.reduce((sum, rate) => sum + rate, 0) / Math.max(1, engagementRates.length)
+  return clampScore(averageEngagement * 18)
+}
+
+function calculateValueScore({
+  query,
+  videos,
+  difficulty,
+  growth,
+  competition,
+  cpm,
+  saturation,
+}: {
+  query: string
+  videos: YouTubeVideo[]
+  difficulty: number
+  growth: string
+  competition: NicheAnalysis['competition']
+  cpm: string
+  saturation: string
+}): ValueScore {
+  const totalViews = videos.reduce((sum, video) => sum + Number(video.statistics?.viewCount || 0), 0)
+  const avgViews = videos.length ? totalViews / videos.length : 0
+  const recentGrowth = parseGrowth(growth)
+  const cpmMidpoint = parseCpmMidpoint(cpm)
+  const queryLower = query.toLowerCase()
+  const hasSearchIntent = /tutorial|how to|guide|tips|review|analytics|strategy/.test(queryLower)
+  const audienceResponse = calculateEngagementScore(videos)
+
+  const dimensions: ValueScoreDimension[] = [
+    {
+      key: 'demand',
+      label: 'Demand',
+      score: clampScore(Math.log10(avgViews + 1) * 14 + videos.length * 1.5),
+      weight: 0.22,
+      note: avgViews > 500_000 ? 'Strong proven audience demand.' : 'Demand exists but needs validation through samples.',
+    },
+    {
+      key: 'competition',
+      label: 'Competition',
+      score: clampScore(100 - difficulty * 9 + (competition === 'Low' ? 12 : competition === 'Medium' ? 4 : -8)),
+      weight: 0.2,
+      note: competition === 'Low' ? 'Entry window looks accessible.' : competition === 'Medium' ? 'Requires sharper packaging.' : 'Established players may be hard to beat.',
+    },
+    {
+      key: 'commercial',
+      label: 'Commercial',
+      score: clampScore(cpmMidpoint * 6 + (queryLower.includes('review') || queryLower.includes('business') || queryLower.includes('ai') ? 18 : 8)),
+      weight: 0.18,
+      note: cpmMidpoint >= 8 ? 'Good advertiser and affiliate fit.' : 'Commercial upside is moderate.',
+    },
+    {
+      key: 'momentum',
+      label: 'Momentum',
+      score: clampScore(recentGrowth + (saturation === 'Early' ? 14 : saturation === 'Growing' ? 8 : -4)),
+      weight: 0.16,
+      note: saturation === 'Early' ? 'Early-stage topic with room to rank.' : saturation === 'Growing' ? 'Growing market, move quickly.' : 'More mature market, differentiation matters.',
+    },
+    {
+      key: 'repeatability',
+      label: 'Repeatability',
+      score: clampScore((hasSearchIntent ? 56 : 44) + audienceResponse * 0.3 + (queryLower.includes('strategy') || queryLower.includes('tips') ? 12 : 4)),
+      weight: 0.14,
+      note: hasSearchIntent ? 'Search intent and audience response support a repeatable cluster.' : 'Needs a clearer repeatable format.',
+    },
+    {
+      key: 'execution',
+      label: 'Execution',
+      score: clampScore(92 - difficulty * 6 + (queryLower.includes('tutorial') || queryLower.includes('tips') ? 8 : 0)),
+      weight: 0.1,
+      note: difficulty <= 4 ? 'Feasible for a lean creator workflow.' : 'Needs stronger research and production quality.',
+    },
+  ]
+
+  const total = clampScore(dimensions.reduce((sum, item) => sum + item.score * item.weight, 0))
+  const grade = total >= 85 ? 'A' : total >= 72 ? 'B' : total >= 60 ? 'C' : 'D'
+  const verdict = total >= 85
+    ? 'High-value opportunity'
+    : total >= 72
+      ? 'Worth testing'
+      : total >= 60
+        ? 'Validate before committing'
+        : 'Low priority'
+  const recommendation = total >= 85
+    ? 'Build a 5-video cluster now and use the top samples as benchmarks.'
+    : total >= 72
+      ? 'Analyze one sample, compare two winners, then publish a focused test.'
+      : total >= 60
+        ? 'Open the ranking samples first and look for weak hooks before producing.'
+        : 'Keep watching, but prioritize stronger opportunities first.'
+
+  return { total, grade, verdict, recommendation, dimensions }
 }
 
 function getCompareHref(videos: YouTubeVideo[]) {
@@ -176,7 +310,15 @@ export default async function LowCompetitionKeywordsPage() {
       const searchVolume = estimateSearchVolume(videos)
       const growth = calculateGrowth(videos)
       const cpm = estimateCPM(query)
-      const opportunityScore = calculateOpportunityScore(competition.difficulty, growth, competition.level)
+      const valueScore = calculateValueScore({
+        query,
+        videos,
+        difficulty: competition.difficulty,
+        growth,
+        competition: competition.level,
+        cpm,
+        saturation: getSaturationLabel(competition.saturation),
+      })
 
       return {
         niche,
@@ -189,7 +331,8 @@ export default async function LowCompetitionKeywordsPage() {
         saturation: getSaturationLabel(competition.saturation),
         difficulty: competition.difficulty,
         videoCount: competition.videoCount,
-        opportunityScore,
+        opportunityScore: valueScore.total,
+        valueScore,
       }
     })
   )
@@ -248,13 +391,25 @@ export default async function LowCompetitionKeywordsPage() {
           ))}
         </section>
 
+        <section className="mb-8 rounded-2xl border border-red-100 bg-red-50 p-4 sm:p-5">
+          <div className="grid gap-3 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-red-700">TubeFission Value Score</div>
+              <h2 className="mt-1 text-lg font-black text-gray-900">One score, six business signals</h2>
+            </div>
+            <p className="text-sm leading-relaxed text-gray-700">
+              The product now grades every niche by demand, competition, commercial value, momentum, repeatability, and execution difficulty, then turns that score into a concrete recommendation.
+            </p>
+          </div>
+        </section>
+
         <section id="opportunities" className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] mb-12">
           <div className="glass-panel rounded-2xl overflow-hidden border border-gray-200">
             <div className="p-5 border-b border-gray-200">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">Opportunity Board</h2>
-                  <p className="text-sm text-gray-500 mt-1">Sorted by actionability: low difficulty, recent demand, and monetization fit.</p>
+                  <p className="text-sm text-gray-500 mt-1">Sorted by multidimensional value: demand, competition, commercial upside, momentum, repeatability, and execution fit.</p>
                 </div>
                 <Link href="/youtube-keyword-research" className="inline-flex w-fit items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                   Research custom keyword
@@ -267,7 +422,7 @@ export default async function LowCompetitionKeywordsPage() {
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Niche</th>
-                    <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Score</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Value Score</th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Volume</th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Competition</th>
                     <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Value</th>
@@ -282,10 +437,14 @@ export default async function LowCompetitionKeywordsPage() {
                         <div className="text-xs text-gray-400">{niche.videoCount} videos analyzed</div>
                       </td>
                       <td className="px-4 py-4">
-                        <div className="font-black text-gray-900">{niche.opportunityScore}</div>
-                        <div className="mt-1 h-1.5 w-16 overflow-hidden rounded-full bg-gray-100">
+                        <div className="flex items-center gap-2">
+                          <div className="font-black text-gray-900">{niche.valueScore.total}</div>
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-black text-gray-700">{niche.valueScore.grade}</span>
+                        </div>
+                        <div className="mt-1 h-1.5 w-20 overflow-hidden rounded-full bg-gray-100">
                           <div className="h-full rounded-full bg-red-500" style={{ width: `${niche.opportunityScore}%` }} />
                         </div>
+                        <div className="mt-1 text-xs text-gray-500">{niche.valueScore.verdict}</div>
                       </td>
                       <td className="px-4 py-4 text-gray-600">{niche.searchVolume}</td>
                       <td className="px-4 py-4">
@@ -327,9 +486,12 @@ export default async function LowCompetitionKeywordsPage() {
                       <p className="mt-1 text-xs text-gray-500">{niche.videoCount} videos analyzed</p>
                     </div>
                     <div className="shrink-0 rounded-xl bg-red-50 px-3 py-2 text-center">
-                      <div className="text-lg font-black text-red-700">{niche.opportunityScore}</div>
-                      <div className="text-[10px] font-bold uppercase text-red-600">Score</div>
+                      <div className="text-lg font-black text-red-700">{niche.valueScore.total}</div>
+                      <div className="text-[10px] font-bold uppercase text-red-600">Grade {niche.valueScore.grade}</div>
                     </div>
+                  </div>
+                  <div className="mt-3 rounded-lg bg-gray-50 p-3 text-xs font-medium text-gray-600">
+                    {niche.valueScore.verdict}: {niche.valueScore.recommendation}
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
                     <div className="rounded-lg bg-gray-50 p-3">
@@ -368,16 +530,16 @@ export default async function LowCompetitionKeywordsPage() {
                 <div className="text-xs font-bold uppercase tracking-wider text-red-600">Recommended next move</div>
                 <h2 className="mt-2 text-xl font-bold text-gray-900">{featuredNiche.niche}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-gray-500">
-                  Start here because it has the strongest balance of demand, low difficulty, and repeatable creator angles.
+                  {featuredNiche.valueScore.verdict}. {featuredNiche.valueScore.recommendation}
                 </p>
                 <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
                   <div className="rounded-xl bg-gray-50 p-3">
-                    <div className="text-xs uppercase tracking-wider text-gray-400">Opportunity</div>
-                    <div className="font-black text-gray-900">{featuredNiche.opportunityScore}/100</div>
+                    <div className="text-xs uppercase tracking-wider text-gray-400">Value score</div>
+                    <div className="font-black text-gray-900">{featuredNiche.valueScore.total}/100</div>
                   </div>
                   <div className="rounded-xl bg-gray-50 p-3">
-                    <div className="text-xs uppercase tracking-wider text-gray-400">Difficulty</div>
-                    <div className="font-black text-gray-900">{featuredNiche.difficulty}/10</div>
+                    <div className="text-xs uppercase tracking-wider text-gray-400">Grade</div>
+                    <div className="font-black text-gray-900">{featuredNiche.valueScore.grade}</div>
                   </div>
                   <div className="rounded-xl bg-gray-50 p-3">
                     <div className="text-xs uppercase tracking-wider text-gray-400">Trend</div>
@@ -387,6 +549,20 @@ export default async function LowCompetitionKeywordsPage() {
                     <div className="text-xs uppercase tracking-wider text-gray-400">Est. volume</div>
                     <div className="font-black text-gray-900">{featuredNiche.searchVolume}</div>
                   </div>
+                </div>
+                <div className="mt-5 space-y-3">
+                  {featuredNiche.valueScore.dimensions.map((dimension) => (
+                    <div key={dimension.key}>
+                      <div className="mb-1 flex items-center justify-between gap-3 text-xs">
+                        <span className="font-bold text-gray-700">{dimension.label}</span>
+                        <span className="font-black text-gray-900">{dimension.score}</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div className="h-full rounded-full bg-red-500" style={{ width: `${dimension.score}%` }} />
+                      </div>
+                      <p className="mt-1 text-xs leading-relaxed text-gray-500">{dimension.note}</p>
+                    </div>
+                  ))}
                 </div>
                 <div className="mt-5 grid gap-2">
                   <Link href={getTopVideoHref(featuredNiche.videos)} className="inline-flex items-center justify-center rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white hover:bg-red-700">
