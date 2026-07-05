@@ -235,6 +235,89 @@ function buildContentAnalysis(topic: string, video: DeepVideoAnalysisProps['vide
   }
 }
 
+function hasAny(text: string, patterns: RegExp[]) {
+  return patterns.some((pattern) => pattern.test(text))
+}
+
+function buildViralityDiagnosis(video: DeepVideoAnalysisProps['video'], topic: string, keywords: string[]) {
+  const title = video.snippet?.title || ''
+  const description = video.snippet?.description || ''
+  const tags = video.snippet?.tags || []
+  const text = getText(video)
+  const lowerTitle = title.toLowerCase()
+
+  const hasClearPromise = hasAny(lowerTitle, [
+    /how to/,
+    /why/,
+    /what happens/,
+    /i tried/,
+    /tested/,
+    /before.*after/,
+    /without/,
+    /vs|comparison/,
+    /best|worst|top/,
+  ])
+  const hasCuriosity = title.includes('?') || hasAny(lowerTitle, [/secret/, /hidden/, /finally/, /never/, /nobody/, /truth/, /mistake/])
+  const hasSpecificity = /\d/.test(title) || hasAny(lowerTitle, [/day/, /hour/, /step/, /rank/, /tier/, /episode/])
+  const hasEmotion = hasAny(lowerTitle, [/insane/, /shocking/, /amazing/, /crazy/, /brutal/, /beautiful/, /scary/, /funny/, /failed/, /surprising/])
+  const hasTimeliness = hasAny(text, [/new/, /2026/, /2025/, /breaking/, /trend/, /viral/, /update/, /just released/])
+  const hasSearchIntent = hasAny(text, [/how to/, /tutorial/, /guide/, /explained/, /review/, /best/, /vs/, /tips/, /learn/])
+  const hasShareableFormat = hasAny(text, [/challenge/, /reaction/, /experiment/, /i tried/, /ranking/, /transformation/, /before/, /after/, /shorts/])
+  const hasAudienceSpecificity = topic !== 'General entertainment' || tags.length >= 3 || keywords.length >= 4
+  const hasDescriptionSupport = description.length >= 220
+
+  const signals = [
+    { key: 'Clear promise', active: hasClearPromise, weight: 18, positive: 'The title gives viewers a reason to click because it promises a result, answer, test, or comparison.', negative: 'The title does not make the viewer payoff concrete enough.' },
+    { key: 'Curiosity gap', active: hasCuriosity, weight: 14, positive: 'The packaging creates an open loop that can pull viewers into the first click.', negative: 'The packaging has limited curiosity tension.' },
+    { key: 'Specific angle', active: hasSpecificity, weight: 12, positive: 'Specific numbers, timeframes, or ranked framing make the idea easier to understand and share.', negative: 'The idea feels broad; a number, timeframe, or concrete constraint would make it sharper.' },
+    { key: 'Emotional trigger', active: hasEmotion, weight: 12, positive: 'The wording carries emotional charge, which helps sharing and comments.', negative: 'The content angle may be too neutral to spark strong reactions.' },
+    { key: 'Timely demand', active: hasTimeliness, weight: 10, positive: 'The topic has timely or trend-based demand that can amplify discovery.', negative: 'There is little public timing signal in the content metadata.' },
+    { key: 'Search intent', active: hasSearchIntent, weight: 10, positive: 'The content can capture search demand because it answers a query or helps a decision.', negative: 'Search intent is weak, so the video depends more on browse or recommendations.' },
+    { key: 'Shareable format', active: hasShareableFormat, weight: 12, positive: 'The format is naturally repeatable or discussable, which helps recommendation spread.', negative: 'The format does not yet show an obvious share or repeat mechanic.' },
+    { key: 'Audience fit', active: hasAudienceSpecificity, weight: 8, positive: `The topic is legible to a target audience: ${topic}.`, negative: 'The target audience is not clear enough from title, tags, and description.' },
+    { key: 'Metadata support', active: hasDescriptionSupport, weight: 4, positive: 'The description gives YouTube more context for matching the video to viewers.', negative: 'The description is thin, which weakens search and recommendation context.' },
+  ]
+
+  const score = signals.reduce((sum, signal) => sum + (signal.active ? signal.weight : 0), 0)
+  const positiveSignals = signals.filter((signal) => signal.active)
+  const missingSignals = signals.filter((signal) => !signal.active)
+
+  const verdict = score >= 74
+    ? 'Likely to break out'
+    : score >= 56
+      ? 'Can work, but needs sharper packaging'
+      : 'Likely to stay limited'
+
+  const answer = score >= 56
+    ? 'Why this video can go viral'
+    : 'Why this video may not go viral'
+
+  const mainReason = score >= 74
+    ? 'The content has enough click, curiosity, audience, and distribution signals to earn broader testing.'
+    : score >= 56
+      ? 'The idea has useful content signals, but one or two weak points may limit how far YouTube can push it.'
+      : 'The content does not yet give viewers or the algorithm a strong enough reason to click, stay, and share.'
+
+  return {
+    score,
+    verdict,
+    answer,
+    mainReason,
+    positives: positiveSignals.length > 0
+      ? positiveSignals.slice(0, 4).map((signal) => signal.positive)
+      : ['The public content metadata does not show a strong viral trigger yet.'],
+    blockers: missingSignals.length > 0
+      ? missingSignals.slice(0, 4).map((signal) => signal.negative)
+      : ['No major content blocker is visible from public title, description, and tag signals.'],
+    evidence: [
+      `Title: ${title || 'Unavailable'}`,
+      `Topic read: ${topic}`,
+      `Keyword signals: ${keywords.slice(0, 5).join(', ') || 'limited public keyword data'}`,
+      `Description depth: ${description.length} chars`,
+    ],
+  }
+}
+
 function buildEffectiveness(video: DeepVideoAnalysisProps['video'], velocity: number, engagementRate: number) {
   const views = Number(video.statistics?.viewCount || 0)
   const likes = Number(video.statistics?.likeCount || 0)
@@ -298,6 +381,7 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
   const copy = buildCopyAnalysis(video)
   const timeline = buildTimeline(video)
   const content = buildContentAnalysis(topic, video)
+  const virality = buildViralityDiagnosis(video, topic, keywords)
   const effect = buildEffectiveness(video, velocity, engagementRate)
   const seo = buildSeoAnalysis(video, keywords)
   const nextBrief = buildNextBrief(video, topic, traffic.primary, keywords, effect.score)
@@ -307,7 +391,7 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="text-xs font-bold uppercase tracking-wider text-red-600">Deep Video Analysis</div>
-          <h2 className="mt-1 text-xl font-bold text-gray-900">Why this video works and what to do next</h2>
+          <h2 className="mt-1 text-xl font-bold text-gray-900">Why this video will spread or stall</h2>
           <p className="mt-2 max-w-3xl text-sm text-gray-500">
             Built from public video data and content signals. Private retention, revenue, and real traffic-source data require YouTube Studio access, so those sections are clearly modeled as analyst inference.
           </p>
@@ -315,6 +399,54 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
         <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
           <div className="text-xs text-gray-500">Effect score</div>
           <div className="text-2xl font-black text-gray-900">{effect.score}/100</div>
+        </div>
+      </div>
+
+      <div className="mb-4 rounded-2xl border border-red-200 bg-gradient-to-br from-red-50 to-white p-5">
+        <div className="grid gap-4 lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <div className="text-xs font-bold uppercase tracking-wider text-red-600">Content-led verdict</div>
+            <div className="mt-2 text-2xl font-black text-gray-950">{virality.verdict}</div>
+            <div className="mt-3 flex items-end gap-2">
+              <div className="text-4xl font-black text-red-600">{virality.score}</div>
+              <div className="pb-1 text-sm font-bold text-gray-500">/100 content virality</div>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-gray-600">{virality.mainReason}</p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl border border-green-100 bg-white p-4">
+              <div className="mb-3 text-sm font-black text-gray-900">{virality.answer}</div>
+              <div className="space-y-2">
+                {virality.positives.map((item) => (
+                  <div key={item} className="flex gap-2 text-sm text-gray-700">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-amber-100 bg-white p-4">
+              <div className="mb-3 text-sm font-black text-gray-900">Why it may not go further</div>
+              <div className="space-y-2">
+                {virality.blockers.map((item) => (
+                  <div key={item} className="flex gap-2 text-sm text-gray-700">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {virality.evidence.map((item) => (
+            <div key={item} className="rounded-lg border border-red-100 bg-white/80 p-3 text-xs leading-relaxed text-gray-600">
+              {item}
+            </div>
+          ))}
         </div>
       </div>
 
