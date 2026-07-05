@@ -4,12 +4,16 @@ import Link from 'next/link'
 import { getViewVelocity, getEngagementRate, getTagEmoji } from '@/lib/analytics'
 import { fetchTrendingVideos, type YouTubeVideo } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
-import { getRegionLabels, REGION_META } from '@/lib/region'
+import { getRegionLabels, REGION_META, type Region } from '@/lib/region'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
 import AddToVideoCompareButton from '@/app/components/AddToVideoCompareButton'
 
+function getTrendingAnalysisRegion(region: Region): Region {
+  return region === 'GLOBAL' ? 'US' : region
+}
+
 export async function generateMetadata(): Promise<Metadata> {
-  const region = await getRegion()
+  const region = getTrendingAnalysisRegion(await getRegion())
   const regionLabel = REGION_META[region]?.label || region
   const today = getTodayString()
 
@@ -55,9 +59,9 @@ function getDecisionHint(score: number, engagement: number) {
 }
 
 export default async function TrendingPage() {
-  const region = await getRegion()
+  const region = getTrendingAnalysisRegion(await getRegion())
   const labels = getRegionLabels(region)
-  const videos = await fetchTrendingVideos(region, 30, { retries: 0, timeoutMs: 3500 })
+  const videos = await fetchTrendingVideos(region, 30, { retries: 0, timeoutMs: 3500, revalidateSeconds: 300 })
 
   const sorted = [...videos].sort((a, b) =>
     Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0)
