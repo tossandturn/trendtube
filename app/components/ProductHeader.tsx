@@ -16,21 +16,23 @@ interface User {
 
 const navGroups = [
   {
-    label: 'Analyze',
-    href: '/youtube-video-analyzer',
-    links: [
-      { label: 'Video Analyzer', href: '/youtube-video-analyzer' },
-      { label: 'Channel Analytics', href: '/youtube-channel-analytics' },
-    ],
-  },
-  {
     label: 'Discover',
     href: '/trending',
     links: [
       { label: 'Trending Videos', href: '/trending' },
       { label: 'Trend Database', href: '/trends' },
+      { label: 'Low Competition Keywords', href: '/low-competition-keywords' },
       { label: 'Shorts Trends', href: '/youtube-shorts-trends' },
       { label: 'AI Trends', href: '/youtube-ai-trends' },
+    ],
+  },
+  {
+    label: 'Analyze',
+    href: '/youtube-video-analyzer',
+    links: [
+      { label: 'Video Analyzer', href: '/youtube-video-analyzer' },
+      { label: 'Channel Analytics', href: '/youtube-channel-analytics' },
+      { label: 'Keyword Research', href: '/youtube-keyword-research' },
     ],
   },
   {
@@ -47,7 +49,6 @@ const navGroups = [
     href: '/ai-assistant',
     links: [
       { label: 'AI Assistant', href: '/ai-assistant' },
-      { label: 'Keyword Research', href: '/youtube-keyword-research' },
       { label: 'Niche Finder', href: '/youtube-niche-finder' },
       { label: 'Opportunity Finder', href: '/youtube-opportunity-finder' },
     ],
