@@ -1,17 +1,15 @@
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getRegion } from '@/lib/region-server'
-import { fetchTrendingVideos } from '@/lib/api-client'
-import { extractTrendsFromRegion, type RealTrend } from '@/lib/trend-extractor'
 import { Breadcrumbs } from '@/app/components/Breadcrumbs'
-import { TrendDiscovery } from '@/app/components/TrendDiscovery'
-import { REGIONS, REGION_META } from '@/lib/region'
+import AddToVideoCompareButton from '@/app/components/AddToVideoCompareButton'
+import { getRegion } from '@/lib/region-server'
+import { getCachedTrendBoard, type TrendBoardVideo } from '@/lib/trend-board'
+import { REGION_META, REGIONS } from '@/lib/region'
 
 const TREND_REGIONS = REGIONS.filter((region) => region !== 'GLOBAL')
 
 function getTodayString() {
-  const today = new Date()
-  return today.toISOString().split('T')[0].replace(/-/g, '.')
+  return new Date().toISOString().split('T')[0].replace(/-/g, '.')
 }
 
 function formatCompactNumber(value: number) {
@@ -21,158 +19,226 @@ function formatCompactNumber(value: number) {
   return Math.round(value).toLocaleString()
 }
 
+function formatVelocity(value: number) {
+  return `${formatCompactNumber(value)}/day`
+}
+
+function scoreFor(item: TrendBoardVideo, lane: string) {
+  if (lane === 'niche') return item.nicheScore
+  if (lane === 'creative') return item.creativeScore
+  return item.viralScore
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const region = await getRegion()
   const regionLabel = REGION_META[region].label
   const today = getTodayString()
 
   return {
-    title: `${regionLabel} Video Trends ${today} | TubeFission`,
-    description: `Discover viral YouTube trends in ${regionLabel} for ${today}. Real-time analytics across trending videos.`,
+    title: `${regionLabel} Viral Content Board ${today} | TubeFission`,
+    description: `Hourly YouTube trend board for ${regionLabel}: gaming, lifestyle, music, and film viral opportunities, niches, and creative formats.`,
   }
+}
+
+function VideoOpportunityCard({ item, lane }: { item: TrendBoardVideo; lane: string }) {
+  const video = item.video
+  const thumbnail = video.snippet?.thumbnails?.medium?.url
+    || video.snippet?.thumbnails?.high?.url
+    || `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <Link href={`/video/${video.id}`} className="group block">
+        <div className="relative aspect-video overflow-hidden bg-gray-100">
+          <img
+            src={thumbnail}
+            alt={video.snippet?.title || 'YouTube video thumbnail'}
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+          <div className="absolute left-2 top-2 rounded-md bg-black/75 px-2 py-1 text-[10px] font-bold text-white">
+            {item.categoryLabel}
+          </div>
+          <div className="absolute right-2 top-2 rounded-md bg-white/95 px-2 py-1 text-[10px] font-bold text-gray-900">
+            {scoreFor(item, lane)}
+          </div>
+        </div>
+      </Link>
+
+      <div className="space-y-3 p-3">
+        <div>
+          <Link href={`/video/${video.id}`} className="group">
+            <h3 className="line-clamp-2 text-sm font-bold leading-snug text-gray-900 group-hover:text-red-600">
+              {video.snippet?.title || 'Untitled video'}
+            </h3>
+          </Link>
+          <p className="mt-1 truncate text-xs text-gray-500">{video.snippet?.channelTitle || 'Unknown channel'}</p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-md bg-gray-50 p-2">
+            <div className="text-[10px] font-bold text-gray-400">Views</div>
+            <div className="text-xs font-bold text-gray-900">{formatCompactNumber(item.views)}</div>
+          </div>
+          <div className="rounded-md bg-gray-50 p-2">
+            <div className="text-[10px] font-bold text-gray-400">Velocity</div>
+            <div className="text-xs font-bold text-green-700">{formatVelocity(item.velocity)}</div>
+          </div>
+          <div className="rounded-md bg-gray-50 p-2">
+            <div className="text-[10px] font-bold text-gray-400">Engage</div>
+            <div className="text-xs font-bold text-amber-700">{item.engagement.toFixed(1)}%</div>
+          </div>
+        </div>
+
+        <div className="rounded-md bg-gray-50 p-2">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Analyst read</div>
+          <p className="mt-1 line-clamp-2 text-xs text-gray-600">
+            {item.decision}: {item.format}. Topic signal: {item.topic}.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            href={`/video/${video.id}`}
+            className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-3 py-2 text-xs font-bold text-white hover:bg-gray-800"
+          >
+            Analyze
+          </Link>
+          <AddToVideoCompareButton videoId={video.id} compact fullWidth />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default async function TrendsPage() {
   const region = await getRegion()
+  const board = await getCachedTrendBoard(region)
   const today = getTodayString()
-  const videos = await fetchTrendingVideos(region, 50)
-  const trends = videos.length > 0 ? await extractTrendsFromRegion(region, 50) : []
-
-  // Group by category from real data
-  const byCategory: Record<string, RealTrend[]> = {}
-  trends.forEach(t => {
-    if (!byCategory[t.category]) byCategory[t.category] = []
-    byCategory[t.category].push(t)
+  const regionLabel = REGION_META[region].label
+  const updatedAt = new Date(board.generatedAt).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
   })
-
-  const totalViews = trends.reduce((sum, t) => sum + t.totalViews, 0)
-  const avgBreakout = trends.length > 0
-    ? trends.reduce((sum, t) => sum + t.breakoutScore, 0) / trends.length
-    : 0
 
   return (
     <main className="min-h-screen bg-[#fafafa]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <Breadcrumbs items={[
-          { label: 'Home', href: '/' },
-          { label: 'Trends' }
-        ]} />
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Trends' }]} />
       </div>
 
-      {/* Hero */}
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              {region === 'GLOBAL' ? 'Global' : REGION_META[region].label} Video Trends {today}
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {region === 'GLOBAL'
-                ? `Global trending videos from major regions worldwide for ${today}. Zero fake data.`
-                : `Trends extracted from actual viral videos in ${region} for ${today}. Zero fake data.`}
-            </p>
-          </div>
+      <section className="py-8 sm:py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+            <div>
+              <div className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-red-600">Hourly content board</div>
+              <h1 className="max-w-3xl text-3xl font-black tracking-tight text-gray-900 sm:text-5xl">
+                {regionLabel} viral opportunities by content vertical
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-600 sm:text-base">
+                Videos are grouped by actual content signals into Gaming, Lifestyle, Music, and Film & TV. Each vertical is split into Viral, Niche, and Creative Minds so you can pick what to analyze or compare next.
+              </p>
+            </div>
 
-          {/* Region Selector - Mobile: Horizontal Scroll */}
-          <div className="mt-6 flex justify-center">
-            <div className="inline-flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 shadow-sm max-w-full">
-              <span className="text-sm text-gray-500 px-2 hidden sm:inline">Region:</span>
-              <div className="flex gap-1 overflow-x-auto max-w-[280px] sm:max-w-none scrollbar-hide">
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <span className="text-xs font-bold uppercase tracking-wide text-gray-500">Region</span>
+                <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
+                  Updates hourly
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
                 {TREND_REGIONS.map((r) => (
                   <Link
                     key={r}
                     href={`/api/switch-region?region=${r}&redirect=/trends`}
-                    className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                    className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
                       region === r
-                        ? 'bg-red-600 text-white shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
-                    title={REGION_META[r].label}
                   >
-                    <img
-                      src={`https://flagcdn.com/w40/${REGION_META[r].flag}.png`}
-                      alt={REGION_META[r].label}
-                      className="w-4 h-3 rounded-sm object-cover"
-                    />
-                    <span>{r}</span>
+                    {r}
                   </Link>
                 ))}
               </div>
+              <p className="mt-3 text-xs text-gray-500">
+                Last board build: {updatedAt}. The first request after the hourly window refreshes the cache; later users get the cached board.
+              </p>
             </div>
           </div>
 
-          <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Trends Detected</p>
-              <p className="text-2xl font-bold text-gray-900">{trends.length}</p>
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Videos tracked</p>
+              <p className="mt-1 text-2xl font-black text-gray-900">{board.videosTracked}</p>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Categories</p>
-              <p className="text-2xl font-bold text-gray-900">{Object.keys(byCategory).length}</p>
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Total views</p>
+              <p className="mt-1 text-2xl font-black text-gray-900">{formatCompactNumber(board.totalViews)}</p>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Total Views Analyzed</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCompactNumber(totalViews)}</p>
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Avg velocity</p>
+              <p className="mt-1 text-2xl font-black text-green-700">{formatVelocity(board.avgVelocity)}</p>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Avg Breakout</p>
-              <p className="text-2xl font-bold text-gray-900">{avgBreakout.toFixed(0)}</p>
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Avg engagement</p>
+              <p className="mt-1 text-2xl font-black text-amber-700">{board.avgEngagement.toFixed(1)}%</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Trend Discovery Component */}
       <section className="pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Featured Categories - Mobile: 2 cols, Desktop: 4 cols */}
-          <div className="mb-8">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Featured Categories</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <Link
-                href="/gaming"
-                className="group block bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border border-purple-200 hover:border-purple-400 hover:shadow-md transition-all active:scale-95"
-              >
-                <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🎮</div>
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-purple-600 transition-colors">Gaming</h3>
-                <p className="text-xs text-gray-500 mt-0.5 sm:mt-1">Minecraft, GTA, Fortnite & more</p>
-              </Link>
-              <Link
-                href="/trends/ai-shorts"
-                className="group block bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 sm:p-4 border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all active:scale-95"
-              >
-                <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🤖</div>
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-blue-600 transition-colors">AI</h3>
-                <p className="text-xs text-gray-500 mt-0.5 sm:mt-1">AI tools, tutorials & trends</p>
-              </Link>
-              <Link
-                href="/trends/mrbeast-style"
-                className="group block bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-3 sm:p-4 border border-yellow-200 hover:border-yellow-400 hover:shadow-md transition-all active:scale-95"
-              >
-                <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🎬</div>
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-orange-600 transition-colors">Challenges</h3>
-                <p className="text-xs text-gray-500 mt-0.5 sm:mt-1">High-stakes challenge content</p>
-              </Link>
-              <Link
-                href="/trends/youtube-automation"
-                className="group block bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 sm:p-4 border border-green-200 hover:border-green-400 hover:shadow-md transition-all active:scale-95"
-              >
-                <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🚀</div>
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base group-hover:text-green-600 transition-colors">Automation</h3>
-                <p className="text-xs text-gray-500 mt-0.5 sm:mt-1">Faceless channel strategies</p>
-              </Link>
-            </div>
-          </div>
+        <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+          {board.sections.map((section) => (
+            <div key={section.id} className="rounded-lg border border-gray-200 bg-white">
+              <div className="border-b border-gray-100 p-4 sm:p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-black text-gray-900">{section.label}</h2>
+                    <p className="mt-1 max-w-3xl text-sm text-gray-600">{section.description}</p>
+                  </div>
+                  <div className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+                    {section.videos.length} videos
+                  </div>
+                </div>
+              </div>
 
-          <TrendDiscovery
-            trends={trends.map(t => ({
-              ...t,
-              momentum: t.avgVelocity > 50000 ? 'rising' : t.avgVelocity < 10000 ? 'falling' : 'stable'
-            }))}
-            categories={Object.keys(byCategory)}
-          />
+              <div className="grid gap-0 lg:grid-cols-3">
+                {section.lanes.map((lane) => (
+                  <div key={lane.id} className="border-t border-gray-100 p-4 lg:border-l lg:border-t-0 first:lg:border-l-0">
+                    <div className="mb-4 min-h-[76px]">
+                      <h3 className="text-sm font-black uppercase tracking-wide text-gray-900">{lane.label}</h3>
+                      <p className="mt-1 text-xs leading-5 text-gray-500">{lane.description}</p>
+                    </div>
+
+                    {lane.videos.length > 0 ? (
+                      <div className="space-y-3">
+                        {lane.videos.map((item) => (
+                          <VideoOpportunityCard key={`${lane.id}-${item.video.id}`} item={item} lane={lane.id} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                        No strong signal in this lane yet. It will fill on the next hourly board when enough videos match.
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {board.sections.length === 0 && (
+            <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
+              <h2 className="text-lg font-bold text-gray-900">No board data yet</h2>
+              <p className="mt-2 text-sm text-gray-600">The hourly board could not find usable videos. Try another region or check back after the next refresh.</p>
+            </div>
+          )}
         </div>
       </section>
     </main>
   )
 }
+

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { readVideoCompareIds } from '@/app/components/AddToVideoCompareButton'
 import ChannelCompareView from './ChannelCompareView'
 import VideoCompareView from './VideoCompareView'
 
@@ -19,6 +20,25 @@ export default function CompareNewContent() {
   const [leftId, setLeftId] = useState(initialLeft)
   const [rightId, setRightId] = useState(initialRight)
   const [isComparing, setIsComparing] = useState(Boolean(initialLeft && initialRight))
+  const [basketIds, setBasketIds] = useState<string[]>([])
+
+  useEffect(() => {
+    if (initialType !== 'videos') return
+    const ids = readVideoCompareIds()
+    setBasketIds(ids)
+    if (initialLeft && !initialRight) {
+      const nextRight = ids.find((id) => id !== initialLeft)
+      if (nextRight) setRightId(nextRight)
+      if (nextRight) setIsComparing(true)
+      return
+    }
+    if (!initialLeft && !initialRight && ids.length > 0) {
+      setMode('videos')
+      setLeftId(ids[0] || '')
+      setRightId(ids[1] || '')
+      setIsComparing(ids.length >= 2)
+    }
+  }, [initialLeft, initialRight, initialType])
 
   const handleCompare = () => {
     if (leftId && rightId) setIsComparing(true)
@@ -52,6 +72,14 @@ export default function CompareNewContent() {
       setLeftId(VIDEO_EXAMPLES[0])
       setRightId(VIDEO_EXAMPLES[1])
     }
+  }
+
+  const applyBasket = () => {
+    if (basketIds.length === 0) return
+    setMode('videos')
+    setLeftId(basketIds[0] || '')
+    setRightId(basketIds[1] || '')
+    setIsComparing(basketIds.length >= 2)
   }
 
   const modeCopy = mode === 'channels'
@@ -177,6 +205,14 @@ export default function CompareNewContent() {
               >
                 Use Example Inputs
               </button>
+              {mode === 'videos' && basketIds.length > 0 && (
+                <button
+                  onClick={applyBasket}
+                  className="w-full sm:w-auto px-5 py-4 bg-amber-100 text-amber-900 font-medium rounded-xl hover:bg-amber-200 transition"
+                >
+                  Use Basket ({basketIds.length})
+                </button>
+              )}
             </div>
 
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
