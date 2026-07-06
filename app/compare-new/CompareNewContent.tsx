@@ -7,7 +7,7 @@ import ChannelCompareView from './ChannelCompareView'
 import VideoCompareView from './VideoCompareView'
 
 const CHANNEL_EXAMPLES = ['@MrBeast', '@MKBHD']
-const VIDEO_EXAMPLES = ['dQw4w9WgXcQ', 'jNQXAC9IVRw']
+const VIDEO_EXAMPLES = ['VI9igkwFNI0', '4Q4TuAzkz4k']
 
 export default function CompareNewContent() {
   const searchParams = useSearchParams()

@@ -3,9 +3,7 @@
    Extracts trends from actual YouTube videos. No fake data.
 ========================================================= */
 
-import { fetchTrendingVideos } from './api-client'
-
-const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
+import { fetchTrendingVideos, type YouTubeVideo } from './api-client'
 
 export interface RealTrend {
   slug: string
@@ -64,7 +62,7 @@ const STOP_WORDS = new Set([
 ])
 
 // Category detection from keywords
-function detectCategory(keyword: string): string {
+export function detectCategory(keyword: string): string {
   const lower = keyword.toLowerCase()
   if (['ai', 'tech', 'phone', 'app', 'software', 'chatgpt', 'gpt', 'robot', 'code', 'coding', 'programming', 'developer', 'computer', 'gadget', 'review'].some(t => lower.includes(t))) return 'Technology'
   if (['money', 'finance', 'invest', 'stock', 'crypto', 'bitcoin', 'trading', 'forex', 'wealth', 'income', 'passive'].some(t => lower.includes(t))) return 'Finance'
@@ -82,7 +80,7 @@ function detectCategory(keyword: string): string {
   return 'Entertainment'
 }
 
-function slugify(text: string): string {
+export function slugify(text: string): string {
   return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 50)
 }
 
@@ -91,10 +89,7 @@ function getAgeDays(publishedAt: string): number {
   return Math.max(0.5, ageMs / (1000 * 60 * 60 * 24))
 }
 
-export async function extractTrendsFromRegion(region: string, maxResults = 50): Promise<RealTrend[]> {
-  if (!API_KEY) return []
-
-  const videos = await fetchTrendingVideos(region, maxResults)
+export function extractTrendsFromVideos(videos: YouTubeVideo[], region: string, maxTrends = 20): RealTrend[] {
   if (videos.length === 0) return []
 
   // Extract all keywords from video titles
@@ -192,7 +187,12 @@ export async function extractTrendsFromRegion(region: string, maxResults = 50): 
   })
 
   // Sort by breakout score descending
-  return trends.sort((a, b) => b.breakoutScore - a.breakoutScore).slice(0, 20)
+  return trends.sort((a, b) => b.breakoutScore - a.breakoutScore).slice(0, maxTrends)
+}
+
+export async function extractTrendsFromRegion(region: string, maxResults = 50): Promise<RealTrend[]> {
+  const videos = await fetchTrendingVideos(region, maxResults)
+  return extractTrendsFromVideos(videos, region, 20)
 }
 
 export function getTrendsByCategoryFromReal(trends: RealTrend[], category: string): RealTrend[] {

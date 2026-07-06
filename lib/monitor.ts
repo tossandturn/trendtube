@@ -289,10 +289,12 @@ export async function runHealthCheck(): Promise<HealthReport> {
   // Check YouTube API
   if (YOUTUBE_API_KEY) {
     const t0 = Date.now()
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 3500)
     try {
       const res = await fetch(
         `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&maxResults=1&regionCode=US&key=${YOUTUBE_API_KEY}`,
-        { cache: 'no-store' }
+        { cache: 'no-store', signal: controller.signal }
       )
       report.checks.youtubeApi.latencyMs = Date.now() - t0
       report.checks.youtubeApi.ok = res.ok
@@ -301,7 +303,11 @@ export async function runHealthCheck(): Promise<HealthReport> {
       }
     } catch (e) {
       report.checks.youtubeApi.latencyMs = Date.now() - t0
-      report.checks.youtubeApi.error = e instanceof Error ? e.message : String(e)
+      report.checks.youtubeApi.error = e instanceof Error && e.name === 'AbortError'
+        ? 'Health check timed out'
+        : e instanceof Error ? e.message : String(e)
+    } finally {
+      clearTimeout(timeout)
     }
   } else {
     report.checks.youtubeApi.error = 'No API key configured'
@@ -330,9 +336,9 @@ export async function runHealthCheck(): Promise<HealthReport> {
   report.checks.errors.ok = report.checks.errors.count1h < 5
 
   // Overall status
-  if (!report.checks.youtubeApi.ok || !report.checks.errors.ok) {
+  if (!report.checks.errors.ok || (!report.checks.youtubeApi.ok && !report.checks.dataFreshness.ok)) {
     report.status = 'down'
-  } else if (!report.checks.quota.ok || !report.checks.dataFreshness.ok) {
+  } else if (!report.checks.youtubeApi.ok || !report.checks.quota.ok || !report.checks.dataFreshness.ok) {
     report.status = 'degraded'
   }
 

@@ -8,6 +8,8 @@ import { Menu, Search, X } from 'lucide-react'
 import { extractChannelId, extractVideoId, isValidYouTubeUrl } from '@/lib/youtube-parser'
 import { REGIONS, REGION_META, type Region } from '@/lib/region'
 
+const HEADER_REGIONS = REGIONS.filter((region) => region !== 'GLOBAL')
+
 interface User {
   id: string
   username: string
@@ -137,7 +139,7 @@ function RegionSelect({ region, onSwitch }: { region: Region; onSwitch: (region:
       className="h-9 rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
       aria-label="Select region"
     >
-      {REGIONS.map((r) => (
+      {HEADER_REGIONS.map((r) => (
         <option key={r} value={r}>
           {r} - {REGION_META[r].label}
         </option>
@@ -237,12 +239,18 @@ export default function ProductHeader() {
       setMounted(true)
       const match = document.cookie.match(/region=([A-Z]{2,6})/)
       if (match && REGIONS.includes(match[1] as Region)) {
-        setRegion(match[1] as Region)
+        const nextRegion = match[1] === 'GLOBAL' ? 'US' : match[1]
+        setRegion(nextRegion as Region)
+        if (match[1] === 'GLOBAL') {
+          const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString()
+          document.cookie = `region=US;path=/;expires=${expires}`
+        }
       }
     })
   }, [])
 
   function switchRegion(nextRegion: Region) {
+    if (nextRegion === 'GLOBAL') nextRegion = 'US'
     if (nextRegion === region) return
     const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString()
     document.cookie = `region=${nextRegion};path=/;expires=${expires}`

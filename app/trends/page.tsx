@@ -7,6 +7,8 @@ import { Breadcrumbs } from '@/app/components/Breadcrumbs'
 import { TrendDiscovery } from '@/app/components/TrendDiscovery'
 import { REGIONS, REGION_META } from '@/lib/region'
 
+const TREND_REGIONS = REGIONS.filter((region) => region !== 'GLOBAL')
+
 function getTodayString() {
   const today = new Date()
   return today.toISOString().split('T')[0].replace(/-/g, '.')
@@ -69,7 +71,7 @@ export default async function TrendsPage() {
             <div className="inline-flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 shadow-sm max-w-full">
               <span className="text-sm text-gray-500 px-2 hidden sm:inline">Region:</span>
               <div className="flex gap-1 overflow-x-auto max-w-[280px] sm:max-w-none scrollbar-hide">
-                {REGIONS.map((r) => (
+                {TREND_REGIONS.map((r) => (
                   <Link
                     key={r}
                     href={`/api/switch-region?region=${r}&redirect=/trends`}

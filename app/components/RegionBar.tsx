@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { REGIONS, REGION_META, type Region } from '@/lib/region'
 
+const HEADER_REGIONS = REGIONS.filter((region) => region !== 'GLOBAL')
+
 interface User {
   id: string
   username: string
@@ -83,12 +85,18 @@ export default function RegionBar() {
       setMounted(true)
       const match = document.cookie.match(/region=([A-Z]{2,6})/)
       if (match && REGIONS.includes(match[1] as Region)) {
-        setRegion(match[1] as Region)
+        const nextRegion = match[1] === 'GLOBAL' ? 'US' : match[1]
+        setRegion(nextRegion as Region)
+        if (match[1] === 'GLOBAL') {
+          const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString()
+          document.cookie = `region=US;path=/;expires=${expires}`
+        }
       }
     })
   }, [])
 
   function switchRegion(r: Region) {
+    if (r === 'GLOBAL') r = 'US'
     if (r === region) return
     // Cookie updates are event-driven here so the selected region survives reloads.
     // eslint-disable-next-line react-hooks/purity
@@ -126,7 +134,7 @@ export default function RegionBar() {
         <div className="flex items-center gap-2 min-w-0">
           <div className="hidden lg:flex items-center gap-1 bg-gray-100 rounded-xl p-1 border border-gray-200">
             <span className="text-[10px] text-gray-500 data-mono px-2">REGION</span>
-            {REGIONS.map((r) => (
+            {HEADER_REGIONS.map((r) => (
               <button
                 key={r}
                 onClick={() => switchRegion(r)}
@@ -154,7 +162,7 @@ export default function RegionBar() {
               className="h-9 rounded-lg border border-gray-200 bg-white px-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
               aria-label="Select region"
             >
-              {REGIONS.map((r) => (
+              {HEADER_REGIONS.map((r) => (
                 <option key={r} value={r}>
                   {r} · {REGION_META[r].label}
                 </option>

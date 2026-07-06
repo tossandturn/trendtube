@@ -175,7 +175,8 @@ export async function fetchVideoById(id: string): Promise<YouTubeVideo | null> {
     const res = await monitoredFetch(url, {
       next: { revalidate: 300 },
       quotaUnits: 1,
-      retries: 2,
+      retries: 0,
+      timeoutMs: DEFAULT_SEARCH_TIMEOUT_MS,
     })
 
     if (!res.ok) return loadFallbackVideoById(id)
@@ -289,8 +290,37 @@ async function loadFallbackVideos(region: string): Promise<YouTubeVideo[]> {
 }
 
 async function loadFallbackVideoById(id: string): Promise<YouTubeVideo | null> {
-  const videos = await loadFallbackVideos('cached')
-  return videos.find((video) => video.id === id) || null
+  try {
+    const { loadHistory } = await import('./analytics')
+    const history = loadHistory()
+
+    for (let i = history.length - 1; i >= 0; i--) {
+      const match = history[i].videos.find((video) => video.id === id)
+      if (match) {
+        return {
+          id: match.id,
+          snippet: {
+            title: match.title,
+            channelTitle: match.channelTitle,
+            publishedAt: match.publishedAt,
+            thumbnails: {
+              medium: { url: `https://i.ytimg.com/vi/${match.id}/mqdefault.jpg` },
+              high: { url: `https://i.ytimg.com/vi/${match.id}/hqdefault.jpg` },
+            },
+          },
+          statistics: {
+            viewCount: String(match.views),
+            likeCount: String(match.likes),
+            commentCount: String(match.comments),
+          },
+        }
+      }
+    }
+  } catch {
+    // history.json may not exist yet
+  }
+
+  return null
 }
 
 /* ---- Fetch channel by ID or Handle ---- */

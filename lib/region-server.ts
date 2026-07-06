@@ -10,7 +10,9 @@ export async function getRegion(): Promise<Region> {
   try {
     const c = await cookies()
     const region = c.get('region')?.value
-    if (region && REGIONS.includes(region as Region)) return region as Region
+    if (region && REGIONS.includes(region as Region)) {
+      return region === 'GLOBAL' ? 'US' : region as Region
+    }
   } catch {
     // cookies() fails during static generation — fallback to US
   }

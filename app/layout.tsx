@@ -18,6 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://tubefission.com"),
   title: "YouTube AI Analytics & Trend Intelligence Platform | Tubefission",
   description:
     "AI-powered YouTube analytics platform. Analyze channels, discover viral trends, track competitor performance, and get data-driven content insights. Free, no registration.",

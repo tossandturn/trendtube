@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server'
+import { REGIONS, type Region } from '@/lib/region'
+
+function normalizeRegion(region: string): Region {
+  if (!REGIONS.includes(region as Region)) return 'US'
+  return region === 'GLOBAL' ? 'US' : region as Region
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const region = searchParams.get('region')
+  const regionParam = searchParams.get('region')
   const redirect = searchParams.get('redirect') || '/'
 
-  if (!region) {
+  if (!regionParam) {
     return NextResponse.redirect(new URL('/', request.url))
   }
+
+  const region = normalizeRegion(regionParam)
 
   // Set cookie and redirect
   const response = NextResponse.redirect(new URL(redirect, request.url))
@@ -21,11 +29,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { region } = await request.json()
+  const { region: regionParam } = await request.json()
 
-  if (!region) {
+  if (!regionParam) {
     return NextResponse.json({ error: 'Region required' }, { status: 400 })
   }
+
+  const region = normalizeRegion(regionParam)
 
   const response = NextResponse.json({ success: true, region })
   response.cookies.set('region', region, {
