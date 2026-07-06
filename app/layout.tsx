@@ -4,6 +4,7 @@ import "./globals.css";
 import ProductHeader from "./components/ProductHeader";
 import ProductFooter from "./components/ProductFooter";
 import PerformanceMonitor from "./components/PerformanceMonitor";
+import VideoCompareBasketDock from "./components/VideoCompareBasketDock";
 import { getRegion } from "@/lib/region-server";
 import { REGION_META } from "@/lib/region";
 
@@ -112,6 +113,7 @@ export default async function RootLayout({
         <PerformanceMonitor />
         <ProductHeader />
         <div className="flex-1">{children}</div>
+        <VideoCompareBasketDock />
         <ProductFooter />
       </body>
     </html>

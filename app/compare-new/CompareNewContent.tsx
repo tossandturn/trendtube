@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useSyncExternalStore } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
@@ -76,7 +77,7 @@ export default function CompareNewContent() {
     setMode('videos')
     setLeftId(basketIds[0] || '')
     setRightId(basketIds[1] || '')
-    setIsComparing(basketIds.length === 2)
+    setIsComparing(Boolean(basketIds[0] && basketIds[1]))
   }
 
   const clearBasket = () => {
@@ -136,7 +137,7 @@ export default function CompareNewContent() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <Link href="/" className="text-gray-500 hover:text-gray-900 shrink-0">
-                ← Back
+                Back
               </Link>
               <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">Compare Tool</h1>
             </div>
@@ -260,9 +261,11 @@ export default function CompareNewContent() {
                     return (
                       <div key={item.id} className="grid gap-3 rounded-lg border border-amber-200 bg-white p-3 sm:grid-cols-[120px_1fr]">
                         <div className="relative aspect-video overflow-hidden rounded-md bg-gray-100">
-                          <img
+                          <Image
                             src={thumbnail}
                             alt={item.title || 'Video thumbnail'}
+                            fill
+                            sizes="(min-width: 640px) 120px, 100vw"
                             className="h-full w-full object-cover"
                             loading="lazy"
                           />
@@ -274,7 +277,7 @@ export default function CompareNewContent() {
                                 {item.title || item.id}
                               </div>
                               <div className="mt-1 truncate text-xs text-gray-500">
-                                {item.channelTitle || 'Unknown channel'} · {item.sourceLabel || 'Saved video'}
+                                {item.channelTitle || 'Unknown channel'} - {item.sourceLabel || 'Saved video'}
                               </div>
                             </div>
                             <Link
@@ -348,9 +351,9 @@ export default function CompareNewContent() {
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
               <div className="font-semibold mb-2">Accepted inputs</div>
               <ul className="space-y-1 text-blue-800">
-                <li>• Full YouTube URLs</li>
-                <li>• Channel handles like @mrbeast</li>
-                <li>• Raw channel IDs or video IDs</li>
+                <li>- Full YouTube URLs</li>
+                <li>- Channel handles like @mrbeast</li>
+                <li>- Raw channel IDs or video IDs</li>
               </ul>
             </div>
           </div>
