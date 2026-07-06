@@ -95,6 +95,14 @@ function getVideoWinnerSummary(leftVideo: CompareVideo, rightVideo: CompareVideo
   }
 }
 
+function getSummaryHeadline(overallWinner: string) {
+  if (overallWinner === 'Tie') {
+    return 'Split decision: each video wins different parts of the performance pattern'
+  }
+
+  return `${overallWinner} shows the stronger overall performance pattern`
+}
+
 export default function VideoCompareView({ leftId, rightId }: VideoCompareViewProps) {
   const [leftVideo, setLeftVideo] = useState<CompareVideo | null>(null)
   const [rightVideo, setRightVideo] = useState<CompareVideo | null>(null)
@@ -208,7 +216,7 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
 
       <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6 mb-8">
         <div className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-2">Summary verdict</div>
-        <h3 className="text-2xl font-bold text-gray-900 mb-3">{summary.overallWinner} shows the stronger overall performance pattern</h3>
+        <h3 className="text-2xl font-bold text-gray-900 mb-3">{getSummaryHeadline(summary.overallWinner)}</h3>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div className="bg-white rounded-xl p-4 border border-amber-100">
             <div className="text-xs text-gray-500 mb-1">Reach winner</div>

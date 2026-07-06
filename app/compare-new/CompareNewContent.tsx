@@ -2,7 +2,7 @@
 
 import { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   readVideoCompareItems,
   subscribeVideoCompareIds,
@@ -16,6 +16,7 @@ const CHANNEL_EXAMPLES = ['@MrBeast', '@MKBHD']
 const VIDEO_EXAMPLES = ['VI9igkwFNI0', '4Q4TuAzkz4k']
 
 export default function CompareNewContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const initialType = searchParams.get('type')
   const initialMode = initialType === 'videos' ? 'videos' : 'channels'
@@ -31,7 +32,13 @@ export default function CompareNewContent() {
   const selectedRight = basketItems.find((item) => item.id === rightId)
 
   const handleCompare = () => {
-    if (leftId && rightId && leftId !== rightId) setIsComparing(true)
+    if (!leftId || !rightId || leftId === rightId) return
+
+    const params = new URLSearchParams({ type: mode })
+    params.set('left', leftId)
+    params.set('right', rightId)
+    router.replace(`/compare-new?${params.toString()}`)
+    setIsComparing(true)
   }
 
   const extractId = (input: string, type: 'channel' | 'video'): string => {

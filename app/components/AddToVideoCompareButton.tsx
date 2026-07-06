@@ -173,7 +173,7 @@ export default function AddToVideoCompareButton({
   const isSelected = ids.includes(videoId)
   const label = useMemo(() => {
     if (!hydrated) return compact ? 'Basket' : 'Add to Basket'
-    if (isSelected) return compact ? 'Open' : `Open Basket (${ids.length})`
+    if (isSelected) return compact ? 'Open Basket' : `Open Basket (${ids.length})`
     return compact ? 'Basket' : `Add to Basket${ids.length > 0 ? ` (${ids.length})` : ''}`
   }, [compact, hydrated, ids.length, isSelected])
 
