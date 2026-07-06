@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -35,6 +36,7 @@ interface CompareVideo {
 }
 
 type Side = 'left' | 'right' | 'tie'
+type SaveState = 'idle' | 'saved'
 
 interface VideoAnalysis {
   title: string
@@ -72,6 +74,12 @@ interface VideoAnalysis {
   risk: string
 }
 
+interface EvidenceItem {
+  label: string
+  status: 'available' | 'inferred' | 'missing'
+  detail: string
+}
+
 function clamp(value: number, min = 0, max = 100) {
   return Math.min(max, Math.max(min, value))
 }
@@ -86,6 +94,13 @@ function formatNumber(n: string | number | undefined) {
 
 function safePercent(value: number, digits = 2) {
   return `${value.toFixed(digits)}%`
+}
+
+function getGrade(score: number) {
+  if (score >= 85) return 'A'
+  if (score >= 75) return 'B+'
+  if (score >= 65) return 'B'
+  return 'C'
 }
 
 function getAgeDays(video: CompareVideo) {
@@ -377,6 +392,75 @@ function buildNextVideoBrief(left: VideoAnalysis, right: VideoAnalysis, decision
   }
 }
 
+function buildEvidence(video: CompareVideo, analysis: VideoAnalysis): EvidenceItem[] {
+  const hasStats = Boolean(video.statistics?.viewCount && video.statistics?.likeCount && video.statistics?.commentCount)
+  const hasPublishedAt = Boolean(video.snippet?.publishedAt)
+  const hasDescription = Boolean(video.snippet?.description)
+
+  return [
+    {
+      label: 'Public performance',
+      status: hasStats ? 'available' : 'missing',
+      detail: hasStats
+        ? `${formatNumber(analysis.views)} views, ${formatNumber(analysis.likes)} likes, ${formatNumber(analysis.comments)} comments.`
+        : 'Views, likes, or comments were not available from the public API response.',
+    },
+    {
+      label: 'Momentum',
+      status: hasPublishedAt ? 'available' : 'inferred',
+      detail: hasPublishedAt
+        ? `${formatNumber(analysis.velocity)} views/day based on publish date.`
+        : 'Publish date was missing, so age was estimated for velocity scoring.',
+    },
+    {
+      label: 'Packaging and topic',
+      status: hasDescription ? 'available' : 'inferred',
+      detail: hasDescription
+        ? `Title and description support a ${analysis.topic} / ${analysis.format} read.`
+        : `Title-only read suggests ${analysis.topic} / ${analysis.format}.`,
+    },
+    {
+      label: 'Audience and region',
+      status: 'inferred',
+      detail: `${analysis.audience.age}, ${analysis.audience.geography}. This is inferred from language/topic clues, not private YouTube geography data.`,
+    },
+    {
+      label: 'Retention and revenue',
+      status: 'missing',
+      detail: 'Private retention, RPM, CTR, traffic sources, and revenue are not available; business value is a public-signal estimate.',
+    },
+  ]
+}
+
+function getConfidence(video: CompareVideo, analysis: VideoAnalysis) {
+  let score = 45
+  if (video.statistics?.viewCount) score += 12
+  if (video.statistics?.likeCount) score += 10
+  if (video.statistics?.commentCount) score += 10
+  if (video.snippet?.publishedAt) score += 10
+  if ((video.snippet?.description || '').length > 80) score += 8
+  if (analysis.views > 100000) score += 5
+  return clamp(score, 0, 92)
+}
+
+function statusClasses(status: EvidenceItem['status']) {
+  if (status === 'available') return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  if (status === 'inferred') return 'bg-amber-50 text-amber-700 border-amber-200'
+  return 'bg-gray-50 text-gray-600 border-gray-200'
+}
+
+function writeArrayItem<T extends { id: string }>(key: string, item: T) {
+  if (typeof window === 'undefined') return
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) || '[]')
+    const items = Array.isArray(parsed) ? parsed as T[] : []
+    const next = [item, ...items.filter((existing) => existing.id !== item.id)].slice(0, 50)
+    window.localStorage.setItem(key, JSON.stringify(next))
+  } catch {
+    window.localStorage.setItem(key, JSON.stringify([item]))
+  }
+}
+
 function DimensionCard({
   title,
   description,
@@ -432,10 +516,57 @@ function DimensionCard({
 }
 
 export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoCompareMetricsProps) {
+  const [savedBrief, setSavedBrief] = useState<SaveState>('idle')
+  const [savedWatchlist, setSavedWatchlist] = useState<SaveState>('idle')
+  const [savedAlert, setSavedAlert] = useState<SaveState>('idle')
   const left = analyzeVideo(leftVideo)
   const right = analyzeVideo(rightVideo)
   const decision = buildDecision(left, right)
   const brief = buildNextVideoBrief(left, right, decision)
+  const leftConfidence = getConfidence(leftVideo, left)
+  const rightConfidence = getConfidence(rightVideo, right)
+  const confidenceScore = Math.round((leftConfidence + rightConfidence) / 2)
+  const compareHref = `/compare-new?type=videos&left=${encodeURIComponent(leftVideo.id || '')}&right=${encodeURIComponent(rightVideo.id || '')}`
+  const benchmarkId = brief.benchmarkSide === 'right' ? rightVideo.id : leftVideo.id
+
+  const saveBriefToWorkspace = () => {
+    writeArrayItem('tubefission:opportunityHistory', {
+      id: `compare-${leftVideo.id || 'left'}-${rightVideo.id || 'right'}`,
+      niche: `${brief.benchmark.topic} benchmark`,
+      score: brief.benchmark.scores.overall,
+      grade: getGrade(brief.benchmark.scores.overall),
+      verdict: decision.headline,
+      recommendation: `${brief.primaryGoal}: ${brief.titleAngle}`,
+      href: benchmarkId ? `/video/${benchmarkId}` : compareHref,
+      compareHref,
+    })
+    setSavedBrief('saved')
+  }
+
+  const addBenchmarkToWatchlist = () => {
+    writeArrayItem('tubefission_watchlist', {
+      id: `compare-benchmark-${benchmarkId || brief.benchmark.title}`,
+      type: 'trend',
+      name: `${brief.benchmark.topic}: ${brief.benchmark.title}`,
+    })
+    setSavedWatchlist('saved')
+  }
+
+  const createMomentumAlert = () => {
+    writeArrayItem('tubefission_alerts', {
+      id: `compare-alert-${brief.benchmark.topic.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      name: `${brief.benchmark.topic} momentum`,
+      target: brief.benchmark.topic,
+      metric: 'view_velocity',
+      direction: 'above',
+      threshold: Math.max(10000, Math.round(brief.benchmark.velocity)),
+      email: '',
+      isActive: true,
+      createdAt: 'draft',
+      channels: ['email'],
+    })
+    setSavedAlert('saved')
+  }
 
   const scoreRows = [
     { dimension: 'Reach', A: left.scores.reach, B: right.scores.reach },
@@ -476,6 +607,45 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
                 <div className="mt-1 text-xs">{color === 'blue' ? left.monetizationFit : right.monetizationFit}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-5 sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <div className="mb-2 text-xs font-bold uppercase tracking-wider text-indigo-700">Data Trust</div>
+            <h3 className="text-xl font-bold text-gray-900">Confidence: {confidenceScore}/100</h3>
+            <p className="mt-2 text-sm leading-relaxed text-gray-700">
+              This comparison is strongest for public performance, engagement, and momentum. Audience, region, and commercial value are directional estimates because YouTube does not expose private retention, revenue, CTR, or geography here.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-xl bg-white p-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-blue-500">Video A trust</div>
+                <div className="mt-1 text-2xl font-black text-gray-900">{leftConfidence}</div>
+              </div>
+              <div className="rounded-xl bg-white p-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-red-500">Video B trust</div>
+                <div className="mt-1 text-2xl font-black text-gray-900">{rightConfidence}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            {[...buildEvidence(leftVideo, left), ...buildEvidence(rightVideo, right)]
+              .filter((item, index, items) => items.findIndex((candidate) => candidate.label === item.label && candidate.status === item.status) === index)
+              .slice(0, 6)
+              .map((item) => (
+                <div key={`${item.label}-${item.status}`} className="rounded-xl border border-gray-200 bg-white p-3">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm font-bold text-gray-900">{item.label}</div>
+                    <span className={`rounded-full border px-2 py-1 text-[11px] font-bold uppercase ${statusClasses(item.status)}`}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-5 text-gray-600">{item.detail}</p>
+                </div>
+              ))}
           </div>
         </div>
       </section>
@@ -553,6 +723,45 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-red-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="mb-5">
+          <div className="mb-2 text-xs font-bold uppercase tracking-wider text-red-600">Close the loop</div>
+          <h3 className="text-xl font-bold text-gray-900">Turn this comparison into a reusable workflow</h3>
+          <p className="mt-2 text-sm text-gray-600">
+            Save the brief, track the benchmark, and set a velocity alert so this research becomes an operating loop instead of a one-off report.
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          <button
+            type="button"
+            onClick={saveBriefToWorkspace}
+            aria-label="Save comparison brief to workspace"
+            className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-left hover:border-red-200 hover:bg-red-50"
+          >
+            <div className="text-sm font-black text-gray-900">{savedBrief === 'saved' ? 'Brief saved' : 'Save brief to workspace'}</div>
+            <p className="mt-2 text-xs leading-5 text-gray-600">Adds the benchmark, score, verdict, and next title angle to workspace history.</p>
+          </button>
+          <button
+            type="button"
+            onClick={addBenchmarkToWatchlist}
+            aria-label="Track comparison benchmark"
+            className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-left hover:border-red-200 hover:bg-red-50"
+          >
+            <div className="text-sm font-black text-gray-900">{savedWatchlist === 'saved' ? 'Benchmark tracked' : 'Track benchmark'}</div>
+            <p className="mt-2 text-xs leading-5 text-gray-600">Adds the winning topic and video to the watchlist for later research.</p>
+          </button>
+          <button
+            type="button"
+            onClick={createMomentumAlert}
+            aria-label="Create benchmark momentum alert"
+            className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-left hover:border-red-200 hover:bg-red-50"
+          >
+            <div className="text-sm font-black text-gray-900">{savedAlert === 'saved' ? 'Alert draft created' : 'Create momentum alert'}</div>
+            <p className="mt-2 text-xs leading-5 text-gray-600">Creates a draft alert using the benchmark view velocity threshold.</p>
+          </button>
         </div>
       </section>
 
