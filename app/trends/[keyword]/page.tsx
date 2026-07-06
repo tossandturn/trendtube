@@ -6,6 +6,7 @@ import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate, getTagColor, getTagEmoji } from '@/lib/analytics'
 import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
 import { REGION_META, type Region } from '@/lib/region'
+import { extractTrendsFromVideos } from '@/lib/trend-extractor'
 import TrendVideosGrid from '@/app/components/TrendVideosGrid'
 import { WordCloud } from '@/app/components/WordCloud'
 import PotentialVideoRanking from '@/app/components/PotentialVideoRanking'
@@ -535,7 +536,15 @@ export default async function TrendPage({ params }: TrendPageProps) {
     searchYouTube(searchQuery, 24, 'relevance'),
   ])
 
-  const displayVideos = selectTrendSpecificVideos(searchVideos, videos, keyword, trendData.title)
+  const extractedTrends = extractTrendsFromVideos(videos, region, 50)
+  const currentTrend = extractedTrends.find((trend) => trend.slug === keyword)
+  const trendAnchorVideos = currentTrend
+    ? videos.filter((video) => currentTrend.topVideoIds.includes(video.id))
+    : []
+  const displayVideos = mergeUniqueVideos(
+    trendAnchorVideos,
+    selectTrendSpecificVideos(searchVideos, videos, keyword, trendData.title),
+  )
 
   // Generate daily recommendations for this trend
   const dailyRecommendations = generateDailyRecommendations(displayVideos, region, 3)

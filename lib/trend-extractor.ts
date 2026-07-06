@@ -59,24 +59,38 @@ const STOP_WORDS = new Set([
   'subscribers', 'views', 'like', 'likes', 'comment', 'comments', 'vlog',
   'episode', 'update', 'official', 'full', 'hd', 'ft', 'feat', 'featuring',
   'version', 'original', 'cover', 'remix', 'live', 'stream', 'streaming',
+  'secret', 'official', 'second', 'stage', '2nd', 'run', 'ball', 'black',
+  'dear', 'final', 'season', 'episode', 'part',
+])
+
+const MEANINGFUL_SINGLE_WORDS = new Set([
+  'ai', 'chatgpt', 'midjourney', 'minecraft', 'fortnite', 'roblox', 'valorant',
+  'meccha', 'chameleon', 'odyssey', 'trailer', 'anime', 'netflix', 'crunchyroll',
+  'gaming', 'mukbang', 'shorts', 'iphone', 'tesla', 'bitcoin',
 ])
 
 // Category detection from keywords
 export function detectCategory(keyword: string): string {
   const lower = keyword.toLowerCase()
-  if (['ai', 'tech', 'phone', 'app', 'software', 'chatgpt', 'gpt', 'robot', 'code', 'coding', 'programming', 'developer', 'computer', 'gadget', 'review'].some(t => lower.includes(t))) return 'Technology'
-  if (['money', 'finance', 'invest', 'stock', 'crypto', 'bitcoin', 'trading', 'forex', 'wealth', 'income', 'passive'].some(t => lower.includes(t))) return 'Finance'
-  if (['game', 'gaming', 'minecraft', 'fortnite', 'gta', 'valorant', 'roblox', 'play', 'esports', 'player'].some(t => lower.includes(t))) return 'Gaming'
-  if (['food', 'cook', 'recipe', 'eat', 'mukbang', 'restaurant', 'kitchen', 'chef', 'meal', 'dish'].some(t => lower.includes(t))) return 'Food'
-  if (['beauty', 'makeup', 'skincare', 'fashion', 'outfit', 'style', 'glam', 'cosmetic'].some(t => lower.includes(t))) return 'Beauty'
-  if (['workout', 'fitness', 'gym', 'health', 'diet', 'exercise', 'muscle', 'training', 'yoga'].some(t => lower.includes(t))) return 'Health'
-  if (['travel', 'vlog', 'trip', 'visit', 'tour', 'vacation', 'hotel', 'flight', 'adventure'].some(t => lower.includes(t))) return 'Travel'
-  if (['study', 'learn', 'education', 'tutorial', 'how to', 'lesson', 'course', 'exam', 'university'].some(t => lower.includes(t))) return 'Education'
-  if (['music', 'song', 'cover', 'reaction', 'album', 'artist', 'rap', 'hip hop', 'pop', 'rock', 'dj', 'concert'].some(t => lower.includes(t))) return 'Music'
-  if (['shorts', 'short', 'tiktok', 'reel', 'clip', 'viral clip'].some(t => lower.includes(t))) return 'Short-Form'
-  if (['movie', 'film', 'cinema', 'trailer', 'series', 'tv', 'show', 'actor', 'netflix'].some(t => lower.includes(t))) return 'Entertainment'
-  if (['car', 'auto', 'vehicle', 'drive', 'racing', 'motor', 'bike', 'supercar', 'drift'].some(t => lower.includes(t))) return 'Auto'
-  if (['sport', 'sports', 'football', 'basketball', 'soccer', 'nfl', 'nba', 'fifa', 'match', 'goal'].some(t => lower.includes(t))) return 'Sports'
+  const hasTerm = (terms: string[]) => terms.some((term) =>
+    term.includes(' ')
+      ? lower.includes(term)
+      : new RegExp(`\\b${term}\\b`, 'i').test(lower)
+  )
+
+  if (hasTerm(['ai', 'tech', 'phone', 'app', 'software', 'chatgpt', 'gpt', 'robot', 'code', 'coding', 'programming', 'developer', 'computer', 'gadget', 'review'])) return 'Technology'
+  if (hasTerm(['money', 'finance', 'invest', 'stock', 'crypto', 'bitcoin', 'trading', 'forex', 'wealth', 'income', 'passive'])) return 'Finance'
+  if (hasTerm(['game', 'gaming', 'minecraft', 'fortnite', 'gta', 'valorant', 'roblox', 'play', 'esports', 'player'])) return 'Gaming'
+  if (hasTerm(['food', 'cook', 'recipe', 'eat', 'mukbang', 'restaurant', 'kitchen', 'chef', 'meal', 'dish'])) return 'Food'
+  if (hasTerm(['beauty', 'makeup', 'skincare', 'fashion', 'outfit', 'style', 'glam', 'cosmetic'])) return 'Beauty'
+  if (hasTerm(['workout', 'fitness', 'gym', 'health', 'diet', 'exercise', 'muscle', 'training', 'yoga'])) return 'Health'
+  if (hasTerm(['travel', 'vlog', 'trip', 'visit', 'tour', 'vacation', 'hotel', 'flight', 'adventure'])) return 'Travel'
+  if (hasTerm(['study', 'learn', 'education', 'tutorial', 'how to', 'lesson', 'course', 'exam', 'university'])) return 'Education'
+  if (hasTerm(['music', 'song', 'cover', 'reaction', 'album', 'artist', 'rap', 'hip hop', 'pop', 'rock', 'dj', 'concert'])) return 'Music'
+  if (hasTerm(['shorts', 'short', 'tiktok', 'reel', 'clip', 'viral clip'])) return 'Short-Form'
+  if (hasTerm(['movie', 'film', 'cinema', 'trailer', 'series', 'tv', 'show', 'actor', 'netflix'])) return 'Entertainment'
+  if (hasTerm(['car', 'auto', 'vehicle', 'drive', 'racing', 'motor', 'bike', 'supercar', 'drift'])) return 'Auto'
+  if (hasTerm(['sport', 'sports', 'football', 'basketball', 'soccer', 'nfl', 'nba', 'fifa', 'match', 'goal'])) return 'Sports'
   return 'Entertainment'
 }
 
@@ -87,6 +101,46 @@ export function slugify(text: string): string {
 function getAgeDays(publishedAt: string): number {
   const ageMs = Date.now() - new Date(publishedAt).getTime()
   return Math.max(0.5, ageMs / (1000 * 60 * 60 * 24))
+}
+
+function getKeywordWeight(keyword: string) {
+  return keyword.split(/\s+/).filter(Boolean).length
+}
+
+function isUsefulTrendKeyword(keyword: string) {
+  const normalized = keyword.toLowerCase().trim()
+  const words = normalized.split(/\s+/).filter(Boolean)
+
+  if (words.length === 0) return false
+  if (words.some((word) => STOP_WORDS.has(word))) return false
+  if (words.length === 1 && !MEANINGFUL_SINGLE_WORDS.has(normalized)) return false
+  return true
+}
+
+function overlapRatio(a: string[], b: string[]) {
+  if (a.length === 0 || b.length === 0) return 0
+  const bSet = new Set(b)
+  const overlap = a.filter((id) => bSet.has(id)).length
+  return overlap / Math.min(a.length, b.length)
+}
+
+function dedupeOverlappingTrends(trends: RealTrend[]) {
+  const selected: RealTrend[] = []
+
+  for (const trend of trends) {
+    const duplicate = selected.some((existing) => {
+      const overlap = overlapRatio(trend.topVideoIds, existing.topVideoIds)
+      if (overlap < 0.67) return false
+
+      const currentWords = getKeywordWeight(trend.keyword)
+      const existingWords = getKeywordWeight(existing.keyword)
+      return currentWords <= existingWords || trend.videoCount <= existing.videoCount
+    })
+
+    if (!duplicate) selected.push(trend)
+  }
+
+  return selected
 }
 
 export function extractTrendsFromVideos(videos: YouTubeVideo[], region: string, maxTrends = 20): RealTrend[] {
@@ -105,10 +159,12 @@ export function extractTrendsFromVideos(videos: YouTubeVideo[], region: string, 
 
   videos.forEach(video => {
     const title = video.snippet?.title || ''
-    const words = title
+    const rawWords = title
       .replace(/[^\w\s#]/g, ' ')
       .split(/\s+/)
       .map(w => w.replace(/^#/, '').toLowerCase())
+      .filter(w => w.length >= 2 && !/^\d+$/.test(w))
+    const words = rawWords
       .filter(w => w.length >= 3 && !STOP_WORDS.has(w) && !/^\d+$/.test(w))
 
     const views = Number(video.statistics?.viewCount || 0)
@@ -121,8 +177,8 @@ export function extractTrendsFromVideos(videos: YouTubeVideo[], region: string, 
 
     // Also extract bigrams (2-word phrases) for richer trends
     const bigrams: string[] = []
-    for (let i = 0; i < words.length - 1; i++) {
-      bigrams.push(`${words[i]} ${words[i + 1]}`)
+    for (let i = 0; i < rawWords.length - 1; i++) {
+      bigrams.push(`${rawWords[i]} ${rawWords[i + 1]}`)
     }
 
     const allTerms = [...words, ...bigrams]
@@ -154,6 +210,7 @@ export function extractTrendsFromVideos(videos: YouTubeVideo[], region: string, 
   const trends: RealTrend[] = []
   keywordMap.forEach((data, keyword) => {
     if (data.videos.length < 2) return // Must appear in at least 2 videos
+    if (!isUsefulTrendKeyword(keyword)) return
 
     const avgVelocity = Math.round(data.totalVelocity / data.videos.length)
     const engagementRate = data.totalViews > 0
@@ -187,7 +244,13 @@ export function extractTrendsFromVideos(videos: YouTubeVideo[], region: string, 
   })
 
   // Sort by breakout score descending
-  return trends.sort((a, b) => b.breakoutScore - a.breakoutScore).slice(0, maxTrends)
+  const ranked = trends.sort((a, b) => {
+    if (b.breakoutScore !== a.breakoutScore) return b.breakoutScore - a.breakoutScore
+    if (b.videoCount !== a.videoCount) return b.videoCount - a.videoCount
+    return getKeywordWeight(b.keyword) - getKeywordWeight(a.keyword)
+  })
+
+  return dedupeOverlappingTrends(ranked).slice(0, maxTrends)
 }
 
 export async function extractTrendsFromRegion(region: string, maxResults = 50): Promise<RealTrend[]> {

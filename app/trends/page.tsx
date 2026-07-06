@@ -14,6 +14,13 @@ function getTodayString() {
   return today.toISOString().split('T')[0].replace(/-/g, '.')
 }
 
+function formatCompactNumber(value: number) {
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`
+  return Math.round(value).toLocaleString()
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const region = await getRegion()
   const regionLabel = REGION_META[region].label
@@ -105,7 +112,7 @@ export default async function TrendsPage() {
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <p className="text-sm text-gray-500">Total Views Analyzed</p>
-              <p className="text-2xl font-bold text-gray-900">{(totalViews / 1e9).toFixed(1)}B</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCompactNumber(totalViews)}</p>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <p className="text-sm text-gray-500">Avg Breakout</p>
