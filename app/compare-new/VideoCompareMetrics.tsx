@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import {
   Bar,
   BarChart,
@@ -762,6 +763,22 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
             <div className="text-sm font-black text-gray-900">{savedAlert === 'saved' ? 'Alert draft created' : 'Create momentum alert'}</div>
             <p className="mt-2 text-xs leading-5 text-gray-600">Creates a draft alert using the benchmark view velocity threshold.</p>
           </button>
+        </div>
+        <div className="mt-4 flex flex-col gap-2 rounded-xl border border-red-100 bg-red-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-black text-gray-900">Workspace-ready decision</div>
+            <p className="mt-1 text-xs leading-5 text-gray-600">
+              Use Workspace to resume this benchmark, review saved opportunities, and finish alert setup.
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Link href="/workspace" className="rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700">
+              Open Workspace
+            </Link>
+            <Link href="/alerts" className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50">
+              Finish Alert
+            </Link>
+          </div>
         </div>
       </section>
 

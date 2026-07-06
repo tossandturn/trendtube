@@ -207,7 +207,7 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-4">
           <Link href={`/compare-new?type=videos`} className="text-gray-500 hover:text-gray-900">
-            ← Edit Comparison
+            Edit Comparison
           </Link>
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Video Comparison</h2>

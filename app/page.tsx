@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SoftwareApplicationSchema, FAQPageSchema, BreadcrumbSchema } from '@/app/components/JsonLd'
 import { AnalyzeHeroForm } from '@/app/components/AnalyzeHeroForm'
+import ProductValueWorkflow from '@/app/components/ProductValueWorkflow'
 
 export const metadata: Metadata = {
   title: 'YouTube AI Analytics & Trend Intelligence Platform | Tubefission',
@@ -132,12 +133,25 @@ export default function HomePage() {
                 ))}
               </div>
               <div className="rounded-xl bg-gray-950 p-4 text-white">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Advantage</div>
-                <div className="mt-2 text-3xl font-black">90</div>
-                <div className="mt-1 text-sm text-gray-300">Workflow beats one-off reports.</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Closed loop</div>
+                <div className="mt-2 text-2xl font-black">Analyze / Compare / Track</div>
+                <div className="mt-1 text-sm text-gray-300">Built for repeat decisions, not one-off reports.</div>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="border-y border-gray-200 bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-red-600">Product strength</div>
+              <h2 className="mt-1 text-2xl font-black text-gray-950">Why TubeFission is moving toward 90.</h2>
+            </div>
+            <Link href="/workspace" className="text-sm font-bold text-red-600 hover:text-red-700">Continue in workspace</Link>
+          </div>
+          <ProductValueWorkflow compact />
         </div>
       </section>
 

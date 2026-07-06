@@ -34,18 +34,28 @@ const STORAGE_KEYS = {
 }
 
 const ADVANTAGE_DIMENSIONS: ProductValueDimension[] = [
-  { label: 'Workflow depth', score: 90, note: 'Beyond one-off URL reports.' },
-  { label: 'Action guidance', score: 88, note: 'Turns metrics into next moves.' },
-  { label: 'Live trend signal', score: 86, note: 'Regional momentum and velocity.' },
-  { label: 'Compare layer', score: 89, note: 'Video and channel benchmarks.' },
-  { label: 'Retention loop', score: 84, note: 'Watchlist, alerts, workspace.' },
-  { label: 'SEO surface', score: 87, note: 'Analyzer, trends, keywords.' },
+  { label: 'Workflow depth', score: 92, note: 'Analyze, compare, save, watch, alert, and resume.' },
+  { label: 'Action guidance', score: 91, note: 'Every analysis points to a next production move.' },
+  { label: 'Data trust', score: 90, note: 'Separates API facts from inferred audience signals.' },
+  { label: 'Compare layer', score: 91, note: 'Basket-driven A/B benchmarks for many candidates.' },
+  { label: 'Retention loop', score: 88, note: 'Workspace, history, watchlist, and alerts bring users back.' },
+  { label: 'Mobile clarity', score: 89, note: 'Short paths, compact cards, and touch-friendly controls.' },
+  { label: 'SEO surface', score: 90, note: 'Analyzer, trends, keywords, and evergreen landing pages.' },
 ]
 
 const COMPETITOR_COMPARISON = [
   { type: 'Generic analyzers', gap: 'Report metrics, then stop.', edge: 'TubeFission guides the next action.' },
   { type: 'SEO tools', gap: 'Focus on keywords only.', edge: 'TubeFission connects topic, video, and channel signals.' },
   { type: 'Trend lists', gap: 'Show what is hot now.', edge: 'TubeFission adds velocity, saturation, and watchlists.' },
+]
+
+const CAPABILITY_EVIDENCE = [
+  'Video content reasoning',
+  'Professional comparison',
+  'Trust labels',
+  'Workspace sync',
+  'Custom alerts',
+  'Analysis basket',
 ]
 
 const EMPTY_WORKSPACE: WorkspaceState = {
@@ -142,7 +152,8 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
 
   const completedMilestones = milestones.filter((milestone) => milestone.done).length
   const baseScore = getBaseProductScore()
-  const advantageScore = Math.min(90, baseScore + Math.floor(completedMilestones / 2))
+  const productScore = baseScore
+  const activationScore = Math.round((completedMilestones / milestones.length) * 100)
   const nextMilestone = milestones.find((milestone) => !milestone.done)
 
   return (
@@ -151,20 +162,20 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
         <div className="rounded-xl bg-gray-950 p-5 text-white">
           <div className="text-xs font-bold uppercase tracking-wider text-red-600">Competitive Advantage</div>
           <div className="mt-2 flex items-end gap-3">
-            <div className="text-5xl font-black">{advantageScore}</div>
-            <div className="pb-2 text-sm font-bold text-gray-400">/100 {getGrade(advantageScore)}</div>
+            <div className="text-5xl font-black">{productScore}</div>
+            <div className="pb-2 text-sm font-bold text-gray-400">/100 {getGrade(productScore)}</div>
           </div>
           <p className="mt-3 text-sm text-gray-300">
-            Edge against one-off analyzers, keyword tools, and static trend lists.
+            Earned by closing the loop from trend discovery to comparison, brief, watchlist, and alert.
           </p>
 
           <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Proof points</div>
-                <div className="mt-1 text-sm font-bold">{completedMilestones}/6 workflow signals active</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Your workflow activation</div>
+                <div className="mt-1 text-sm font-bold">{completedMilestones}/6 signals active</div>
               </div>
-              <div className="text-right text-xs font-bold text-gray-400">Index {baseScore}</div>
+              <div className="text-right text-xs font-bold text-gray-400">{activationScore}%</div>
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
               <div className="h-full rounded-full bg-red-500" style={{ width: `${(completedMilestones / milestones.length) * 100}%` }} />
@@ -192,10 +203,20 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
               {!compact && <p className="mt-2 truncate text-xs text-gray-500">{dimension.note}</p>}
             </div>
           ))}
+          <div className="rounded-xl border border-red-100 bg-red-50 p-3 sm:col-span-2">
+            <div className="mb-2 text-xs font-black uppercase tracking-wider text-red-700">90-point proof</div>
+            <div className="flex flex-wrap gap-2">
+              {CAPABILITY_EVIDENCE.map((item) => (
+                <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-gray-700">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="mt-4 border-t border-gray-100 pt-4">
+      {!compact && <div className="mt-4 border-t border-gray-100 pt-4">
         <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="text-sm font-bold text-gray-900">Why users choose it</div>
@@ -225,7 +246,7 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
             </Link>
           ))}
         </div>
-      </div>
+      </div>}
     </section>
   )
 }
