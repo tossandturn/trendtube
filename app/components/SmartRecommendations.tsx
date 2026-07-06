@@ -233,7 +233,15 @@ export default function SmartRecommendations({
             </div>
             </Link>
             <div className="px-3 pb-3">
-              <AddToVideoCompareButton videoId={video.id} compact fullWidth />
+              <AddToVideoCompareButton
+                videoId={video.id}
+                title={video.title}
+                channelTitle={video.channelTitle}
+                thumbnailUrl={video.thumbnail}
+                sourceLabel="AI recommendation"
+                compact
+                fullWidth
+              />
             </div>
           </div>
         ))}

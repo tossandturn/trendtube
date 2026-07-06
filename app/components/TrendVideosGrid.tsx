@@ -370,7 +370,15 @@ export default function TrendVideosGrid({ videos, keyword, initialRegion = 'US',
                     </div>
                   </Link>
                   <div className="px-3 pb-3 sm:px-4 sm:pb-4">
-                    <AddToVideoCompareButton videoId={video.id} compact fullWidth />
+                    <AddToVideoCompareButton
+                      videoId={video.id}
+                      title={video.snippet?.title}
+                      channelTitle={channelTitle}
+                      thumbnailUrl={video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`}
+                      sourceLabel="Trend detail"
+                      compact
+                      fullWidth
+                    />
                   </div>
                 </div>
               )

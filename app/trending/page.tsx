@@ -424,7 +424,14 @@ export default async function TrendingPage() {
                       <Link href={`/video/${video.id}`} className="flex-1 px-3 py-2 bg-gray-900 text-white rounded-lg text-xs font-medium text-center hover:bg-gray-800 transition">
                         Analyze Video
                       </Link>
-                      <AddToVideoCompareButton videoId={video.id} compact />
+                      <AddToVideoCompareButton
+                        videoId={video.id}
+                        title={video.snippet?.title}
+                        channelTitle={video.snippet?.channelTitle}
+                        thumbnailUrl={video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`}
+                        sourceLabel="Trending"
+                        compact
+                      />
                     </div>
                   </div>
                 </div>

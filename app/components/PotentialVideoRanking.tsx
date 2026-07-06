@@ -230,7 +230,14 @@ export default function PotentialVideoRanking({ videos, region = 'US' }: Potenti
                     <span className="text-[10px] text-gray-500 whitespace-nowrap">
                       {getScoreLabel(score)}
                     </span>
-                    <AddToVideoCompareButton videoId={video.id} compact />
+                    <AddToVideoCompareButton
+                      videoId={video.id}
+                      title={video.snippet?.title}
+                      channelTitle={video.snippet?.channelTitle}
+                      thumbnailUrl={video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.default?.url || `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`}
+                      sourceLabel="Potential ranking"
+                      compact
+                    />
                   </div>
                 </div>
               </div>

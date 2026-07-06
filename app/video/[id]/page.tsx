@@ -349,7 +349,13 @@ export default async function VideoPage({ params }: VideoPageProps) {
           >
             Compare This Video
           </Link>
-          <AddToVideoCompareButton videoId={id} />
+          <AddToVideoCompareButton
+            videoId={id}
+            title={video.snippet?.title}
+            channelTitle={video.snippet?.channelTitle}
+            thumbnailUrl={video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${id}/mqdefault.jpg`}
+            sourceLabel="Video analysis"
+          />
           <a
             href={`https://www.youtube.com/watch?v=${id}`}
             target="_blank"
@@ -797,7 +803,15 @@ export default async function VideoPage({ params }: VideoPageProps) {
                   </div>
                   </Link>
                   <div className="px-3 pb-3 sm:px-4 sm:pb-4">
-                    <AddToVideoCompareButton videoId={v.id} compact fullWidth />
+                    <AddToVideoCompareButton
+                      videoId={v.id}
+                      title={v.snippet?.title}
+                      channelTitle={v.snippet?.channelTitle}
+                      thumbnailUrl={v.snippet?.thumbnails?.medium?.url || v.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`}
+                      sourceLabel="Related video"
+                      compact
+                      fullWidth
+                    />
                   </div>
                 </div>
               ))}

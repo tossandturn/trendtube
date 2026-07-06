@@ -5,8 +5,21 @@ import { useRouter } from 'next/navigation'
 import { ArrowRight, Check, GitCompare } from 'lucide-react'
 
 const STORAGE_KEY = 'tubefission:videoCompareIds'
+const ITEMS_STORAGE_KEY = 'tubefission:videoCompareItems'
 const CHANGE_EVENT = 'tubefission:videoCompareChanged'
 const MAX_BASKET_VIDEOS = 50
+
+let cachedItemsKey = ''
+let cachedItemsSnapshot: VideoCompareItem[] = []
+
+export interface VideoCompareItem {
+  id: string
+  title?: string
+  channelTitle?: string
+  thumbnailUrl?: string
+  sourceLabel?: string
+  addedAt?: string
+}
 
 function normalizeIds(value: unknown): string[] {
   if (!Array.isArray(value)) return []
@@ -21,6 +34,55 @@ function normalizeIds(value: unknown): string[] {
   return ids.slice(0, MAX_BASKET_VIDEOS)
 }
 
+function normalizeCompareItems(value: unknown): VideoCompareItem[] {
+  if (!Array.isArray(value)) return []
+
+  const items: VideoCompareItem[] = []
+  value.forEach((item) => {
+    const rawId = typeof item === 'string'
+      ? item
+      : typeof item === 'object' && item !== null && 'id' in item
+        ? (item as { id?: unknown }).id
+        : ''
+    if (typeof rawId !== 'string') return
+
+    const id = rawId.trim()
+    if (!id || items.some((existing) => existing.id === id)) return
+
+    const source = typeof item === 'object' && item !== null ? item as Record<string, unknown> : {}
+    items.push({
+      id,
+      title: typeof source.title === 'string' ? source.title : undefined,
+      channelTitle: typeof source.channelTitle === 'string' ? source.channelTitle : undefined,
+      thumbnailUrl: typeof source.thumbnailUrl === 'string' ? source.thumbnailUrl : undefined,
+      sourceLabel: typeof source.sourceLabel === 'string' ? source.sourceLabel : undefined,
+      addedAt: typeof source.addedAt === 'string' ? source.addedAt : undefined,
+    })
+  })
+
+  return items.slice(0, MAX_BASKET_VIDEOS)
+}
+
+export function readVideoCompareItems(): VideoCompareItem[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const rawItems = window.localStorage.getItem(ITEMS_STORAGE_KEY) || '[]'
+    const rawIds = window.localStorage.getItem(STORAGE_KEY) || '[]'
+    const cacheKey = `${rawItems}\n${rawIds}`
+    if (cacheKey === cachedItemsKey) return cachedItemsSnapshot
+
+    const storedItems = normalizeCompareItems(JSON.parse(rawItems))
+    cachedItemsSnapshot = storedItems.length > 0
+      ? storedItems
+      : normalizeIds(JSON.parse(rawIds)).map((id) => ({ id }))
+    cachedItemsKey = cacheKey
+    return cachedItemsSnapshot
+  } catch {
+    return []
+  }
+}
+
 export function readVideoCompareIds(): string[] {
   if (typeof window === 'undefined') return []
 
@@ -31,10 +93,19 @@ export function readVideoCompareIds(): string[] {
   }
 }
 
-export function writeVideoCompareIds(ids: string[]) {
-  const nextIds = normalizeIds(ids)
+export function writeVideoCompareItems(items: VideoCompareItem[]) {
+  const nextItems = normalizeCompareItems(items)
+  const nextIds = nextItems.map((item) => item.id)
+  window.localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(nextItems))
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextIds))
-  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: nextIds }))
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { ids: nextIds, items: nextItems } }))
+}
+
+export function writeVideoCompareIds(ids: string[]) {
+  const existingItems = readVideoCompareItems()
+  const existingById = new Map(existingItems.map((item) => [item.id, item]))
+  const nextItems = normalizeIds(ids).map((id) => existingById.get(id) || { id })
+  writeVideoCompareItems(nextItems)
 }
 
 export function subscribeVideoCompareIds(onStoreChange: () => void) {
@@ -60,6 +131,10 @@ export function getCompareUrl(ids: string[]) {
 
 interface AddToVideoCompareButtonProps {
   videoId: string
+  title?: string
+  channelTitle?: string
+  thumbnailUrl?: string
+  sourceLabel?: string
   className?: string
   compact?: boolean
   fullWidth?: boolean
@@ -67,6 +142,10 @@ interface AddToVideoCompareButtonProps {
 
 export default function AddToVideoCompareButton({
   videoId,
+  title,
+  channelTitle,
+  thumbnailUrl,
+  sourceLabel,
   className = '',
   compact = false,
   fullWidth = false,
@@ -104,16 +183,28 @@ export default function AddToVideoCompareButton({
     event.preventDefault()
     event.stopPropagation()
 
-    const currentIds = readVideoCompareIds()
-    let nextIds = currentIds.includes(videoId)
-      ? currentIds
-      : [...currentIds, videoId]
+    const currentItems = readVideoCompareItems()
+    const currentIds = currentItems.map((item) => item.id)
+    let nextItems = currentIds.includes(videoId)
+      ? currentItems
+      : [
+          ...currentItems,
+          {
+            id: videoId,
+            title,
+            channelTitle,
+            thumbnailUrl,
+            sourceLabel,
+            addedAt: new Date().toISOString(),
+          },
+        ]
 
-    if (nextIds.length > MAX_BASKET_VIDEOS) {
-      nextIds = nextIds.slice(nextIds.length - MAX_BASKET_VIDEOS)
+    if (nextItems.length > MAX_BASKET_VIDEOS) {
+      nextItems = nextItems.slice(nextItems.length - MAX_BASKET_VIDEOS)
     }
 
-    writeVideoCompareIds(nextIds)
+    const nextIds = nextItems.map((item) => item.id)
+    writeVideoCompareItems(nextItems)
     setIds(nextIds)
 
     if (currentIds.includes(videoId)) {

@@ -104,7 +104,15 @@ function VideoOpportunityCard({ item, lane }: { item: TrendBoardVideo; lane: str
           >
             Analyze
           </Link>
-          <AddToVideoCompareButton videoId={video.id} compact fullWidth />
+          <AddToVideoCompareButton
+            videoId={video.id}
+            title={video.snippet?.title}
+            channelTitle={video.snippet?.channelTitle}
+            thumbnailUrl={thumbnail}
+            sourceLabel={`${item.categoryLabel} ${lane}`}
+            compact
+            fullWidth
+          />
         </div>
       </div>
     </div>
@@ -114,7 +122,6 @@ function VideoOpportunityCard({ item, lane }: { item: TrendBoardVideo; lane: str
 export default async function TrendsPage() {
   const region = await getRegion()
   const board = await getCachedTrendBoard(region)
-  const today = getTodayString()
   const regionLabel = REGION_META[region].label
   const updatedAt = new Date(board.generatedAt).toLocaleTimeString('en-US', {
     hour: '2-digit',
@@ -241,4 +248,3 @@ export default async function TrendsPage() {
     </main>
   )
 }
-

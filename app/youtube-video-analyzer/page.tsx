@@ -123,7 +123,15 @@ export default async function Page() {
                   </div>
                 </Link>
                 <div className="mt-4">
-                  <AddToVideoCompareButton videoId={video.id} compact fullWidth />
+                  <AddToVideoCompareButton
+                    videoId={video.id}
+                    title={video.snippet?.title}
+                    channelTitle={video.snippet?.channelTitle}
+                    thumbnailUrl={video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`}
+                    sourceLabel="Video analyzer sample"
+                    compact
+                    fullWidth
+                  />
                 </div>
               </div>
             ))}

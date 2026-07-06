@@ -3,7 +3,12 @@
 import { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { readVideoCompareIds, subscribeVideoCompareIds, writeVideoCompareIds } from '@/app/components/AddToVideoCompareButton'
+import {
+  readVideoCompareItems,
+  subscribeVideoCompareIds,
+  writeVideoCompareItems,
+  type VideoCompareItem,
+} from '@/app/components/AddToVideoCompareButton'
 import ChannelCompareView from './ChannelCompareView'
 import VideoCompareView from './VideoCompareView'
 
@@ -20,7 +25,10 @@ export default function CompareNewContent() {
   const [leftId, setLeftId] = useState(initialLeft)
   const [rightId, setRightId] = useState(initialRight)
   const [isComparing, setIsComparing] = useState(Boolean(initialLeft && initialRight))
-  const basketIds = useSyncExternalStore(subscribeVideoCompareIds, readVideoCompareIds, () => [])
+  const basketItems = useSyncExternalStore(subscribeVideoCompareIds, readVideoCompareItems, () => [])
+  const basketIds = basketItems.map((item) => item.id)
+  const selectedLeft = basketItems.find((item) => item.id === leftId)
+  const selectedRight = basketItems.find((item) => item.id === rightId)
 
   const handleCompare = () => {
     if (leftId && rightId && leftId !== rightId) setIsComparing(true)
@@ -65,7 +73,7 @@ export default function CompareNewContent() {
   }
 
   const clearBasket = () => {
-    writeVideoCompareIds([])
+    writeVideoCompareItems([])
     setLeftId('')
     setRightId('')
     setIsComparing(false)
@@ -84,10 +92,14 @@ export default function CompareNewContent() {
   }
 
   const removeBasketVideo = (id: string) => {
-    const nextIds = basketIds.filter((item) => item !== id)
-    writeVideoCompareIds(nextIds)
+    const nextItems = basketItems.filter((item) => item.id !== id)
+    writeVideoCompareItems(nextItems)
     if (leftId === id) setLeftId('')
     if (rightId === id) setRightId('')
+  }
+
+  const getItemLabel = (item?: VideoCompareItem, fallbackId?: string) => {
+    return item?.title || fallbackId || 'Choose from basket'
   }
 
   const modeCopy = mode === 'channels'
@@ -225,48 +237,75 @@ export default function CompareNewContent() {
                 <div className="mb-3 grid gap-2 sm:grid-cols-2">
                   <div className="rounded-lg border border-blue-100 bg-white px-3 py-2">
                     <div className="text-[11px] font-bold uppercase tracking-wider text-blue-500">Selected A</div>
-                    <div className="truncate text-sm font-semibold text-gray-900">{leftId || 'Choose from basket'}</div>
+                    <div className="truncate text-sm font-semibold text-gray-900">{getItemLabel(selectedLeft, leftId)}</div>
                   </div>
                   <div className="rounded-lg border border-red-100 bg-white px-3 py-2">
                     <div className="text-[11px] font-bold uppercase tracking-wider text-red-500">Selected B</div>
-                    <div className="truncate text-sm font-semibold text-gray-900">{rightId || 'Choose from basket'}</div>
+                    <div className="truncate text-sm font-semibold text-gray-900">{getItemLabel(selectedRight, rightId)}</div>
                   </div>
                 </div>
 
-                <div className="grid max-h-80 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-                  {basketIds.map((id) => {
-                    const isLeft = leftId === id
-                    const isRight = rightId === id
+                <div className="grid max-h-[28rem] gap-2 overflow-y-auto pr-1">
+                  {basketItems.map((item) => {
+                    const isLeft = leftId === item.id
+                    const isRight = rightId === item.id
+                    const thumbnail = item.thumbnailUrl || `https://i.ytimg.com/vi/${item.id}/mqdefault.jpg`
                     return (
-                      <div key={id} className="rounded-lg border border-amber-200 bg-white p-3">
-                        <div className="mb-2 truncate text-xs font-bold text-gray-900">{id}</div>
-                        <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
-                          <button
-                            type="button"
-                            onClick={() => chooseBasketVideo(id, 'left')}
-                            className={`rounded-md px-2 py-1.5 text-xs font-bold ${
-                              isLeft ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                            }`}
-                          >
-                            {isLeft ? 'A selected' : 'Set A'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => chooseBasketVideo(id, 'right')}
-                            className={`rounded-md px-2 py-1.5 text-xs font-bold ${
-                              isRight ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100'
-                            }`}
-                          >
-                            {isRight ? 'B selected' : 'Set B'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeBasketVideo(id)}
-                            className="rounded-md bg-gray-100 px-2 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200"
-                            aria-label={`Remove ${id} from basket`}
-                          >
-                            Remove
-                          </button>
+                      <div key={item.id} className="grid gap-3 rounded-lg border border-amber-200 bg-white p-3 sm:grid-cols-[120px_1fr]">
+                        <div className="relative aspect-video overflow-hidden rounded-md bg-gray-100">
+                          <img
+                            src={thumbnail}
+                            alt={item.title || 'Video thumbnail'}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="line-clamp-2 text-sm font-bold leading-snug text-gray-900">
+                                {item.title || item.id}
+                              </div>
+                              <div className="mt-1 truncate text-xs text-gray-500">
+                                {item.channelTitle || 'Unknown channel'} · {item.sourceLabel || 'Saved video'}
+                              </div>
+                            </div>
+                            <Link
+                              href={`/video/${item.id}`}
+                              className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-200"
+                            >
+                              View
+                            </Link>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2">
+                            <button
+                              type="button"
+                              onClick={() => chooseBasketVideo(item.id, 'left')}
+                              className={`rounded-md px-2 py-1.5 text-xs font-bold ${
+                                isLeft ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                              }`}
+                            >
+                              {isLeft ? 'A selected' : 'Set A'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => chooseBasketVideo(item.id, 'right')}
+                              className={`rounded-md px-2 py-1.5 text-xs font-bold ${
+                                isRight ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100'
+                              }`}
+                            >
+                              {isRight ? 'B selected' : 'Set B'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeBasketVideo(item.id)}
+                              className="rounded-md bg-gray-100 px-2 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200"
+                              aria-label={`Remove ${item.id} from basket`}
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )

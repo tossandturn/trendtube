@@ -1005,7 +1005,15 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
                   </div>
                   </Link>
                   <div className="px-4 pb-4">
-                    <AddToVideoCompareButton videoId={video.id} compact fullWidth />
+                    <AddToVideoCompareButton
+                      videoId={video.id}
+                      title={video.snippet?.title}
+                      channelTitle={video.snippet?.channelTitle || channel.snippet?.title}
+                      thumbnailUrl={video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`}
+                      sourceLabel="Channel upload"
+                      compact
+                      fullWidth
+                    />
                   </div>
                 </div>
               ))}
@@ -1051,7 +1059,15 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
                 </div>
               </Link>
               <div className="mt-4">
-                <AddToVideoCompareButton videoId={analysis.bestVideo.id} compact fullWidth />
+                <AddToVideoCompareButton
+                  videoId={analysis.bestVideo.id}
+                  title={analysis.bestVideo.snippet?.title}
+                  channelTitle={analysis.bestVideo.snippet?.channelTitle || channel.snippet?.title}
+                  thumbnailUrl={analysis.bestVideo.snippet?.thumbnails?.medium?.url || analysis.bestVideo.snippet?.thumbnails?.high?.url || `https://i.ytimg.com/vi/${analysis.bestVideo.id}/mqdefault.jpg`}
+                  sourceLabel="Best channel video"
+                  compact
+                  fullWidth
+                />
               </div>
             </div>
           </section>
