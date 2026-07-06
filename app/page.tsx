@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SoftwareApplicationSchema, FAQPageSchema, BreadcrumbSchema } from '@/app/components/JsonLd'
 import { AnalyzeHeroForm } from '@/app/components/AnalyzeHeroForm'
-import ProductValueWorkflow from '@/app/components/ProductValueWorkflow'
 
 export const metadata: Metadata = {
   title: 'YouTube AI Analytics & Trend Intelligence Platform | Tubefission',
@@ -139,13 +138,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ===== COMPETITIVE ADVANTAGE WORKFLOW ===== */}
-      <section className="bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-          <ProductValueWorkflow />
         </div>
       </section>
 
