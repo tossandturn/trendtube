@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { readVideoCompareIds } from '@/app/components/AddToVideoCompareButton'
+import { readVideoCompareIds, subscribeVideoCompareIds, writeVideoCompareIds } from '@/app/components/AddToVideoCompareButton'
 import ChannelCompareView from './ChannelCompareView'
 import VideoCompareView from './VideoCompareView'
 
@@ -20,28 +20,10 @@ export default function CompareNewContent() {
   const [leftId, setLeftId] = useState(initialLeft)
   const [rightId, setRightId] = useState(initialRight)
   const [isComparing, setIsComparing] = useState(Boolean(initialLeft && initialRight))
-  const [basketIds, setBasketIds] = useState<string[]>([])
-
-  useEffect(() => {
-    if (initialType !== 'videos') return
-    const ids = readVideoCompareIds()
-    setBasketIds(ids)
-    if (initialLeft && !initialRight) {
-      const nextRight = ids.find((id) => id !== initialLeft)
-      if (nextRight) setRightId(nextRight)
-      if (nextRight) setIsComparing(true)
-      return
-    }
-    if (!initialLeft && !initialRight && ids.length > 0) {
-      setMode('videos')
-      setLeftId(ids[0] || '')
-      setRightId(ids[1] || '')
-      setIsComparing(ids.length >= 2)
-    }
-  }, [initialLeft, initialRight, initialType])
+  const basketIds = useSyncExternalStore(subscribeVideoCompareIds, readVideoCompareIds, () => [])
 
   const handleCompare = () => {
-    if (leftId && rightId) setIsComparing(true)
+    if (leftId && rightId && leftId !== rightId) setIsComparing(true)
   }
 
   const extractId = (input: string, type: 'channel' | 'video'): string => {
@@ -79,7 +61,33 @@ export default function CompareNewContent() {
     setMode('videos')
     setLeftId(basketIds[0] || '')
     setRightId(basketIds[1] || '')
-    setIsComparing(basketIds.length >= 2)
+    setIsComparing(basketIds.length === 2)
+  }
+
+  const clearBasket = () => {
+    writeVideoCompareIds([])
+    setLeftId('')
+    setRightId('')
+    setIsComparing(false)
+  }
+
+  const chooseBasketVideo = (id: string, side: 'left' | 'right') => {
+    setMode('videos')
+    setIsComparing(false)
+    if (side === 'left') {
+      setLeftId(id)
+      if (rightId === id) setRightId('')
+    } else {
+      setRightId(id)
+      if (leftId === id) setLeftId('')
+    }
+  }
+
+  const removeBasketVideo = (id: string) => {
+    const nextIds = basketIds.filter((item) => item !== id)
+    writeVideoCompareIds(nextIds)
+    if (leftId === id) setLeftId('')
+    if (rightId === id) setRightId('')
   }
 
   const modeCopy = mode === 'channels'
@@ -191,10 +199,86 @@ export default function CompareNewContent() {
               </div>
             </div>
 
+            {mode === 'videos' && basketIds.length > 0 && (
+              <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-bold text-amber-950">Analysis Basket</div>
+                    <p className="text-xs text-amber-800">
+                      Save many candidates here, then pick exactly two videos for A/B analysis.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-full bg-white px-3 py-1 text-xs font-bold text-amber-900">
+                      {basketIds.length} videos
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearBasket}
+                      className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 hover:bg-amber-200"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mb-3 grid gap-2 sm:grid-cols-2">
+                  <div className="rounded-lg border border-blue-100 bg-white px-3 py-2">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-blue-500">Selected A</div>
+                    <div className="truncate text-sm font-semibold text-gray-900">{leftId || 'Choose from basket'}</div>
+                  </div>
+                  <div className="rounded-lg border border-red-100 bg-white px-3 py-2">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-red-500">Selected B</div>
+                    <div className="truncate text-sm font-semibold text-gray-900">{rightId || 'Choose from basket'}</div>
+                  </div>
+                </div>
+
+                <div className="grid max-h-80 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+                  {basketIds.map((id) => {
+                    const isLeft = leftId === id
+                    const isRight = rightId === id
+                    return (
+                      <div key={id} className="rounded-lg border border-amber-200 bg-white p-3">
+                        <div className="mb-2 truncate text-xs font-bold text-gray-900">{id}</div>
+                        <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                          <button
+                            type="button"
+                            onClick={() => chooseBasketVideo(id, 'left')}
+                            className={`rounded-md px-2 py-1.5 text-xs font-bold ${
+                              isLeft ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                            }`}
+                          >
+                            {isLeft ? 'A selected' : 'Set A'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => chooseBasketVideo(id, 'right')}
+                            className={`rounded-md px-2 py-1.5 text-xs font-bold ${
+                              isRight ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100'
+                            }`}
+                          >
+                            {isRight ? 'B selected' : 'Set B'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeBasketVideo(id)}
+                            className="rounded-md bg-gray-100 px-2 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200"
+                            aria-label={`Remove ${id} from basket`}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <button
                 onClick={handleCompare}
-                disabled={!leftId || !rightId}
+                disabled={!leftId || !rightId || leftId === rightId}
                 className="flex-1 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 Start Comparing
@@ -210,7 +294,7 @@ export default function CompareNewContent() {
                   onClick={applyBasket}
                   className="w-full sm:w-auto px-5 py-4 bg-amber-100 text-amber-900 font-medium rounded-xl hover:bg-amber-200 transition"
                 >
-                  Use Basket ({basketIds.length})
+                  Fill A/B from Basket ({basketIds.length})
                 </button>
               )}
             </div>

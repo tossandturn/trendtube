@@ -6,7 +6,7 @@ import { ArrowRight, Check, GitCompare } from 'lucide-react'
 
 const STORAGE_KEY = 'tubefission:videoCompareIds'
 const CHANGE_EVENT = 'tubefission:videoCompareChanged'
-const MAX_COMPARE_VIDEOS = 2
+const MAX_BASKET_VIDEOS = 50
 
 function normalizeIds(value: unknown): string[] {
   if (!Array.isArray(value)) return []
@@ -18,7 +18,7 @@ function normalizeIds(value: unknown): string[] {
     if (id && !ids.includes(id)) ids.push(id)
   })
 
-  return ids.slice(0, MAX_COMPARE_VIDEOS)
+  return ids.slice(0, MAX_BASKET_VIDEOS)
 }
 
 export function readVideoCompareIds(): string[] {
@@ -31,13 +31,26 @@ export function readVideoCompareIds(): string[] {
   }
 }
 
-function writeVideoCompareIds(ids: string[]) {
+export function writeVideoCompareIds(ids: string[]) {
   const nextIds = normalizeIds(ids)
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextIds))
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: nextIds }))
 }
 
-function getCompareUrl(ids: string[]) {
+export function subscribeVideoCompareIds(onStoreChange: () => void) {
+  if (typeof window === 'undefined') return () => {}
+
+  const handleChange = () => onStoreChange()
+  window.addEventListener('storage', handleChange)
+  window.addEventListener(CHANGE_EVENT, handleChange)
+
+  return () => {
+    window.removeEventListener('storage', handleChange)
+    window.removeEventListener(CHANGE_EVENT, handleChange)
+  }
+}
+
+export function getCompareUrl(ids: string[]) {
   const [left, right] = ids
   const params = new URLSearchParams({ type: 'videos' })
   if (left) params.set('left', left)
@@ -80,12 +93,9 @@ export default function AddToVideoCompareButton({
 
   const isSelected = ids.includes(videoId)
   const label = useMemo(() => {
-    if (!hydrated) return compact ? 'Compare' : 'Add to Compare'
-    if (isSelected && ids.length >= MAX_COMPARE_VIDEOS) return compact ? 'Open' : 'Open Compare'
-    if (isSelected) return compact ? 'Added' : 'Added to Compare'
-    if (ids.length === 1) return compact ? 'Add & Go' : 'Add & Compare'
-    if (ids.length >= MAX_COMPARE_VIDEOS) return compact ? 'Replace' : 'Replace & Compare'
-    return compact ? 'Compare' : 'Add to Compare'
+    if (!hydrated) return compact ? 'Basket' : 'Add to Basket'
+    if (isSelected) return compact ? 'Open' : `Open Basket (${ids.length})`
+    return compact ? 'Basket' : `Add to Basket${ids.length > 0 ? ` (${ids.length})` : ''}`
   }, [compact, hydrated, ids.length, isSelected])
 
   const Icon = isSelected ? Check : ids.length > 0 ? ArrowRight : GitCompare
@@ -99,14 +109,14 @@ export default function AddToVideoCompareButton({
       ? currentIds
       : [...currentIds, videoId]
 
-    if (nextIds.length > MAX_COMPARE_VIDEOS) {
-      nextIds = nextIds.slice(nextIds.length - MAX_COMPARE_VIDEOS)
+    if (nextIds.length > MAX_BASKET_VIDEOS) {
+      nextIds = nextIds.slice(nextIds.length - MAX_BASKET_VIDEOS)
     }
 
     writeVideoCompareIds(nextIds)
     setIds(nextIds)
 
-    if (nextIds.length >= MAX_COMPARE_VIDEOS || currentIds.includes(videoId)) {
+    if (currentIds.includes(videoId)) {
       router.push(getCompareUrl(nextIds))
     }
   }
@@ -119,7 +129,7 @@ export default function AddToVideoCompareButton({
     <button
       type="button"
       onClick={handleClick}
-      aria-label={`Add video ${videoId} to comparison`}
+      aria-label={isSelected ? `Open comparison basket with video ${videoId}` : `Add video ${videoId} to comparison basket`}
       className={[
         'inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border font-semibold transition',
         compact ? 'px-2.5 py-2 text-xs' : 'px-3 py-2 text-sm',
