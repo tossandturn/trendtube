@@ -136,6 +136,7 @@ export function useAuth() {
   const logout = () => {
     localStorage.removeItem('user')
     localStorage.removeItem('authToken')
+    window.dispatchEvent(new CustomEvent('tubefission:videoCompareChanged', { detail: { ids: [], items: [] } }))
     setAuthState(prev => ({
       ...prev,
       user: null,

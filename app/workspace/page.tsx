@@ -11,6 +11,7 @@ import {
   getOpportunitySampleIds,
   type OpportunityHistoryItem,
 } from '@/app/components/opportunityActions'
+import { readVideoCompareIds, writeVideoCompareIds } from '@/app/components/AddToVideoCompareButton'
 
 interface WatchlistItem {
   id: string
@@ -42,7 +43,6 @@ const STORAGE_KEYS = {
   opportunities: 'tubefission:opportunityHistory',
   watchlist: 'tubefission_watchlist',
   alerts: 'tubefission_alerts',
-  compare: 'tubefission:videoCompareIds',
 }
 
 function readArray<T>(key: string): T[] {
@@ -87,12 +87,12 @@ export default function WorkspacePage() {
     opportunities: readArray<OpportunityHistoryItem>(STORAGE_KEYS.opportunities),
     watchlist: readArray<WatchlistItem>(STORAGE_KEYS.watchlist),
     alerts: readArray<AlertConfig>(STORAGE_KEYS.alerts),
-    compareIds: readArray<string>(STORAGE_KEYS.compare),
+    compareIds: readVideoCompareIds(),
   }), [])
   const [opportunities, setOpportunities] = useState<OpportunityHistoryItem[]>(() => readArray<OpportunityHistoryItem>(STORAGE_KEYS.opportunities))
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => readArray<WatchlistItem>(STORAGE_KEYS.watchlist))
   const [alerts, setAlerts] = useState<AlertConfig[]>(() => readArray<AlertConfig>(STORAGE_KEYS.alerts))
-  const [compareIds, setCompareIds] = useState<string[]>(() => readArray<string>(STORAGE_KEYS.compare))
+  const [compareIds, setCompareIds] = useState<string[]>(() => readVideoCompareIds())
   const [user] = useState<User | null>(() => readUser())
   const [syncStatus, setSyncStatus] = useState<'local' | 'syncing' | 'synced' | 'error'>('local')
   const [syncedAt, setSyncedAt] = useState<string | null>(null)
@@ -128,7 +128,7 @@ export default function WorkspacePage() {
         writeArray(STORAGE_KEYS.opportunities, merged.opportunities)
         writeArray(STORAGE_KEYS.watchlist, merged.watchlist)
         writeArray(STORAGE_KEYS.alerts, merged.alerts)
-        writeArray(STORAGE_KEYS.compare, merged.compareIds)
+        writeVideoCompareIds(merged.compareIds)
 
         const saveRes = await fetch('/api/workspace/sync', {
           method: 'POST',

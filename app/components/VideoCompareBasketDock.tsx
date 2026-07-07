@@ -6,6 +6,7 @@ import { useMemo, useSyncExternalStore } from 'react'
 import { GitCompare, ShoppingBasket, X } from 'lucide-react'
 import {
   getCompareUrl,
+  isVideoCompareBasketAvailable,
   readVideoCompareItems,
   subscribeVideoCompareIds,
   writeVideoCompareItems,
@@ -15,8 +16,9 @@ export default function VideoCompareBasketDock() {
   const pathname = usePathname()
   const items = useSyncExternalStore(subscribeVideoCompareIds, readVideoCompareItems, () => [])
   const ids = useMemo(() => items.map((item) => item.id), [items])
+  const isAvailable = isVideoCompareBasketAvailable()
 
-  if (items.length === 0 || pathname?.startsWith('/compare-new')) return null
+  if (!isAvailable || items.length === 0 || pathname?.startsWith('/compare-new')) return null
 
   const compareHref = getCompareUrl(ids)
   const readyToCompare = items.length >= 2

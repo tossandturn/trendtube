@@ -12,6 +12,11 @@ const MAX_BASKET_VIDEOS = 50
 let cachedItemsKey = ''
 let cachedItemsSnapshot: VideoCompareItem[] = []
 
+interface BasketUser {
+  id: string
+  email?: string
+}
+
 export interface VideoCompareItem {
   id: string
   title?: string
@@ -19,6 +24,30 @@ export interface VideoCompareItem {
   thumbnailUrl?: string
   sourceLabel?: string
   addedAt?: string
+}
+
+function readBasketUser(): BasketUser | null {
+  if (typeof window === 'undefined') return null
+
+  const token = window.localStorage.getItem('authToken')
+  if (!token) return null
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem('user') || 'null')
+    return typeof parsed?.id === 'string' ? { id: parsed.id, email: parsed.email } : null
+  } catch {
+    return null
+  }
+}
+
+function getScopedStorageKey(baseKey: string) {
+  const user = readBasketUser()
+  if (!user) return null
+  return `${baseKey}:${encodeURIComponent(user.id)}`
+}
+
+export function isVideoCompareBasketAvailable() {
+  return Boolean(readBasketUser())
 }
 
 function normalizeIds(value: unknown): string[] {
@@ -67,9 +96,13 @@ export function readVideoCompareItems(): VideoCompareItem[] {
   if (typeof window === 'undefined') return []
 
   try {
-    const rawItems = window.localStorage.getItem(ITEMS_STORAGE_KEY) || '[]'
-    const rawIds = window.localStorage.getItem(STORAGE_KEY) || '[]'
-    const cacheKey = `${rawItems}\n${rawIds}`
+    const itemsKey = getScopedStorageKey(ITEMS_STORAGE_KEY)
+    const idsKey = getScopedStorageKey(STORAGE_KEY)
+    if (!itemsKey || !idsKey) return []
+
+    const rawItems = window.localStorage.getItem(itemsKey) || '[]'
+    const rawIds = window.localStorage.getItem(idsKey) || '[]'
+    const cacheKey = `${itemsKey}\n${rawItems}\n${rawIds}`
     if (cacheKey === cachedItemsKey) return cachedItemsSnapshot
 
     const storedItems = normalizeCompareItems(JSON.parse(rawItems))
@@ -87,17 +120,25 @@ export function readVideoCompareIds(): string[] {
   if (typeof window === 'undefined') return []
 
   try {
-    return normalizeIds(JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '[]'))
+    const idsKey = getScopedStorageKey(STORAGE_KEY)
+    if (!idsKey) return []
+    return normalizeIds(JSON.parse(window.localStorage.getItem(idsKey) || '[]'))
   } catch {
     return []
   }
 }
 
 export function writeVideoCompareItems(items: VideoCompareItem[]) {
+  const itemsKey = getScopedStorageKey(ITEMS_STORAGE_KEY)
+  const idsKey = getScopedStorageKey(STORAGE_KEY)
+  if (!itemsKey || !idsKey) return
+
   const nextItems = normalizeCompareItems(items)
   const nextIds = nextItems.map((item) => item.id)
-  window.localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(nextItems))
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextIds))
+  window.localStorage.setItem(itemsKey, JSON.stringify(nextItems))
+  window.localStorage.setItem(idsKey, JSON.stringify(nextIds))
+  cachedItemsKey = ''
+  cachedItemsSnapshot = []
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { ids: nextIds, items: nextItems } }))
 }
 
@@ -153,9 +194,11 @@ export default function AddToVideoCompareButton({
   const router = useRouter()
   const [ids, setIds] = useState<string[]>([])
   const [hydrated, setHydrated] = useState(false)
+  const [requiresLogin, setRequiresLogin] = useState(false)
 
   useEffect(() => {
     const syncIds = () => {
+      setRequiresLogin(!isVideoCompareBasketAvailable())
       setIds(readVideoCompareIds())
       setHydrated(true)
     }
@@ -173,15 +216,24 @@ export default function AddToVideoCompareButton({
   const isSelected = ids.includes(videoId)
   const label = useMemo(() => {
     if (!hydrated) return compact ? 'Basket' : 'Add to Basket'
+    if (requiresLogin) return compact ? 'Login' : 'Sign in to Basket'
     if (isSelected) return compact ? 'Open Basket' : `Open Basket (${ids.length})`
     return compact ? 'Basket' : `Add to Basket${ids.length > 0 ? ` (${ids.length})` : ''}`
-  }, [compact, hydrated, ids.length, isSelected])
+  }, [compact, hydrated, ids.length, isSelected, requiresLogin])
 
   const Icon = isSelected ? Check : ids.length > 0 ? ArrowRight : GitCompare
 
   function handleClick(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault()
     event.stopPropagation()
+
+    if (!isVideoCompareBasketAvailable()) {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('tubefission:postLoginRedirect', `${window.location.pathname}${window.location.search}${window.location.hash}`)
+      }
+      router.push('/login')
+      return
+    }
 
     const currentItems = readVideoCompareItems()
     const currentIds = currentItems.map((item) => item.id)

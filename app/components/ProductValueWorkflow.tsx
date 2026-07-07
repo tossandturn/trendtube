@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, CheckCircle2, Circle } from 'lucide-react'
+import { readVideoCompareIds } from '@/app/components/AddToVideoCompareButton'
 
 interface ProductValueDimension {
   label: string
@@ -26,7 +27,6 @@ const STORAGE_KEYS = {
   opportunities: 'tubefission:opportunityHistory',
   watchlist: 'tubefission_watchlist',
   alerts: 'tubefission_alerts',
-  compare: 'tubefission:videoCompareIds',
   session: 'analyzeSessionId',
   user: 'user',
   token: 'authToken',
@@ -74,7 +74,7 @@ function readWorkspaceState(): WorkspaceState {
     opportunities: readArray(STORAGE_KEYS.opportunities).length,
     watchlist: readArray(STORAGE_KEYS.watchlist).length,
     activeAlerts: alerts.filter((alert) => alert.isActive).length,
-    compareIds: readArray(STORAGE_KEYS.compare).length,
+    compareIds: readVideoCompareIds().length,
     isSynced: Boolean(window.localStorage.getItem(STORAGE_KEYS.user) && window.localStorage.getItem(STORAGE_KEYS.token)),
   }
 }

@@ -7,6 +7,11 @@ function generateSessionId(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36)
 }
 
+function getSafeRedirect(value: string | null) {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/workspace'
+  return value
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -40,7 +45,9 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(data.user))
         localStorage.setItem('authToken', data.token)
         localStorage.setItem('analyzeSessionId', generateSessionId())
-        window.location.href = '/workspace'
+        const redirect = getSafeRedirect(localStorage.getItem('tubefission:postLoginRedirect'))
+        localStorage.removeItem('tubefission:postLoginRedirect')
+        window.location.href = redirect
       }
     } catch {
       setError('Network error')

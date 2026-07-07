@@ -1,5 +1,6 @@
 import {
   getCompareUrl,
+  isVideoCompareBasketAvailable,
   readVideoCompareItems,
   writeVideoCompareItems,
   type VideoCompareItem,
@@ -67,6 +68,11 @@ export function getOpportunityCompareHref(item: OpportunityHistoryItem) {
 
 export function addOpportunitySamplesToCompareBasket(item: OpportunityHistoryItem) {
   if (typeof window === 'undefined' || !item.sampleVideos?.length) return
+  if (!isVideoCompareBasketAvailable()) {
+    window.localStorage.setItem('tubefission:postLoginRedirect', `${window.location.pathname}${window.location.search}${window.location.hash}`)
+    window.location.href = '/login'
+    return
+  }
 
   const currentItems = readVideoCompareItems()
   const currentIds = new Set(currentItems.map((video) => video.id))

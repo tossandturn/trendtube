@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
+  isVideoCompareBasketAvailable,
   readVideoCompareItems,
   subscribeVideoCompareIds,
   writeVideoCompareItems,
@@ -29,12 +30,13 @@ export default function CompareNewContent() {
   const [isComparing, setIsComparing] = useState(Boolean(initialLeft && initialRight))
   const basketItems = useSyncExternalStore(subscribeVideoCompareIds, readVideoCompareItems, () => [])
   const basketIds = basketItems.map((item) => item.id)
+  const basketAvailable = isVideoCompareBasketAvailable()
   const selectedLeft = basketItems.find((item) => item.id === leftId)
   const selectedRight = basketItems.find((item) => item.id === rightId)
 
   useEffect(() => {
     if (initialType || basketIds.length === 0 || leftId || rightId) return
-    setMode('videos')
+    queueMicrotask(() => setMode('videos'))
   }, [basketIds.length, initialType, leftId, rightId])
 
   const handleCompare = () => {
@@ -366,6 +368,21 @@ export default function CompareNewContent() {
                 />
               </div>
             </div>
+
+            {mode === 'videos' && !basketAvailable && (
+              <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div className="text-sm font-bold text-amber-950">Analysis Basket requires login</div>
+                <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                  Sign in to save video candidates to your account basket and reuse them across Workspace and Compare.
+                </p>
+                <Link
+                  href="/login"
+                  className="mt-3 inline-flex rounded-lg bg-amber-900 px-4 py-2 text-xs font-bold text-white hover:bg-amber-800"
+                >
+                  Sign in to use Basket
+                </Link>
+              </div>
+            )}
 
             {renderBasketPicker('full')}
 
