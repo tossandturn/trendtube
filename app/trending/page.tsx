@@ -126,8 +126,8 @@ export default async function TrendingPage() {
           <Link href="/trends" className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition">
             Open Trend Database
           </Link>
-          <Link href="/compare-new" className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition">
-            Compare Channels or Videos
+          <Link href="/compare-new?type=videos" className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition">
+            Compare Videos
           </Link>
         </div>
 

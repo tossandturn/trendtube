@@ -111,6 +111,7 @@ export default function ChannelCompareView({ leftId, rightId }: ChannelCompareVi
   const [rightVideos, setRightVideos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const editHref = `/compare-new?type=channels${leftId ? `&left=${encodeURIComponent(leftId)}` : ''}${rightId ? `&right=${encodeURIComponent(rightId)}` : ''}`
 
   useEffect(() => {
     async function fetchData() {
@@ -170,7 +171,7 @@ export default function ChannelCompareView({ leftId, rightId }: ChannelCompareVi
           <h2 className="text-xl font-bold text-red-900 mb-2">Comparison unavailable</h2>
           <p className="text-red-700 mb-4">{error}</p>
           <div className="text-sm text-red-800 mb-5">Try a public channel URL, a channel handle like @mrbeast, or a raw channel ID.</div>
-          <Link href={`/compare-new?type=channels`} className="inline-block px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition">Edit Inputs</Link>
+          <Link href={editHref} className="inline-block px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition">Edit Inputs</Link>
         </div>
       </div>
     )
@@ -182,7 +183,7 @@ export default function ChannelCompareView({ leftId, rightId }: ChannelCompareVi
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div className="mb-8">
         <div className="flex flex-wrap items-center gap-4 mb-4">
-          <Link href={`/compare-new?type=channels`} className="text-gray-500 hover:text-gray-900">← Edit Comparison</Link>
+          <Link href={editHref} className="text-gray-500 hover:text-gray-900">← Edit Comparison</Link>
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Channel Comparison</h2>
         <p className="text-gray-500">See who wins on scale, efficiency, engagement, and commercial fit before you copy a strategy.</p>
@@ -208,7 +209,7 @@ export default function ChannelCompareView({ leftId, rightId }: ChannelCompareVi
       <div className="flex flex-wrap gap-3 mb-8">
         {leftChannel?.id && <Link href={`/channel/${leftChannel.id}`} className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition">Open Channel A Analysis</Link>}
         {rightChannel?.id && <Link href={`/channel/${rightChannel.id}`} className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 transition">Open Channel B Analysis</Link>}
-        <Link href="/compare-new?type=channels" className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition">Compare Another Pair</Link>
+        <Link href={editHref} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition">Edit Pair</Link>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-8">

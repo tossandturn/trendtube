@@ -4,6 +4,7 @@ import {
   writeVideoCompareItems,
   type VideoCompareItem,
 } from '@/app/components/AddToVideoCompareButton'
+import { getCreatorBriefHref } from '@/lib/creator-brief-links'
 
 export type OpportunityVideoSample = VideoCompareItem
 
@@ -40,15 +41,13 @@ export function getOpportunityResearchHref(item: OpportunityHistoryItem) {
 export function getOpportunityBriefHref(item: OpportunityHistoryItem) {
   if (item.briefHref) return item.briefHref
 
-  const params = new URLSearchParams({
+  return getCreatorBriefHref({
     topic: getOpportunityTopic(item),
     type: 'script',
     source: 'workspace',
+    niche: item.niche,
+    angle: item.recommendation,
   })
-  params.set('niche', item.niche)
-  if (item.recommendation) params.set('angle', item.recommendation)
-
-  return `/ai-assistant?${params.toString()}`
 }
 
 export function getOpportunitySampleIds(item: OpportunityHistoryItem) {

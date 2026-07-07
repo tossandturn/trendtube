@@ -5,6 +5,7 @@ import { FAQPageSchema, BreadcrumbSchema, ArticleSchema } from '@/app/components
 import { searchYouTubeMulti } from '@/lib/api-client'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
 import { PRODUCT_ACCESS_COPY } from '@/lib/product-positioning'
+import { getCreatorBriefHref } from '@/lib/creator-brief-links'
 
 export const metadata: Metadata = {
   title: 'YouTube Competitor Analysis — AI-Powered Channel Intelligence',
@@ -96,6 +97,13 @@ function summarizeChannel(video: any, allVideos: any[]) {
 
 export default async function CompetitorAnalysisPage() {
   const sampleVideos = await searchYouTubeMulti(['youtube creator tips', 'youtube growth strategy', 'channel growth'], 12, 'viewCount')
+  const competitorBriefHref = getCreatorBriefHref({
+    topic: 'YouTube competitor strategy',
+    niche: 'Competitor analysis',
+    type: 'script',
+    source: 'competitor-analysis',
+    angle: 'Convert competitor benchmarks into a next-upload brief: content gap, hook pattern, publishing angle, and differentiation checklist.',
+  })
 
   const competitors = sampleVideos
     .map((video: any) => summarizeChannel(video, sampleVideos))
@@ -137,7 +145,7 @@ export default async function CompetitorAnalysisPage() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-900">Live Competitor Snapshot</h2>
-          <Link href="/compare-new" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+          <Link href="/compare-new?type=channels" className="text-sm font-medium text-blue-600 hover:text-blue-700">
             Open compare tool →
           </Link>
         </div>
@@ -182,7 +190,7 @@ export default async function CompetitorAnalysisPage() {
             <Link href="/trends" className="text-blue-600 hover:text-blue-800 font-medium">
               Trend Database →
             </Link>
-            <Link href="/ai-assistant" className="text-blue-600 hover:text-blue-800 font-medium">
+            <Link href={competitorBriefHref} className="text-blue-600 hover:text-blue-800 font-medium">
               AI Assistant →
             </Link>
           </div>
@@ -222,7 +230,7 @@ export default async function CompetitorAnalysisPage() {
           <Link href="/youtube-channel-analytics" className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
             Channel Analytics →
           </Link>
-          <Link href="/compare-new" className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors">
+          <Link href="/compare-new?type=channels" className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors">
             Open Compare Tool →
           </Link>
         </div>

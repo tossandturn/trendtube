@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { getCreatorBriefHref } from '@/lib/creator-brief-links'
 
 interface DeepVideoAnalysisProps {
   video: {
@@ -445,7 +446,13 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
       href: videoHref,
       researchHref: videoHref,
       compareHref: video.id ? `/compare-new?type=videos&left=${encodeURIComponent(video.id)}` : '/compare-new?type=videos',
-      briefHref: `/ai-assistant?topic=${encodeURIComponent(keywords[0] || topic)}&niche=${encodeURIComponent(topic)}&type=script&source=video-analysis&angle=${encodeURIComponent(nextBrief[0]?.value || virality.mainReason)}`,
+      briefHref: getCreatorBriefHref({
+        topic: keywords[0] || topic,
+        niche: topic,
+        type: 'script',
+        source: 'video-analysis',
+        angle: nextBrief[0]?.value || virality.mainReason,
+      }),
       sampleVideos: video.id ? [{
         id: video.id,
         title: video.snippet?.title,

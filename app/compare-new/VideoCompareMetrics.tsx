@@ -15,6 +15,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { getCreatorBriefHref } from '@/lib/creator-brief-links'
 
 interface VideoCompareMetricsProps {
   leftVideo: CompareVideo
@@ -541,7 +542,13 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
       href: benchmarkId ? `/video/${benchmarkId}` : compareHref,
       researchHref: benchmarkId ? `/video/${benchmarkId}` : compareHref,
       compareHref,
-      briefHref: `/ai-assistant?topic=${encodeURIComponent(brief.benchmark.topic)}&niche=${encodeURIComponent(`${brief.benchmark.topic} benchmark`)}&type=script&source=compare&angle=${encodeURIComponent(brief.titleAngle)}`,
+      briefHref: getCreatorBriefHref({
+        topic: brief.benchmark.topic,
+        niche: `${brief.benchmark.topic} benchmark`,
+        type: 'script',
+        source: 'compare',
+        angle: brief.titleAngle,
+      }),
       sampleVideos: [leftVideo, rightVideo]
         .filter((video) => Boolean(video.id))
         .map((video) => ({

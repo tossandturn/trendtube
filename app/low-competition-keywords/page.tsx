@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { searchYouTubeMulti } from '@/lib/api-client'
 import OpportunityHistoryPanel from '@/app/components/OpportunityHistoryPanel'
 import ProductValueWorkflow from '@/app/components/ProductValueWorkflow'
+import { getCreatorBriefHref } from '@/lib/creator-brief-links'
 
 export const metadata: Metadata = {
   title: 'Low Competition YouTube Keywords 2026 | Find Underserved Niches',
@@ -324,15 +325,13 @@ function getResearchHref(niche: NicheAnalysis) {
 }
 
 function getBriefHref(niche: NicheAnalysis) {
-  const params = new URLSearchParams({
+  return getCreatorBriefHref({
     topic: niche.query,
     niche: niche.niche,
     type: 'script',
     source: 'low-competition-keywords',
     angle: niche.valueScore.recommendation,
   })
-
-  return `/ai-assistant?${params.toString()}`
 }
 
 function getSampleVideos(niche: NicheAnalysis) {

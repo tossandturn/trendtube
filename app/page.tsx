@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { SoftwareApplicationSchema, FAQPageSchema, BreadcrumbSchema } from '@/app/components/JsonLd'
 import { AnalyzeHeroForm } from '@/app/components/AnalyzeHeroForm'
 import { PRODUCT_ACCESS_COPY } from '@/lib/product-positioning'
+import { getCreatorBriefHref } from '@/lib/creator-brief-links'
 
 export const metadata: Metadata = {
   title: 'YouTube AI Analytics & Trend Intelligence Platform | Tubefission',
@@ -64,6 +65,14 @@ const FAQ_ITEMS = [
 ]
 
 export default function HomePage() {
+  const homepageBriefHref = getCreatorBriefHref({
+    topic: 'rising YouTube trend opportunity',
+    niche: 'Creator content planning',
+    type: 'script',
+    source: 'homepage-decision',
+    angle: 'Turn a discovered trend into a next-upload brief with title angle, hook, timeline, SEO keywords, and risk checks.',
+  })
+
   return (
     <main className="min-h-screen bg-white">
       {/* Structured Data */}
@@ -91,7 +100,7 @@ export default function HomePage() {
             </div>
             <div className="mt-5 flex flex-wrap gap-2 text-sm">
               <Link href="/trending" className="rounded-full bg-gray-900 px-4 py-2 font-bold text-white hover:bg-gray-800">Trending</Link>
-              <Link href="/compare-new" className="rounded-full border border-gray-200 bg-white px-4 py-2 font-bold text-gray-900 hover:bg-gray-50">Compare</Link>
+              <Link href="/compare-new?type=videos" className="rounded-full border border-gray-200 bg-white px-4 py-2 font-bold text-gray-900 hover:bg-gray-50">Compare</Link>
               <Link href="/workspace" className="rounded-full border border-gray-200 bg-white px-4 py-2 font-bold text-gray-900 hover:bg-gray-50">Workspace</Link>
             </div>
           </div>
@@ -216,14 +225,14 @@ export default function HomePage() {
               <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Start here</div>
               <h2 className="mt-1 text-2xl font-black text-gray-950">Choose the job.</h2>
             </div>
-            <Link href="/compare-new" className="text-sm font-bold text-red-600 hover:text-red-700">Open comparison</Link>
+            <Link href="/compare-new?type=videos" className="text-sm font-bold text-red-600 hover:text-red-700">Open comparison</Link>
           </div>
           <div className="grid gap-3 md:grid-cols-4">
             {[
               { href: '/youtube-channel-analytics', label: 'Audit', title: 'Channel health', color: 'text-blue-600 bg-blue-50' },
               { href: '/trending', label: 'Spot', title: 'Rising topics', color: 'text-red-600 bg-red-50' },
-              { href: '/compare-new', label: 'Pick', title: 'Better model', color: 'text-amber-700 bg-amber-50' },
-              { href: '/ai-assistant', label: 'Plan', title: 'Next brief', color: 'text-emerald-700 bg-emerald-50' },
+              { href: '/compare-new?type=videos', label: 'Pick', title: 'Better model', color: 'text-amber-700 bg-amber-50' },
+              { href: homepageBriefHref, label: 'Plan', title: 'Next brief', color: 'text-emerald-700 bg-emerald-50' },
             ].map((item) => (
               <Link key={item.href} href={item.href} className="group rounded-xl border border-gray-200 bg-white p-4 hover:border-gray-300 hover:shadow-sm">
                 <div className={`mb-4 inline-flex rounded-lg px-3 py-1 text-xs font-black uppercase tracking-wider ${item.color}`}>{item.label}</div>
@@ -393,7 +402,7 @@ export default function HomePage() {
                 Analyze a Channel
               </Link>
               <Link
-                href="/compare-new"
+                href="/compare-new?type=videos"
                 className="flex-1 sm:flex-none px-5 py-2.5 bg-white text-gray-900 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-center"
               >
                 Compare Instead

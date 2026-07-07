@@ -256,7 +256,7 @@ export default async function AnalyticsPage() {
           <Link href="/trending" className="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
             Trending Videos →
           </Link>
-          <Link href="/compare-new" className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors">
+          <Link href="/compare-new?type=channels" className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors">
             Compare Channels →
           </Link>
         </div>

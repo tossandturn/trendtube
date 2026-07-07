@@ -108,6 +108,7 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
   const [rightVideo, setRightVideo] = useState<CompareVideo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const editHref = `/compare-new?type=videos${leftId ? `&left=${encodeURIComponent(leftId)}` : ''}${rightId ? `&right=${encodeURIComponent(rightId)}` : ''}`
 
   useEffect(() => {
     async function fetchData() {
@@ -176,7 +177,7 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
             Try a public YouTube video URL or a raw 11-character video ID.
           </div>
           <Link
-            href={`/compare-new?type=videos`}
+            href={editHref}
             className="inline-block px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition"
           >
             Edit Inputs
@@ -192,7 +193,7 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
         <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Comparison data is incomplete</h2>
           <p className="text-gray-600 mb-5">Try the comparison again with two public YouTube video IDs.</p>
-          <Link href="/compare-new?type=videos" className="inline-block px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition">
+          <Link href={editHref} className="inline-block px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition">
             Edit Inputs
           </Link>
         </div>
@@ -206,7 +207,7 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div className="mb-8">
         <div className="flex items-center gap-4 mb-4">
-          <Link href={`/compare-new?type=videos`} className="text-gray-500 hover:text-gray-900">
+          <Link href={editHref} className="text-gray-500 hover:text-gray-900">
             Edit Comparison
           </Link>
         </div>
@@ -264,10 +265,10 @@ export default function VideoCompareView({ leftId, rightId }: VideoCompareViewPr
           </Link>
         )}
         <Link
-          href="/compare-new?type=videos"
+          href={editHref}
           className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition"
         >
-          Compare Another Pair
+          Edit Pair
         </Link>
       </div>
 
