@@ -5,7 +5,6 @@
 
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
-import { execSync } from 'child_process'
 
 export interface AlertPayload {
   level: 'critical' | 'warning' | 'info'
@@ -173,16 +172,7 @@ function getReleaseVersion() {
   if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)
   if (process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA) return process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA.slice(0, 7)
   if (process.env.RELEASE_TAG) return process.env.RELEASE_TAG
-
-  try {
-    return execSync('git rev-parse --short HEAD', {
-      cwd: process.cwd(),
-      stdio: ['ignore', 'pipe', 'ignore'],
-      encoding: 'utf8',
-    }).trim()
-  } catch {
-    return 'local-build'
-  }
+  return 'local-build'
 }
 
 /* ---- Quota tracking (approximate) ---- */
