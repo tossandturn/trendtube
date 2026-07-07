@@ -280,6 +280,29 @@ function buildActionPlan(video: any, titleAnalysis: any, publishAnalysis: any, d
   return actionItems
 }
 
+function buildTopCreatorDecision(actionPlan: ReturnType<typeof buildActionPlan>, velocity: number, engagementRate: number, titleScore: number) {
+  const shouldModel = velocity >= 100_000 && engagementRate >= 2.5
+    ? 'Model it, but change the angle'
+    : velocity >= 25_000 || engagementRate >= 4
+      ? 'Test the pattern with caution'
+      : 'Do not copy it directly'
+
+  const why = velocity >= 100_000
+    ? `Strong public velocity at ${formatNumber(velocity.toString())}/day.`
+    : engagementRate >= 4
+      ? `Audience response is strong at ${engagementRate.toFixed(2)}% engagement.`
+      : `Signals are mixed: ${formatNumber(velocity.toString())}/day velocity and ${engagementRate.toFixed(2)}% engagement.`
+
+  const nextAction = actionPlan[0]?.description || 'Start by rewriting the hook and title promise before copying the topic.'
+  const risk = titleScore < 60
+    ? 'Packaging is not strong enough to copy as-is.'
+    : engagementRate < 2
+      ? 'Views may be broader than audience satisfaction.'
+      : 'Copying the surface topic may miss the hook that actually worked.'
+
+  return { shouldModel, why, nextAction, risk }
+}
+
 
 export async function generateMetadata({ params }: VideoPageProps): Promise<Metadata> {
   const { id } = await params
@@ -314,6 +337,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
 
   // Calculate performance percentiles
   const actionPlan = buildActionPlan(video, titleAnalysis, publishAnalysis, descAnalysis, velocity, engagementRate)
+  const topDecision = buildTopCreatorDecision(actionPlan, velocity, engagementRate, titleScore)
   const allRelatedEngagement = related.map((v: any) => getEngagementRate(v))
   const avgRelatedEngagement = allRelatedEngagement.length > 0
     ? allRelatedEngagement.reduce((a: number, b: number) => a + b, 0) / allRelatedEngagement.length
@@ -390,6 +414,40 @@ export default async function VideoPage({ params }: VideoPageProps) {
             </div>
           </div>
         </div>
+
+        <section className="mb-6 rounded-2xl border border-gray-900 bg-gray-950 p-5 text-white shadow-xl shadow-gray-200/60">
+          <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-red-300">Top creator decision</div>
+              <h2 className="mt-2 text-2xl font-black sm:text-3xl">{topDecision.shouldModel}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-gray-300">
+                {topDecision.why} Use this as a decision brief before reading the full dashboard.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link href="#next-moves" className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-gray-950 hover:bg-gray-100">
+                  See next move
+                </Link>
+                <Link href={`/compare-new?type=videos&left=${encodeURIComponent(id)}`} className="rounded-xl border border-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-white/10">
+                  Compare before copying
+                </Link>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-400">Next action</div>
+                <div className="mt-2 text-sm leading-relaxed text-gray-100">{topDecision.nextAction}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-400">Main risk</div>
+                <div className="mt-2 text-sm leading-relaxed text-gray-100">{topDecision.risk}</div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-400">Watch first</div>
+                <div className="mt-2 text-sm leading-relaxed text-gray-100">Hook, title promise, first-day velocity, and comment quality.</div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <div className="mb-8 sm:mb-10">
           <VideoPlayer

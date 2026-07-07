@@ -354,23 +354,24 @@ export async function generateMetadata({ params }: TrendPageProps): Promise<Meta
   const region = getTrendAnalysisRegion(await getRegion())
   const regionLabel = REGION_META[region]?.label || region
   const today = new Date().toISOString().split('T')[0].replace(/-/g, '.')
+  const trendTitle = getTrendDisplayTitle(trendData.title)
 
   return {
-    title: `${trendData.title} ${today} ${regionLabel} | TubeFission`,
+    title: `${trendTitle} | ${regionLabel} | ${today} | TubeFission`,
     description: `${trendData.description} Trending in ${regionLabel} on ${today}.`,
     keywords: `${keyword} trends, youtube ${keyword}, viral ${keyword} content, ${keyword} creators`,
     alternates: {
       canonical: `https://tubefission.com/trends/${keyword}`,
     },
     openGraph: {
-      title: `${trendData.title} - ${regionLabel} ${today}`,
+      title: `${trendTitle} - ${regionLabel} ${today}`,
       description: trendData.description,
       url: `https://tubefission.com/trends/${keyword}`,
       type: 'article',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${trendData.title} - ${regionLabel}`,
+      title: `${trendTitle} - ${regionLabel}`,
       description: trendData.description,
     },
   }
@@ -401,6 +402,10 @@ function normalizeTrendKeyword(keyword: string) {
 
 function trendTitleBase(title: string) {
   return title.replace(/\btrends?\b|\b2026\b/gi, '').replace(/\s+/g, ' ').trim()
+}
+
+function getTrendDisplayTitle(title: string) {
+  return title.replace(/\s+2026\b/gi, '').replace(/\s+/g, ' ').trim()
 }
 
 function buildTrendSearchQuery(keyword: string, title: string) {
@@ -480,6 +485,25 @@ function isAiTrendKeyword(keyword: string) {
     || normalized.includes('openai')
 }
 
+function isStrongAiTrendMatch(video: YouTubeVideo, keyword: string) {
+  const normalizedKeyword = normalizeTrendKeyword(keyword).toLowerCase()
+  const primaryText = [
+    video.snippet?.title || '',
+    video.snippet?.channelTitle || '',
+  ].join(' ').toLowerCase()
+
+  const exactToolMatch = normalizedKeyword.includes('chatgpt')
+    ? /\b(chatgpt|openai|gpt[-\s]?[45]?)\b/i.test(primaryText)
+    : /\b(ai|artificial intelligence|chatgpt|openai|gpt|claude|midjourney|llm|automation)\b/i.test(primaryText)
+
+  if (!exactToolMatch) return false
+
+  const crossTopicNoise = /\b(roblox|minecraft|fortnite|gameplay|trailer|teaser|movie|film|odyssey|anime|song|music video)\b/i.test(primaryText)
+  if (!crossTopicNoise) return true
+
+  return /\b(prompt|tutorial|guide|explained|automation|workflow|productivity|ai tool|model|api|coding|developer)\b/i.test(primaryText)
+}
+
 function getTrendRelevanceScore(video: YouTubeVideo, keyword: string, title: string) {
   const normalizedKeyword = normalizeTrendKeyword(keyword).toLowerCase()
   const titleBase = trendTitleBase(title).toLowerCase()
@@ -507,6 +531,7 @@ function getTrendRelevanceScore(video: YouTubeVideo, keyword: string, title: str
   if (isAiTrendKeyword(keyword)) {
     const aiKeywords = ['ai', 'artificial intelligence', 'chatgpt', 'gpt', 'openai', 'claude', 'midjourney', 'dall-e', 'stable diffusion', 'llm', 'machine learning', 'neural network', 'automation', 'bard', 'copilot']
     if (!aiKeywords.some((term) => textContainsTerm(text, term))) return 0
+    if (!isStrongAiTrendMatch(video, keyword)) return 0
     score += 4
   }
 
@@ -570,6 +595,7 @@ function getVideoEvidenceAngles(videos: YouTubeVideo[], keyword: string) {
 export default async function TrendPage({ params }: TrendPageProps) {
   const { keyword } = await params
   const trendData = TREND_KNOWLEDGE[keyword] || generateTrendData(keyword)
+  const trendDisplayTitle = getTrendDisplayTitle(trendData.title)
 
   const region = getTrendAnalysisRegion(await getRegion())
   const searchQuery = buildTrendSearchQuery(keyword, trendData.title)
@@ -586,7 +612,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
   const displayVideos = mergeUniqueVideos(
     trendAnchorVideos,
     selectTrendSpecificVideos(searchVideos, videos, keyword, trendData.title),
-  )
+  ).filter((video) => getTrendRelevanceScore(video, keyword, trendData.title) > 0)
 
   const evidenceAngles = getVideoEvidenceAngles(displayVideos, keyword)
   const snapshotAt = new Date().toISOString()
@@ -727,12 +753,12 @@ export default async function TrendPage({ params }: TrendPageProps) {
           <span>→</span>
           <Link href="/trending" className="hover:text-red-600">Trends</Link>
           <span>→</span>
-          <span className="text-gray-900">{trendData.title}</span>
+          <span className="text-gray-900">{trendDisplayTitle}</span>
         </nav>
 
         {/* Hero */}
         <div className="mb-12">
-          <h1 className="text-3xl sm:text-5xl font-bold mb-4">{trendData.title}</h1>
+          <h1 className="text-3xl sm:text-5xl font-bold mb-4">{trendDisplayTitle}</h1>
           <p className="text-gray-600 text-lg max-w-3xl">{trendData.description}</p>
         </div>
 
@@ -1051,7 +1077,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
             <div className="mb-4 flex items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-lg font-black text-purple-700">E</span>
               <div>
-                <h3 className="font-bold text-gray-900">Why this is classified as {trendData.title}</h3>
+                <h3 className="font-bold text-gray-900">Why this is classified as {trendDisplayTitle}</h3>
                 <p className="text-sm leading-relaxed text-gray-500">
                   The page is built from matched source videos, not generic topic text. Weak words are filtered before scoring, and each creator angle links back to the video that produced the signal.
                 </p>

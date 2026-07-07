@@ -53,7 +53,7 @@ export function SoftwareApplicationSchema() {
       ratingValue: '4.8',
       ratingCount: '1250',
     },
-    description: 'Download YouTube videos without watermark and analyze channels and trends instantly.',
+    description: 'YouTube analytics and trend intelligence for analyzing videos, comparing creators, tracking opportunities, and planning the next upload.',
     url: 'https://tubefission.com',
     image: 'https://tubefission.com/og-image.png',
     author: {
@@ -61,11 +61,11 @@ export function SoftwareApplicationSchema() {
       name: 'Tubefission',
     },
     featureList: [
-      'YouTube video download without watermark',
-      'Channel analytics and statistics',
-      'Trend discovery and tracking',
-      'No login required',
-      'Fast processing',
+      'YouTube video and channel analytics',
+      'Trend discovery with source-video evidence',
+      'Creator briefs and next-upload recommendations',
+      'Video and channel comparison workflows',
+      'Watchlists, alerts, and workspace history',
     ],
   }
 

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { runHealthCheck } from '@/lib/monitor'
 
@@ -56,12 +56,12 @@ export default async function StatusPage() {
       <div className="ambient-glow-tr" />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-10">
         <Link href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-6 sm:mb-8">
-          <span className="text-lg">←</span>
+          <span className="text-lg">&larr;</span>
           <span className="text-sm font-medium">Back to Trends</span>
         </Link>
 
         <div className="mb-8 sm:mb-10">
-          <div className="text-zinc-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">🛡️ SYSTEM MONITORING</div>
+          <div className="text-zinc-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">SYSTEM MONITORING</div>
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow">Status Dashboard</h1>
           <p className="text-zinc-400 text-sm sm:text-base max-w-2xl leading-relaxed">
             Real-time health checks, API quota usage, and data freshness for unattended operation.
@@ -101,7 +101,7 @@ export default async function StatusPage() {
             </div>
           </div>
           <div className="mt-4 text-zinc-500 text-xs data-mono">
-            Version: {report.version} · Checked: {new Date(report.timestamp).toLocaleString('en-US', { timeZone: 'UTC' })} UTC
+            Version: {report.version} 路 Checked: {new Date(report.timestamp).toLocaleString('en-US', { timeZone: 'UTC' })} UTC
           </div>
         </div>
 
@@ -164,29 +164,30 @@ export default async function StatusPage() {
           </CheckCard>
         </div>
 
-        {/* Actions */}
+        {/* Public Readiness */}
         <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent">
-          <h3 className="font-bold text-sm sm:text-base mb-3">Unattended Operation Settings</h3>
-          <div className="space-y-2 text-zinc-400 text-sm">
-            <div className="flex items-center justify-between">
-              <span>Alert Email</span>
-              <span className="data-mono text-zinc-500">{process.env.ALERT_EMAIL || 'Not configured'}</span>
+          <h3 className="font-bold text-sm sm:text-base mb-3">Creator Workflow Readiness</h3>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-zinc-500">Analysis</div>
+              <div className="mt-2 text-sm font-bold text-green-400">Available</div>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-500">Video, channel, and trend analysis pages are online.</p>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Resend API Key</span>
-              <span className="data-mono text-zinc-500">{process.env.RESEND_API_KEY ? 'Configured ✅' : 'Not configured'}</span>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-zinc-500">Workspace</div>
+              <div className="mt-2 text-sm font-bold text-green-400">Available</div>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-500">Saved history, watchlists, compare queues, and alert drafts are active.</p>
             </div>
-            <div className="flex items-center justify-between">
-              <span>Webhook URL</span>
-              <span className="data-mono text-zinc-500">{process.env.ALERT_WEBHOOK_URL ? 'Configured ✅' : 'Not configured'}</span>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-zinc-500">Notifications</div>
+              <div className="mt-2 text-sm font-bold text-yellow-400">Rolling out</div>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-500">Trend and competitor alerts can be drafted now; delivery channels are being expanded.</p>
             </div>
           </div>
-          <div className="mt-4 text-zinc-500 text-xs leading-relaxed">
-            To enable email alerts, add <code className="text-zinc-400 bg-zinc-900 px-1 py-0.5 rounded">RESEND_API_KEY</code> and <code className="text-zinc-400 bg-zinc-900 px-1 py-0.5 rounded">ALERT_EMAIL</code> to your environment variables.
-            Get a free Resend API key at <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">resend.com</a>.
-          </div>
+          <p className="mt-4 text-xs leading-relaxed text-zinc-500">
+            This page shows product health for users. Internal delivery configuration is kept out of the public status view.
+          </p>
         </div>
-
         {/* Footer */}
         <footer className="border-t border-zinc-800/60 pt-10 mt-10 text-zinc-600 text-xs data-mono text-center">
           Auto-refresh this page to monitor system health in real-time.
