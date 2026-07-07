@@ -1,8 +1,8 @@
 export const FREE_ANALYSIS_LIMIT = 10
 
 export const PRODUCT_ACCESS_COPY = {
-  short: `Start with ${FREE_ANALYSIS_LIMIT} free anonymous analyses. Create a free account to save workspace history, watchlists, alerts, and compare queues.`,
-  limit: `Anonymous visitors get ${FREE_ANALYSIS_LIMIT} free analyses. A free account keeps your workspace, watchlists, alerts, and compare basket connected.`,
+  short: `Analyze ${FREE_ANALYSIS_LIMIT} times without signing up. Create a free account to save results, alerts, watchlists, and compare queues.`,
+  limit: `Analyze ${FREE_ANALYSIS_LIMIT} times without signing up. Create a free account to save results and unlock more workspace history.`,
   signup: 'Create a free account to save research and continue the workflow.',
   pricing: 'TubeFission is in free preview. Public Pro and Team pricing is not published yet.',
 }

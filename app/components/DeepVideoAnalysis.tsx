@@ -378,6 +378,26 @@ function buildNextBrief(video: DeepVideoAnalysisProps['video'], topic: string, t
   ]
 }
 
+function buildCreatorBrief(velocity: number, engagementRate: number, trafficPrimary: string, contentFormat: string, virality: ReturnType<typeof buildViralityDiagnosis>, nextBrief: ReturnType<typeof buildNextBrief>) {
+  const verdict = virality.score >= 74 && velocity >= 50_000
+    ? 'Worth testing within 24h'
+    : virality.score >= 56
+      ? 'Track, then retest with sharper packaging'
+      : 'Do not copy directly yet'
+
+  const why = [
+    `${formatNumber(velocity)}/day public view velocity`,
+    `${engagementRate.toFixed(2)}% engagement`,
+    `${trafficPrimary.toLowerCase()} traffic hypothesis`,
+  ].join(' + ')
+
+  const suggestedAngle = `${contentFormat}: ${nextBrief[0]?.value || 'make the viewer payoff more concrete.'}`
+  const risk = virality.blockers[0] || 'Saturation may rise if adjacent creators copy the same hook.'
+  const nextAction = nextBrief[1]?.value || 'Open with the payoff, then validate the idea with a tight title and thumbnail test.'
+
+  return { verdict, why, suggestedAngle, risk, nextAction }
+}
+
 function writeArrayItem<T extends { id: string }>(key: string, item: T) {
   if (typeof window === 'undefined') return
   try {
@@ -394,6 +414,7 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
   const [savedBrief, setSavedBrief] = useState<SaveState>('idle')
   const [savedWatchlist, setSavedWatchlist] = useState<SaveState>('idle')
   const [savedAlert, setSavedAlert] = useState<SaveState>('idle')
+  const [copiedField, setCopiedField] = useState<string>('')
   const text = getText(video)
   const topic = inferTopic(text)
   const keywords = extractKeywords(video)
@@ -405,8 +426,12 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
   const effect = buildEffectiveness(video, velocity, engagementRate)
   const seo = buildSeoAnalysis(video, keywords)
   const nextBrief = buildNextBrief(video, topic, traffic.primary, keywords, effect.score)
+  const creatorBrief = buildCreatorBrief(velocity, engagementRate, traffic.primary, content.format, virality, nextBrief)
   const videoId = video.id || video.snippet?.title || 'unknown-video'
   const videoHref = video.id ? `/video/${video.id}` : '/youtube-video-analyzer'
+  const suggestedTitle = `${keywords[0] || topic}: ${nextBrief[0]?.value.replace(/^Make "/, '').slice(0, 82) || 'a sharper promise for the next upload'}`
+  const suggestedAngle = creatorBrief.suggestedAngle
+  const suggestedKeywords = keywords.slice(0, 8).join(', ')
 
   const saveBriefToWorkspace = () => {
     writeArrayItem('tubefission:opportunityHistory', {
@@ -449,6 +474,17 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
     setSavedAlert('saved')
   }
 
+  const copyText = async (field: string, value: string) => {
+    if (!value) return
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedField(field)
+      window.setTimeout(() => setCopiedField(''), 1400)
+    } catch {
+      setCopiedField('')
+    }
+  }
+
   return (
     <section id="deep-analysis" className="mb-10">
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -462,6 +498,51 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
         <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
           <div className="text-xs text-gray-500">Effect score</div>
           <div className="text-2xl font-black text-gray-900">{effect.score}/100</div>
+        </div>
+      </div>
+
+      <div className="mb-4 rounded-2xl border border-gray-900 bg-gray-950 p-5 text-white">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-red-300">Creator Brief</div>
+            <h3 className="mt-1 text-2xl font-black">{creatorBrief.verdict}</h3>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-gray-300">
+              Decision first: use the metrics below as evidence, but start from whether this idea is worth your next upload.
+            </p>
+          </div>
+          <Link href={video.id ? `/compare-new?type=videos&left=${encodeURIComponent(video.id)}` : '/compare-new?type=videos'} className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-gray-950 hover:bg-gray-100">
+            Add to compare
+          </Link>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+          {[
+            ['Why', creatorBrief.why],
+            ['Suggested angle', creatorBrief.suggestedAngle],
+            ['Risk', creatorBrief.risk],
+            ['Next action', creatorBrief.nextAction],
+            ['Watch metric', 'First-day velocity, like rate, and comments per 1K views.'],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <div className="text-xs font-bold uppercase tracking-wide text-gray-400">{label}</div>
+              <div className="mt-2 text-sm leading-relaxed text-gray-100">{value}</div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          {[
+            ['title', 'Copy title angle', suggestedTitle],
+            ['keywords', 'Copy keywords', suggestedKeywords],
+            ['angle', 'Copy content angle', suggestedAngle],
+          ].map(([field, label, value]) => (
+            <button
+              key={field}
+              type="button"
+              onClick={() => copyText(field, value)}
+              className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-left text-sm font-bold text-white hover:bg-white/15"
+            >
+              {copiedField === field ? 'Copied' : label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -510,6 +591,17 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
               {item}
             </div>
           ))}
+        </div>
+        <div className="mt-3 grid gap-2 text-xs leading-relaxed text-gray-600 md:grid-cols-3">
+          <div className="rounded-lg border border-red-100 bg-white p-3">
+            <strong className="text-gray-900">Content virality:</strong> high means the public title, topic, hook, timing, and format show more breakout signals.
+          </div>
+          <div className="rounded-lg border border-red-100 bg-white p-3">
+            <strong className="text-gray-900">Effect score:</strong> combines reach, velocity, engagement, and comment depth to judge actual video impact.
+          </div>
+          <div className="rounded-lg border border-red-100 bg-white p-3">
+            <strong className="text-gray-900">Search readiness:</strong> checks whether title, description, tags, hashtags, and chapters support discoverability.
+          </div>
         </div>
       </div>
 

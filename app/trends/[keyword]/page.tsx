@@ -392,6 +392,7 @@ const TREND_RELEVANCE_STOP_WORDS = new Set([
   'the', 'and', 'for', 'with', 'from', 'this', 'that', 'your', 'you', 'are',
   'video', 'videos', 'youtube', 'short', 'shorts', 'trend', 'trends', 'viral',
   'content', 'creator', 'creators', 'guide', 'latest', 'best', 'new', '2026',
+  'about', 'today', 'welcome', 'watch', 'full', 'official', 'update',
 ])
 
 function normalizeTrendKeyword(keyword: string) {
@@ -589,17 +590,58 @@ export default async function TrendPage({ params }: TrendPageProps) {
 
   const evidenceAngles = getVideoEvidenceAngles(displayVideos, keyword)
   const snapshotAt = new Date().toISOString()
-  const regionalPrefs = {
-    flag: '',
-    popularFormats: ['Matched video evidence', 'Hook pattern'],
-    trendingTopics: ['Velocity signal', 'Engagement signal'],
-    optimalLength: 'Use source video length',
-    bestPostTime: 'Check source channel timing',
-  }
+
+  // Calculate analytics
+  const totalViews = displayVideos.reduce((sum: number, v: YouTubeVideo) => sum + Number(v.statistics?.viewCount || 0), 0)
+  const avgEngagement = displayVideos.length > 0
+    ? displayVideos.reduce((sum: number, v: YouTubeVideo) => sum + getEngagementRate(v), 0) / displayVideos.length
+    : 0
+  const avgVelocity = displayVideos.length > 0
+    ? displayVideos.reduce((sum: number, v: YouTubeVideo) => sum + getViewVelocity(v), 0) / displayVideos.length
+    : 0
+
+  const matchedTrendTerms = getTrendTerms(keyword, trendData.title).slice(0, 8)
+  const noiseFilteredTerms = ['about', 'today', 'welcome', 'watch', 'full', 'official', 'latest', 'update']
+  const evidenceSummary = [
+    {
+      label: 'Why this belongs',
+      value: matchedTrendTerms.length > 0 ? matchedTrendTerms.join(', ') : normalizeTrendKeyword(keyword),
+      note: 'Matched against source titles, descriptions, and channel context.',
+    },
+    {
+      label: 'Source videos',
+      value: `${displayVideos.length}`,
+      note: `Keyword-matched public videos in ${REGION_META[region]?.label || region}.`,
+    },
+    {
+      label: 'Evidence sample',
+      value: formatNumber(totalViews.toString()),
+      note: 'Total public views across the matched sample.',
+    },
+    {
+      label: '24h velocity proxy',
+      value: `${formatNumber(Math.round(avgVelocity).toString())}/day`,
+      note: 'Modeled from public publish age and current views.',
+    },
+    {
+      label: '7d momentum proxy',
+      value: formatNumber(Math.round(avgVelocity * 7).toString()),
+      note: 'Seven-day projection if the current velocity holds.',
+    },
+    {
+      label: 'Noise filtered',
+      value: noiseFilteredTerms.slice(0, 5).join(', '),
+      note: 'Generic words are removed before trend matching and keyword clouds.',
+    },
+  ]
+
   const dailyRecommendations = evidenceAngles.map((angle, index) => ({
     id: angle.id,
     title: angle.hookPattern,
     category: angle.matchedKeyword ? 'Keyword-matched evidence' : 'Related evidence',
+    href: angle.href,
+    sourceTitle: angle.title,
+    sourceChannel: angle.channel,
     confidence: Math.min(95, Math.max(35, Math.round(angle.engagement * 12 + Math.log10(angle.views + 1) * 8))),
     potentialViews: angle.velocity >= 500000 ? 'viral' : angle.velocity >= 100000 ? 'high' : angle.engagement >= 4 ? 'medium' : 'low',
     difficulty: angle.views >= 1000000 ? 'hard' : angle.views >= 100000 ? 'medium' : 'easy',
@@ -607,15 +649,6 @@ export default async function TrendPage({ params }: TrendPageProps) {
     suggestedTags: [normalizeTrendKeyword(keyword), angle.hookPattern.replace(/\s+/g, '-'), `video-${index + 1}`],
     similarVideos: [{ id: angle.id, title: `${angle.title} (${formatNumber(angle.views.toString())} views)`, views: angle.views }],
   }))
-
-  // Calculate analytics
-  const totalViews = displayVideos.reduce((sum: number, v: any) => sum + Number(v.statistics?.viewCount || 0), 0)
-  const avgEngagement = displayVideos.length > 0
-    ? displayVideos.reduce((sum: number, v: any) => sum + getEngagementRate(v), 0) / displayVideos.length
-    : 0
-  const avgVelocity = displayVideos.length > 0
-    ? displayVideos.reduce((sum: number, v: any) => sum + getViewVelocity(v), 0) / displayVideos.length
-    : 0
 
   // Calculate velocity trend (simulated)
   const velocityData = displayVideos
@@ -640,7 +673,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
     // Extended stop words including URL components, platform names, and common noise
     const stopWords = new Set([
       // Basic stop words
-      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'me', 'him', 'them', 'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'now', 'also', 'get', 'like', 'one', 'two', 'new', 'use', 'way', 'make', 'see', 'know', 'take', 'come', 'think', 'look', 'time', 'day', 'year', 'work', 'well', 'even', 'back', 'after', 'use', 'her', 'here', 'him', 'his', 'how', 'its', 'our', 'out', 'day', 'did', 'many', 'may', 'over', 'say', 'she', 'try', 'way', 'who', 'boy', 'did', 'man', 'men', 'run', 'she', 'sun', 'way', 'ago', 'cut', 'did', 'dry', 'far', 'ill', 'old', 'sit', 'ago',
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'me', 'him', 'them', 'what', 'which', 'who', 'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just', 'now', 'also', 'get', 'like', 'one', 'two', 'new', 'use', 'way', 'make', 'see', 'know', 'take', 'come', 'think', 'look', 'time', 'day', 'year', 'work', 'well', 'even', 'back', 'after', 'use', 'her', 'here', 'him', 'his', 'how', 'its', 'our', 'out', 'day', 'did', 'many', 'may', 'over', 'say', 'she', 'try', 'way', 'who', 'boy', 'did', 'man', 'men', 'run', 'she', 'sun', 'way', 'ago', 'cut', 'did', 'dry', 'far', 'ill', 'old', 'sit', 'ago', 'about', 'today', 'welcome',
       // URL components
       'http', 'https', 'www', 'com', 'org', 'net', 'io', 'co', 'be', 'ly', 'watch', 'youtu',
       // Platform names
@@ -1015,116 +1048,99 @@ export default async function TrendPage({ params }: TrendPageProps) {
 
           {/* Trend-Specific Evidence */}
           <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-3xl">{regionalPrefs.flag || '🌍'}</span>
+            <div className="mb-4 flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-lg font-black text-purple-700">E</span>
               <div>
-                <h3 className="font-bold text-gray-900">{trendData.title} evidence quality</h3>
-                <p className="text-sm text-gray-500">Based on {displayVideos.length} keyword-matched videos in {region}. Each angle below cites a source video and metric signal.</p>
+                <h3 className="font-bold text-gray-900">Why this is classified as {trendData.title}</h3>
+                <p className="text-sm leading-relaxed text-gray-500">
+                  The page is built from matched source videos, not generic topic text. Weak words are filtered before scoring, and each creator angle links back to the video that produced the signal.
+                </p>
               </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
-                <div className="text-purple-600 text-xs font-bold mb-1">🎬 WORKS IN {region}</div>
-                <div className="text-sm text-gray-700">{regionalPrefs.popularFormats.slice(0, 2).join(', ')}</div>
-              </div>
-              <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-                <div className="text-blue-600 text-xs font-bold mb-1">🔥 HOT IN {region}</div>
-                <div className="text-sm text-gray-700">{regionalPrefs.trendingTopics.slice(0, 2).join(', ')}</div>
-              </div>
-              <div className="bg-green-50 rounded-xl p-3 border border-green-100">
-                <div className="text-green-600 text-xs font-bold mb-1">⏱️ OPTIMAL LENGTH</div>
-                <div className="text-sm text-gray-700">{regionalPrefs.optimalLength}</div>
-              </div>
-              <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
-                <div className="text-orange-600 text-xs font-bold mb-1">🚀 BEST POST TIME</div>
-                <div className="text-sm text-gray-700">{regionalPrefs.bestPostTime}</div>
-              </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {evidenceSummary.map((item) => (
+                <div key={item.label} className="rounded-xl border border-purple-100 bg-purple-50 p-3">
+                  <div className="text-xs font-bold uppercase tracking-wide text-purple-700">{item.label}</div>
+                  <div className="mt-1 text-sm font-black text-gray-900">{item.value}</div>
+                  <div className="mt-1 text-xs leading-relaxed text-gray-600">{item.note}</div>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Evidence Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {dailyRecommendations.map((rec, idx) => {
-              // Generate trend URL from title
-              const trendKeyword = rec.title.toLowerCase()
-                .replace(/[^a-z0-9\s]/g, '')
-                .split(' ')
-                .slice(0, 3)
-                .join('-')
+            {dailyRecommendations.map((rec, idx) => (
+              <Link
+                key={rec.id}
+                href={rec.href}
+                className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group block hover:border-purple-300 transition-all"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`text-xs font-bold px-2 py-1 rounded ${
+                    rec.potentialViews === 'viral' ? 'bg-red-100 text-red-600' :
+                    rec.potentialViews === 'high' ? 'bg-orange-100 text-orange-600' :
+                    rec.potentialViews === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+                    'bg-green-100 text-green-600'
+                  }`}>
+                    {rec.potentialViews === 'viral' ? 'VIRAL' :
+                     rec.potentialViews === 'high' ? 'HIGH' :
+                     rec.potentialViews === 'medium' ? 'MEDIUM' : 'STEADY'}
+                  </span>
+                  <span className="text-xs text-gray-400 data-mono">#{idx + 1}</span>
+                </div>
 
-              return (
-                <Link
-                  key={rec.id}
-                  href={`/trends/${trendKeyword}`}
-                  className="glass-panel neon-border rounded-2xl p-5 glow-hover corner-accent group block hover:border-purple-300 transition-all"
-                >
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`text-xs font-bold px-2 py-1 rounded ${
-                      rec.potentialViews === 'viral' ? 'bg-red-100 text-red-600' :
-                      rec.potentialViews === 'high' ? 'bg-orange-100 text-orange-600' :
-                      rec.potentialViews === 'medium' ? 'bg-yellow-100 text-yellow-600' :
-                      'bg-green-100 text-green-600'
-                    }`}>
-                      {rec.potentialViews === 'viral' ? '🔥 VIRAL' :
-                       rec.potentialViews === 'high' ? '⚡ HIGH' :
-                       rec.potentialViews === 'medium' ? '💡 MEDIUM' : '📈 STEADY'}
+                <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
+                  {rec.title}
+                </h3>
+                <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-gray-500">
+                  From: {rec.sourceTitle}
+                </p>
+
+                <div className="text-xs text-gray-500 mb-3 flex flex-wrap items-center gap-1">
+                  <span className="font-bold text-gray-700">Source</span>
+                  <span>{rec.sourceChannel}</span>
+                  <span>-</span>
+                  <span>{rec.category}</span>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Evidence fit</span>
+                    <span className="font-bold data-mono">{rec.confidence}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full" style={{ width: `${rec.confidence}%` }} />
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                  <div className="text-xs font-bold text-gray-700 mb-1">Why this works</div>
+                  <p className="text-xs text-gray-500 leading-relaxed">{rec.whyTrending}</p>
+                </div>
+
+                {rec.similarVideos.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-xs font-bold text-gray-700 mb-2">Source video</div>
+                    <div className="space-y-1">
+                      {rec.similarVideos.slice(0, 2).map((v, i) => (
+                        <span key={i} className="block text-xs text-gray-500 truncate">
+                          {v.title.slice(0, 35)}{v.title.length > 35 ? '...' : ''}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-1">
+                  {rec.suggestedTags.slice(0, 3).map((tag, i) => (
+                    <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      #{tag}
                     </span>
-                    <span className="text-xs text-gray-400 data-mono">#{idx + 1}</span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="font-bold text-sm text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
-                    {rec.title}
-                  </h3>
-
-                  {/* Category */}
-                  <div className="text-xs text-gray-500 mb-3 flex items-center gap-1">
-                    <span>🏷️</span> {rec.category}
-                  </div>
-
-                  {/* Metrics */}
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Evidence fit</span>
-                      <span className="font-bold data-mono">{rec.confidence}%</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full" style={{ width: `${rec.confidence}%` }} />
-                    </div>
-                  </div>
-
-                  {/* Why Trending */}
-                  <div className="bg-gray-50 rounded-xl p-3 mb-4">
-                    <div className="text-xs font-bold text-gray-700 mb-1">🧠 Why This Works</div>
-                    <p className="text-xs text-gray-500 leading-relaxed">{rec.whyTrending}</p>
-                  </div>
-
-                  {/* Similar Videos */}
-                  {rec.similarVideos.length > 0 && (
-                    <div className="mb-4">
-                      <div className="text-xs font-bold text-gray-700 mb-2">📺 Similar Videos</div>
-                      <div className="space-y-1">
-                        {rec.similarVideos.slice(0, 2).map((v, i) => (
-                          <span key={i} className="block text-xs text-gray-500 truncate">
-                            • {v.title.slice(0, 35)}{v.title.length > 35 ? '...' : ''}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1">
-                    {rec.suggestedTags.slice(0, 3).map((tag, i) => (
-                      <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                </Link>
-              )
-            })}
+                  ))}
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
 

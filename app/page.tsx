@@ -78,13 +78,13 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:px-8">
           <div>
             <div className="mb-4 inline-flex rounded-full border border-red-100 bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-red-600 shadow-sm">
-              Creator decision OS
+              YouTube idea decision tool
             </div>
             <h1 className="text-4xl font-black tracking-tight text-gray-950 sm:text-6xl">
-              Decide your next YouTube move faster.
+              Paste a YouTube URL. Get the next move.
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg">
-              Paste a video or channel URL. Get the signal, the benchmark, and the next action.
+              See why a video is taking off, whether the trend is still worth chasing, and what to publish next.
             </p>
             <div className="mt-6">
               <AnalyzeHeroForm />
@@ -99,16 +99,70 @@ export default function HomePage() {
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xl shadow-gray-200/70">
             <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Decision workflow</div>
-                <div className="text-lg font-black text-gray-950">URL to next move</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Creator Brief preview</div>
+                <div className="text-lg font-black text-gray-950">What you get after analysis</div>
               </div>
-              <div className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">Core flow</div>
+              <div className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">Example</div>
             </div>
-            <div className="grid gap-3">
+            <div className="rounded-xl border border-red-100 bg-red-50 p-4">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="sm:col-span-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-red-700">Verdict</div>
+                  <div className="mt-1 text-2xl font-black text-gray-950">Worth testing within 24h</div>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-700">
+                    High view velocity, clear content hook, and medium competition. The trend is still usable before copycat volume rises.
+                  </p>
+                </div>
+                <div className="rounded-lg bg-white p-3">
+                  <div className="text-xs text-gray-500">Opportunity</div>
+                  <div className="mt-1 text-3xl font-black text-red-600">82</div>
+                  <div className="text-xs font-semibold text-gray-500">public sample score</div>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                {[
+                  ['Why it is rising', 'Velocity is above the matched sample and comments show strong curiosity.'],
+                  ['Suggested angle', 'Reaction, tutorial, or comparison with a sharper first 15 seconds.'],
+                  ['Risk', 'Saturation may climb in 48h if adjacent creators copy the format.'],
+                  ['Next action', 'Create an 8-12 min video, test 2 titles, post 2-4PM EST.'],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-lg bg-white p-3">
+                    <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{label}</div>
+                    <div className="mt-1 leading-relaxed text-gray-800">{value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
               {[
-                { href: '/youtube-video-analyzer', step: '01', title: 'Analyze a URL', copy: 'Read performance, audience response, SEO, and content signals.' },
-                { href: '/compare-new?type=videos', step: '02', title: 'Compare winners', copy: 'Benchmark videos or channels before copying a strategy.' },
-                { href: '/workspace', step: '03', title: 'Track opportunity', copy: 'Save watchlists, alerts, history, and next content ideas.' },
+                ['Freshness', 'Hourly trend snapshots'],
+                ['Evidence', 'Source videos and sample size'],
+                ['Regions', 'US, JP, KR, UK, HK, TW'],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                  <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{label}</div>
+                  <div className="mt-1 text-sm font-semibold text-gray-900">{value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Before TubeFission</div>
+                <div className="mt-2 text-sm font-semibold text-gray-900">Pick topics by feel, then hope the upload works.</div>
+              </div>
+              <div className="rounded-xl bg-gray-950 p-4 text-white">
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">After TubeFission</div>
+                <div className="mt-2 text-sm font-semibold">Find 3 shootable ideas, a posting window, and a follow-up alert.</div>
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-3">
+              {[
+                { href: '/youtube-video-analyzer', step: '01', title: 'Analyze a URL', copy: 'Why this video rose or stalled.' },
+                { href: '/compare-new?type=videos', step: '02', title: 'Compare winners', copy: 'Pick the stronger model before copying.' },
+                { href: '/workspace', step: '03', title: 'Track opportunity', copy: 'Save ideas, alerts, and history.' },
               ].map((item) => (
                 <Link key={item.step} href={item.href} className="group grid grid-cols-[44px_1fr] gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3 hover:border-red-200 hover:bg-red-50">
                   <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-sm font-black text-red-600 shadow-sm">{item.step}</div>
@@ -118,25 +172,6 @@ export default function HomePage() {
                   </div>
                 </Link>
               ))}
-            </div>
-            <div className="mt-3 grid gap-3 md:grid-cols-[1.25fr_0.75fr]">
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-sm font-bold text-gray-900">Decision output</span>
-                  <span className="text-xs font-bold text-red-600">After analysis</span>
-                </div>
-                {['Content signal', 'Competitor benchmark', 'Saved next action'].map((item) => (
-                  <div key={item} className="flex items-center gap-2 border-t border-gray-200 py-2 text-sm text-gray-700 first:border-t-0">
-                    <span className="h-2 w-2 rounded-full bg-red-500" />
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <div className="rounded-xl bg-gray-950 p-4 text-white">
-                <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Closed loop</div>
-                <div className="mt-2 text-2xl font-black">Analyze / Compare / Track</div>
-                <div className="mt-1 text-sm text-gray-300">Built for repeat decisions, not one-off reports.</div>
-              </div>
             </div>
           </div>
         </div>

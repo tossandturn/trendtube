@@ -186,12 +186,11 @@ export function AnalyzeHeroForm() {
           </p>
         )}
         {!isLoggedIn && (
-          <p className="mt-2 text-xs text-gray-500 text-center">
-            {PRODUCT_ACCESS_COPY.limit}{' '}
+          <p className="mt-3 text-xs leading-5 text-gray-500 sm:text-center">
+            {PRODUCT_ACCESS_COPY.short}{' '}
             <a href="/signup" className="text-blue-600 hover:underline">
               Sign up free
-            </a>{' '}
-            to save your research.
+            </a>
           </p>
         )}
       </form>
