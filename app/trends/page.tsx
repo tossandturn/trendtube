@@ -1,16 +1,14 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Breadcrumbs } from '@/app/components/Breadcrumbs'
 import AddToVideoCompareButton from '@/app/components/AddToVideoCompareButton'
 import { getRegion } from '@/lib/region-server'
 import { getCachedTrendBoard, type TrendBoardVideo } from '@/lib/trend-board'
 import { REGION_META, REGIONS } from '@/lib/region'
+import { TREND_REFRESH_CADENCE, formatSnapshotTimestamp, trendFreshnessCopy } from '@/lib/data-freshness'
 
 const TREND_REGIONS = REGIONS.filter((region) => region !== 'GLOBAL')
-
-function getTodayString() {
-  return new Date().toISOString().split('T')[0].replace(/-/g, '.')
-}
 
 function formatCompactNumber(value: number) {
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`
@@ -32,10 +30,9 @@ function scoreFor(item: TrendBoardVideo, lane: string) {
 export async function generateMetadata(): Promise<Metadata> {
   const region = await getRegion()
   const regionLabel = REGION_META[region].label
-  const today = getTodayString()
 
   return {
-    title: `${regionLabel} Viral Content Board ${today} | TubeFission`,
+    title: `${regionLabel} Viral Content Board | Hourly YouTube Snapshot`,
     description: `Hourly YouTube trend board for ${regionLabel}: gaming, lifestyle, music, and film viral opportunities, niches, and creative formats.`,
   }
 }
@@ -50,10 +47,13 @@ function VideoOpportunityCard({ item, lane }: { item: TrendBoardVideo; lane: str
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
       <Link href={`/video/${video.id}`} className="group block">
         <div className="relative aspect-video overflow-hidden bg-gray-100">
-          <img
+          <Image
             src={thumbnail}
             alt={video.snippet?.title || 'YouTube video thumbnail'}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            fill
+            sizes="(min-width: 1024px) 33vw, 100vw"
+            unoptimized
+            className="object-cover transition duration-300 group-hover:scale-105"
             loading="lazy"
           />
           <div className="absolute left-2 top-2 rounded-md bg-black/75 px-2 py-1 text-[10px] font-bold text-white">
@@ -123,10 +123,7 @@ export default async function TrendsPage() {
   const region = await getRegion()
   const board = await getCachedTrendBoard(region)
   const regionLabel = REGION_META[region].label
-  const updatedAt = new Date(board.generatedAt).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  const updatedAt = formatSnapshotTimestamp(board.generatedAt)
 
   return (
     <main className="min-h-screen bg-[#fafafa]">
@@ -151,7 +148,7 @@ export default async function TrendsPage() {
               <div className="mb-3 flex items-center justify-between gap-3">
                 <span className="text-xs font-bold uppercase tracking-wide text-gray-500">Region</span>
                 <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
-                  Updates hourly
+                  {TREND_REFRESH_CADENCE}
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -170,8 +167,9 @@ export default async function TrendsPage() {
                 ))}
               </div>
               <p className="mt-3 text-xs text-gray-500">
-                Last board build: {updatedAt}. The first request after the hourly window refreshes the cache; later users get the cached board.
+                {trendFreshnessCopy(board.generatedAt)} Later users see the same snapshot until the next hourly refresh.
               </p>
+              <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-gray-400">Snapshot built {updatedAt}</p>
             </div>
           </div>
 

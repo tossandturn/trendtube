@@ -34,7 +34,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'How accurate is the data?',
-    answer: 'All data comes directly from the YouTube Data API and is refreshed daily. Our trend engine analyzes real videos across six countries to compute velocity, saturation, and breakout scores.',
+    answer: 'Metrics come from the YouTube Data API. Trend pages use hourly refreshed snapshots so every page can show a clear data timestamp instead of mixing live claims with stale cache.',
   },
   {
     question: 'Is Tubefission safe to use?',
@@ -50,7 +50,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'How do I find viral trends?',
-    answer: 'Visit our Trend Database or Trending pages to see real-time breakout scores and velocity metrics. Our AI identifies patterns before they peak, giving you a competitive advantage.',
+    answer: 'Visit our Trend Database or Trending pages to see hourly refreshed breakout scores and velocity metrics. Each trend page explains the snapshot time and the signals behind the recommendation.',
   },
   {
     question: 'Is there an analysis limit?',
@@ -225,7 +225,7 @@ export default function HomePage() {
           <li><strong>SEO optimization scores</strong> - evaluating title, description, and tag quality against top-performing videos.</li>
         </ul>
         <p className="text-gray-700 leading-relaxed mb-10">
-          These metrics are computed from real YouTube API data, refreshed daily, and filtered by country so you can see what works in your specific market. No guesswork, no outdated spreadsheets - just clear, visual intelligence powered by machine learning.
+          These metrics are computed from YouTube API-backed data, refreshed through transparent cache windows, and filtered by country so you can see what works in your specific market. No guesswork, no outdated spreadsheets - just clear, visual intelligence powered by machine learning.
         </p>
 
         <h2 className="text-3xl font-bold text-gray-900 mb-6">Channel Analytics & Competitor Research</h2>
@@ -244,7 +244,7 @@ export default function HomePage() {
 
         <h2 className="text-3xl font-bold text-gray-900 mb-6">Trend Discovery with Real Data</h2>
         <p className="text-gray-700 leading-relaxed mb-6">
-          Our trend engine does not rely on guesswork or static lists. Instead, it pulls live data from YouTube&apos;s most popular videos across six countries - the United States, Japan, South Korea, the United Kingdom, Hong Kong, and Taiwan. From these videos, we extract real trending keywords, compute velocity and saturation scores, and surface breakout opportunities that are still early enough to capture.
+          Our trend engine does not rely on guesswork or static lists. Instead, it builds hourly snapshots from YouTube&apos;s most popular videos across six countries - the United States, Japan, South Korea, the United Kingdom, Hong Kong, and Taiwan. From these videos, we extract real trending keywords, compute velocity and saturation scores, and surface breakout opportunities that are still early enough to capture.
         </p>
         <p className="text-gray-700 leading-relaxed mb-10">
           This means every trend you see on Tubefission is backed by actual view counts, engagement rates, and creator adoption metrics from the real platform. You are not reading predictions - you are reading data-driven intelligence.
@@ -299,8 +299,8 @@ export default function HomePage() {
           <div className="flex gap-4">
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">4</div>
             <div>
-              <h3 className="font-semibold text-gray-900">Real-Time Data</h3>
-              <p className="text-gray-600 text-sm">All metrics are refreshed daily from the official YouTube API for maximum accuracy.</p>
+              <h3 className="font-semibold text-gray-900">Clear Data Freshness</h3>
+              <p className="text-gray-600 text-sm">Trend data uses official YouTube API-backed snapshots with visible refresh timing, so users know when the signal was generated.</p>
             </div>
           </div>
         </div>

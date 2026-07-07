@@ -2,10 +2,12 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getViewVelocity, getEngagementRate, getTagEmoji } from '@/lib/analytics'
-import { fetchTrendingVideos, type YouTubeVideo } from '@/lib/api-client'
+import type { YouTubeVideo } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getRegionLabels, REGION_META, type Region } from '@/lib/region'
-import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
+import { generateDailyRecommendations, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
+import { getCachedTrendBoard } from '@/lib/trend-board'
+import { TREND_REFRESH_CADENCE, trendFreshnessCopy } from '@/lib/data-freshness'
 import AddToVideoCompareButton from '@/app/components/AddToVideoCompareButton'
 
 function getTrendingAnalysisRegion(region: Region): Region {
@@ -15,11 +17,10 @@ function getTrendingAnalysisRegion(region: Region): Region {
 export async function generateMetadata(): Promise<Metadata> {
   const region = getTrendingAnalysisRegion(await getRegion())
   const regionLabel = REGION_META[region]?.label || region
-  const today = getTodayString()
 
   return {
-    title: `${regionLabel} Trending Videos ${today} | Real-Time Viral Tracker`,
-    description: `Track the most viral YouTube videos in ${regionLabel} right now for ${today}. Real-time trending analysis with velocity, engagement, and creator intelligence.`,
+    title: `${regionLabel} Trending Videos | Hourly YouTube Snapshot`,
+    description: `Track the most viral YouTube videos in ${regionLabel} with hourly refreshed YouTube API-backed velocity, engagement, and creator intelligence.`,
   }
 }
 
@@ -61,7 +62,9 @@ function getDecisionHint(score: number, engagement: number) {
 export default async function TrendingPage() {
   const region = getTrendingAnalysisRegion(await getRegion())
   const labels = getRegionLabels(region)
-  const videos = await fetchTrendingVideos(region, 30, { retries: 0, timeoutMs: 3500, revalidateSeconds: 300 })
+  const board = await getCachedTrendBoard(region)
+  const snapshotAt = board.generatedAt
+  const videos = board.sections.flatMap((section) => section.videos.map((item) => item.video))
 
   const sorted = [...videos].sort((a, b) =>
     Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0)
@@ -103,11 +106,14 @@ export default async function TrendingPage() {
         <div className="mb-8 sm:mb-10">
           <div className="text-gray-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">🔥 TRENDING NOW</div>
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow text-gray-900">
-            {labels.full} Trending Videos {getTodayString()}
+            {labels.full} Trending Videos
           </h1>
           <p className="text-gray-500 text-sm sm:text-base max-w-3xl leading-relaxed">
             Use this page to answer three questions fast: what is getting the most attention, which patterns are worth studying, and which channels deserve a deeper audit.
           </p>
+          <div className="mt-4 inline-flex rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600">
+            {TREND_REFRESH_CADENCE}: {trendFreshnessCopy(snapshotAt)}
+          </div>
           {region === 'GLOBAL' && (
             <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
               <span className="text-lg">🌍</span>
@@ -293,7 +299,7 @@ export default async function TrendingPage() {
                 <span className="text-purple-600">💡</span> {getTimeBasedGreeting()}, Creator
               </h2>
             </div>
-            <span className="text-xs text-gray-500 data-mono bg-gray-100 px-3 py-1 rounded-full">{getTodayString()}</span>
+            <span className="text-xs text-gray-500 data-mono bg-gray-100 px-3 py-1 rounded-full">{TREND_REFRESH_CADENCE}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
