@@ -6,7 +6,6 @@ import { ArrowRight, CheckCircle2, Circle } from 'lucide-react'
 
 interface ProductValueDimension {
   label: string
-  score: number
   note: string
 }
 
@@ -34,28 +33,18 @@ const STORAGE_KEYS = {
 }
 
 const ADVANTAGE_DIMENSIONS: ProductValueDimension[] = [
-  { label: 'Workflow depth', score: 92, note: 'Analyze, compare, save, watch, alert, and resume.' },
-  { label: 'Action guidance', score: 91, note: 'Every analysis points to a next production move.' },
-  { label: 'Data trust', score: 90, note: 'Separates API facts from inferred audience signals.' },
-  { label: 'Compare layer', score: 91, note: 'Basket-driven A/B benchmarks for many candidates.' },
-  { label: 'Retention loop', score: 88, note: 'Workspace, history, watchlist, and alerts bring users back.' },
-  { label: 'Mobile clarity', score: 89, note: 'Short paths, compact cards, and touch-friendly controls.' },
-  { label: 'SEO surface', score: 90, note: 'Analyzer, trends, keywords, and evergreen landing pages.' },
+  { label: 'Analyze', note: 'Start from a video, channel, trend, or niche.' },
+  { label: 'Diagnose', note: 'Separate content reasons, traffic signals, and data confidence.' },
+  { label: 'Compare', note: 'Use a basket to benchmark multiple candidates before copying.' },
+  { label: 'Decide', note: 'Turn analysis into a concrete title, hook, and distribution bet.' },
+  { label: 'Track', note: 'Save the opportunity, watch the benchmark, and set alerts.' },
+  { label: 'Resume', note: 'Use Workspace as the place to continue research.' },
 ]
 
 const COMPETITOR_COMPARISON = [
   { type: 'Generic analyzers', gap: 'Report metrics, then stop.', edge: 'TubeFission guides the next action.' },
   { type: 'SEO tools', gap: 'Focus on keywords only.', edge: 'TubeFission connects topic, video, and channel signals.' },
   { type: 'Trend lists', gap: 'Show what is hot now.', edge: 'TubeFission adds velocity, saturation, and watchlists.' },
-]
-
-const CAPABILITY_EVIDENCE = [
-  'Video content reasoning',
-  'Professional comparison',
-  'Trust labels',
-  'Workspace sync',
-  'Custom alerts',
-  'Analysis basket',
 ]
 
 const EMPTY_WORKSPACE: WorkspaceState = {
@@ -88,18 +77,6 @@ function readWorkspaceState(): WorkspaceState {
     compareIds: readArray(STORAGE_KEYS.compare).length,
     isSynced: Boolean(window.localStorage.getItem(STORAGE_KEYS.user) && window.localStorage.getItem(STORAGE_KEYS.token)),
   }
-}
-
-function getBaseProductScore() {
-  const total = ADVANTAGE_DIMENSIONS.reduce((sum, item) => sum + item.score, 0)
-  return Math.round(total / ADVANTAGE_DIMENSIONS.length)
-}
-
-function getGrade(score: number) {
-  if (score >= 90) return 'A'
-  if (score >= 86) return 'A-'
-  if (score >= 82) return 'B+'
-  return 'B'
 }
 
 export default function ProductValueWorkflow({ compact = false }: ProductValueWorkflowProps) {
@@ -151,8 +128,6 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
   ], [workspace])
 
   const completedMilestones = milestones.filter((milestone) => milestone.done).length
-  const baseScore = getBaseProductScore()
-  const productScore = baseScore
   const activationScore = Math.round((completedMilestones / milestones.length) * 100)
   const nextMilestone = milestones.find((milestone) => !milestone.done)
 
@@ -160,13 +135,13 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
     <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
         <div className="rounded-xl bg-gray-950 p-5 text-white">
-          <div className="text-xs font-bold uppercase tracking-wider text-red-600">Competitive Advantage</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-red-600">Workflow Progress</div>
           <div className="mt-2 flex items-end gap-3">
-            <div className="text-5xl font-black">{productScore}</div>
-            <div className="pb-2 text-sm font-bold text-gray-400">/100 {getGrade(productScore)}</div>
+            <div className="text-5xl font-black">{completedMilestones}</div>
+            <div className="pb-2 text-sm font-bold text-gray-400">/6 steps active</div>
           </div>
           <p className="mt-3 text-sm text-gray-300">
-            Earned by closing the loop from trend discovery to comparison, brief, watchlist, and alert.
+            A stronger product is one that helps users keep moving: analyze, decide, save, monitor, and return.
           </p>
 
           <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3">
@@ -175,7 +150,7 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
                 <div className="text-xs font-bold uppercase tracking-wider text-gray-400">Your workflow activation</div>
                 <div className="mt-1 text-sm font-bold">{completedMilestones}/6 signals active</div>
               </div>
-              <div className="text-right text-xs font-bold text-gray-400">{activationScore}%</div>
+              <div className="text-right text-xs font-bold text-gray-400">{activationScore}% complete</div>
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
               <div className="h-full rounded-full bg-red-500" style={{ width: `${(completedMilestones / milestones.length) * 100}%` }} />
@@ -192,27 +167,14 @@ export default function ProductValueWorkflow({ compact = false }: ProductValueWo
 
         <div className="grid gap-3 sm:grid-cols-2">
           {ADVANTAGE_DIMENSIONS.map((dimension) => (
-            <div key={dimension.label} className="rounded-xl bg-gray-50 p-3">
+            <div key={dimension.label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
               <div className="mb-1 flex items-center justify-between gap-3">
                 <span className="text-sm font-bold text-gray-800">{dimension.label}</span>
-                <span className="text-sm font-black text-gray-900">{dimension.score}</span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
-                <div className="h-full rounded-full bg-red-500" style={{ width: `${dimension.score}%` }} />
+                <span className="text-xs font-black uppercase tracking-wide text-red-600">Flow</span>
               </div>
               {!compact && <p className="mt-2 truncate text-xs text-gray-500">{dimension.note}</p>}
             </div>
           ))}
-          <div className="rounded-xl border border-red-100 bg-red-50 p-3 sm:col-span-2">
-            <div className="mb-2 text-xs font-black uppercase tracking-wider text-red-700">90-point proof</div>
-            <div className="flex flex-wrap gap-2">
-              {CAPABILITY_EVIDENCE.map((item) => (
-                <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-gray-700">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 

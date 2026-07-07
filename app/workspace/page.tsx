@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Bell, BookmarkCheck, CheckCircle2, Cloud, GitCompare, History, Plus, Rocket } from 'lucide-react'
-import ProductValueWorkflow from '@/app/components/ProductValueWorkflow'
 
 interface OpportunityHistoryItem {
   id: string
@@ -225,10 +224,6 @@ export default function WorkspacePage() {
               </Link>
             )
           })}
-        </section>
-
-        <section className="mb-8">
-          <ProductValueWorkflow compact />
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">

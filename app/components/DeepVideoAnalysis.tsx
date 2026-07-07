@@ -1,5 +1,8 @@
 'use client'
 
+import { useState } from 'react'
+import Link from 'next/link'
+
 interface DeepVideoAnalysisProps {
   video: {
     id?: string
@@ -20,6 +23,8 @@ interface DeepVideoAnalysisProps {
   velocity: number
   engagementRate: number
 }
+
+type SaveState = 'idle' | 'saved'
 
 function clamp(value: number, min = 0, max = 100) {
   return Math.min(max, Math.max(min, value))
@@ -373,7 +378,22 @@ function buildNextBrief(video: DeepVideoAnalysisProps['video'], topic: string, t
   ]
 }
 
+function writeArrayItem<T extends { id: string }>(key: string, item: T) {
+  if (typeof window === 'undefined') return
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) || '[]')
+    const items = Array.isArray(parsed) ? parsed as T[] : []
+    const next = [item, ...items.filter((existing) => existing.id !== item.id)].slice(0, 50)
+    window.localStorage.setItem(key, JSON.stringify(next))
+  } catch {
+    window.localStorage.setItem(key, JSON.stringify([item]))
+  }
+}
+
 export default function DeepVideoAnalysis({ video, velocity, engagementRate }: DeepVideoAnalysisProps) {
+  const [savedBrief, setSavedBrief] = useState<SaveState>('idle')
+  const [savedWatchlist, setSavedWatchlist] = useState<SaveState>('idle')
+  const [savedAlert, setSavedAlert] = useState<SaveState>('idle')
   const text = getText(video)
   const topic = inferTopic(text)
   const keywords = extractKeywords(video)
@@ -385,6 +405,49 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
   const effect = buildEffectiveness(video, velocity, engagementRate)
   const seo = buildSeoAnalysis(video, keywords)
   const nextBrief = buildNextBrief(video, topic, traffic.primary, keywords, effect.score)
+  const videoId = video.id || video.snippet?.title || 'unknown-video'
+  const videoHref = video.id ? `/video/${video.id}` : '/youtube-video-analyzer'
+
+  const saveBriefToWorkspace = () => {
+    writeArrayItem('tubefission:opportunityHistory', {
+      id: `video-analysis-${videoId}`,
+      niche: `${topic} video analysis`,
+      query: keywords[0] || topic,
+      score: effect.score,
+      grade: effect.score >= 80 ? 'A' : effect.score >= 65 ? 'B+' : effect.score >= 50 ? 'B' : 'C',
+      verdict: virality.verdict,
+      recommendation: `${nextBrief[0]?.value || virality.mainReason}`,
+      href: videoHref,
+      compareHref: video.id ? `/compare-new?type=videos&left=${encodeURIComponent(video.id)}` : '/compare-new?type=videos',
+      savedAt: new Date().toISOString(),
+    })
+    setSavedBrief('saved')
+  }
+
+  const addToWatchlist = () => {
+    writeArrayItem('tubefission_watchlist', {
+      id: `video-${videoId}`,
+      type: 'trend',
+      name: `${topic}: ${video.snippet?.title || 'Video analysis'}`,
+    })
+    setSavedWatchlist('saved')
+  }
+
+  const createVelocityAlert = () => {
+    writeArrayItem('tubefission_alerts', {
+      id: `video-alert-${String(videoId).toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      name: `${topic} video velocity`,
+      target: video.snippet?.title || topic,
+      metric: 'view_velocity',
+      direction: 'above',
+      threshold: Math.max(10000, Math.round(velocity)),
+      email: '',
+      isActive: true,
+      createdAt: 'draft',
+      channels: ['email'],
+    })
+    setSavedAlert('saved')
+  }
 
   return (
     <section id="deep-analysis" className="mb-10">
@@ -586,6 +649,47 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-emerald-700">Use this analysis</div>
+            <h3 className="mt-1 text-lg font-black text-gray-900">Turn the diagnosis into a reusable workflow</h3>
+            <p className="mt-1 text-sm leading-relaxed text-gray-600">
+              Save the brief, monitor the video/topic, and create an alert so this analysis becomes an ongoing research asset.
+            </p>
+          </div>
+          <Link href="/workspace" className="shrink-0 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800">
+            Open Workspace
+          </Link>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          <button
+            type="button"
+            onClick={saveBriefToWorkspace}
+            className="rounded-xl border border-emerald-200 bg-white p-4 text-left hover:border-emerald-300 hover:bg-emerald-50"
+          >
+            <div className="text-sm font-black text-gray-900">{savedBrief === 'saved' ? 'Analysis saved' : 'Save analysis brief'}</div>
+            <p className="mt-2 text-xs leading-5 text-gray-600">Stores verdict, score, keywords, and next title angle in Workspace history.</p>
+          </button>
+          <button
+            type="button"
+            onClick={addToWatchlist}
+            className="rounded-xl border border-emerald-200 bg-white p-4 text-left hover:border-emerald-300 hover:bg-emerald-50"
+          >
+            <div className="text-sm font-black text-gray-900">{savedWatchlist === 'saved' ? 'Added to watchlist' : 'Track this topic'}</div>
+            <p className="mt-2 text-xs leading-5 text-gray-600">Adds the video and topic to the watchlist for follow-up research.</p>
+          </button>
+          <button
+            type="button"
+            onClick={createVelocityAlert}
+            className="rounded-xl border border-emerald-200 bg-white p-4 text-left hover:border-emerald-300 hover:bg-emerald-50"
+          >
+            <div className="text-sm font-black text-gray-900">{savedAlert === 'saved' ? 'Alert draft created' : 'Create velocity alert'}</div>
+            <p className="mt-2 text-xs leading-5 text-gray-600">Creates a draft alert using this video&apos;s current view velocity threshold.</p>
+          </button>
         </div>
       </div>
     </section>
