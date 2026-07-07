@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
-import { extractTrendsFromRegion, getAllTagsFromReal } from '@/lib/trend-extractor'
+import { extractTrendsFromVideos, getAllTagsFromReal } from '@/lib/trend-extractor'
 import { getRegion } from '@/lib/region-server'
 import { REGIONS, type Region } from '@/lib/region'
+import { getCachedTrendBoard } from '@/lib/trend-board'
 
 function normalizeRegion(region: string | null): Region | null {
   if (!region) return null
@@ -15,17 +16,19 @@ export async function GET(request: Request) {
   const region = normalizeRegion(searchParams.get('region')) || await getRegion()
 
   try {
-    const allTrends = await extractTrendsFromRegion(region, 50)
+    const board = await getCachedTrendBoard(region)
+    const videos = board.sections.flatMap((section) => section.videos.map((item) => item.video))
+    const allTrends = extractTrendsFromVideos(videos, region, 40)
     if (tag) {
       const normalizedTag = tag.toLowerCase()
       const trends = allTrends.filter((trend) =>
         trend.tags.some((item) => item.toLowerCase() === normalizedTag) ||
         trend.keyword.toLowerCase() === normalizedTag
       )
-      return NextResponse.json({ region, tag, trends })
+      return NextResponse.json({ region, snapshotAt: board.generatedAt, tag, trends })
     }
     const tags = getAllTagsFromReal(allTrends)
-    return NextResponse.json({ region, tags })
+    return NextResponse.json({ region, snapshotAt: board.generatedAt, tags })
   } catch {
     return NextResponse.json({ error: 'Failed' }, { status: 500 })
   }

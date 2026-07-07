@@ -169,6 +169,9 @@ export default async function TrendsPage() {
               <p className="mt-3 text-xs text-gray-500">
                 {trendFreshnessCopy(board.generatedAt)} Later users see the same snapshot until the next hourly refresh.
               </p>
+              <p className="mt-2 text-xs text-gray-500">
+                Source markets: {board.sourceRegions.join(', ')}. The page shows ranked slices from a larger deduped pool to keep browsing fast.
+              </p>
               <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-gray-400">Snapshot built {updatedAt}</p>
             </div>
           </div>

@@ -64,34 +64,16 @@ export default async function TrendingPage() {
   const labels = getRegionLabels(region)
   const board = await getCachedTrendBoard(region)
   const snapshotAt = board.generatedAt
-  const videos = board.sections.flatMap((section) => section.videos.map((item) => item.video))
-
-  const sorted = [...videos].sort((a, b) =>
-    Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0)
-  )
-
-  const visibleVideos = sorted.slice(0, 18)
+  const sorted = board.topVideos
+  const visibleVideos = sorted.slice(0, 36)
   const dailyRecommendations = generateDailyRecommendations(sorted.slice(0, 12), region, 4)
   const regionalPrefs = REGIONAL_PREFERENCES[region] || REGIONAL_PREFERENCES.US
 
-  const totalViews = sorted.reduce((sum, v) => sum + Number(v.statistics?.viewCount || 0), 0)
-  const avgEngagement = sorted.length > 0
-    ? sorted.reduce((sum, v) => sum + getEngagementRate(v), 0) / sorted.length
-    : 0
-  const avgVelocity = sorted.length > 0
-    ? sorted.reduce((sum, v) => sum + getViewVelocity(v), 0) / sorted.length
-    : 0
-
-  const categoryMap = new Map<string, number>()
-  sorted.forEach((v) => {
-    const title = v.snippet?.title?.toLowerCase() || ''
-    if (title.includes('ai') || title.includes('chatgpt')) categoryMap.set('AI', (categoryMap.get('AI') || 0) + 1)
-    if (title.includes('shorts')) categoryMap.set('Shorts', (categoryMap.get('Shorts') || 0) + 1)
-    if (title.includes('gaming') || title.includes('game')) categoryMap.set('Gaming', (categoryMap.get('Gaming') || 0) + 1)
-    if (title.includes('music') || title.includes('song')) categoryMap.set('Music', (categoryMap.get('Music') || 0) + 1)
-    if (title.includes('how to') || title.includes('tutorial')) categoryMap.set('Tutorial', (categoryMap.get('Tutorial') || 0) + 1)
-  })
-  const topCategories = Array.from(categoryMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  const totalViews = board.totalViews
+  const avgEngagement = board.avgEngagement
+  const avgVelocity = board.avgVelocity
+  const topCategories = board.categoryBreakdown.slice(0, 5)
+  const topKeyword = board.keywordSignals[0]
 
   return (
     <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">
@@ -135,8 +117,8 @@ export default async function TrendingPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
             <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
               <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">🎬 VIDEOS TRACKED</div>
-              <div className="text-2xl sm:text-3xl font-black data-mono text-glow text-gray-900">{sorted.length}</div>
-              <div className="text-xs text-gray-500 mt-1">Live from {labels.full}</div>
+              <div className="text-2xl sm:text-3xl font-black data-mono text-glow text-gray-900">{board.videosTracked}</div>
+              <div className="text-xs text-gray-500 mt-1">Hourly pool: {board.sourceRegions.join(', ')}</div>
             </div>
             <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
               <div className="text-gray-500 text-xs sm:text-sm mb-1 data-mono tracking-wider">👁️ TOTAL VIEWS</div>
@@ -164,7 +146,9 @@ export default async function TrendingPage() {
                   <span className="text-2xl">🔥</span>
                   <div>
                     <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider data-mono">TODAY&apos;S KEYWORD</h3>
-                    <p className="text-xs text-gray-400">Trending search term with highest velocity</p>
+                    <p className="text-xs text-gray-400">
+                      {topKeyword ? `Precomputed from ${board.videosTracked} videos in the hourly snapshot` : 'Trending search term with highest velocity'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -243,19 +227,19 @@ export default async function TrendingPage() {
               </div>
               {topCategories.length > 0 ? (
                 <div className="space-y-3">
-                  {topCategories.map(([category, count]) => {
-                    const maxCount = topCategories[0][1]
-                    const percentage = (count / sorted.length) * 100
+                  {topCategories.map((category) => {
+                    const maxCount = topCategories[0].count
+                    const percentage = category.share
                     return (
-                      <div key={category} className="flex items-center gap-3">
-                        <span className="text-lg">{getTagEmoji(category)}</span>
+                      <div key={category.id} className="flex items-center gap-3">
+                        <span className="text-lg">{getTagEmoji(category.label)}</span>
                         <div className="flex-1">
                           <div className="flex justify-between text-sm mb-1">
-                            <span className="font-medium">{category}</span>
-                            <span className="text-gray-500">{count} videos ({percentage.toFixed(1)}%)</span>
+                            <span className="font-medium">{category.label}</span>
+                            <span className="text-gray-500">{category.count} videos ({percentage}%)</span>
                           </div>
                           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full" style={{ width: `${(count / maxCount) * 100}%` }} />
+                            <div className="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full" style={{ width: `${(category.count / maxCount) * 100}%` }} />
                           </div>
                         </div>
                       </div>

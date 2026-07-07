@@ -40,11 +40,30 @@ export interface TrendBoard {
   region: Region
   generatedAt: string
   refreshCadence: string
+  sourceRegions: string[]
+  videoPoolSize: number
   videosTracked: number
   totalViews: number
   avgEngagement: number
   avgVelocity: number
+  categoryBreakdown: TrendBoardCategorySummary[]
+  keywordSignals: TrendBoardKeywordSignal[]
+  topVideos: YouTubeVideo[]
   sections: TrendBoardSection[]
+}
+
+export interface TrendBoardCategorySummary {
+  id: TrendBoardCategoryId
+  label: string
+  count: number
+  share: number
+}
+
+export interface TrendBoardKeywordSignal {
+  keyword: string
+  count: number
+  totalViews: number
+  avgVelocity: number
 }
 
 const CATEGORY_META: Record<TrendBoardCategoryId, { label: string; description: string; terms: string[] }> = {
@@ -85,6 +104,30 @@ const LANE_META: Record<TrendBoardLaneId, { label: string; description: string }
   },
 }
 
+const TREND_BOARD_REVALIDATE_SECONDS = 3600
+const PRIMARY_REGION_RESULTS = 50
+const RELATED_REGION_RESULTS = 50
+const MAX_POOL_VIDEOS = 180
+const LANE_VIDEO_LIMIT = 8
+const SOURCE_REGION_TIMEOUT_MS = 4500
+
+const REGION_POOL: Record<Region, string[]> = {
+  GLOBAL: ['US', 'GB', 'JP', 'KR', 'TW', 'HK'],
+  US: ['US', 'GB', 'JP', 'KR'],
+  JP: ['JP', 'KR', 'TW', 'HK'],
+  KR: ['KR', 'JP', 'TW', 'HK'],
+  GB: ['GB', 'US', 'JP'],
+  HK: ['HK', 'TW', 'JP', 'KR'],
+  TW: ['TW', 'HK', 'JP', 'KR'],
+}
+
+const KEYWORD_STOP_WORDS = new Set([
+  'the', 'and', 'for', 'with', 'from', 'this', 'that', 'have', 'has', 'are',
+  'was', 'were', 'you', 'your', 'our', 'their', 'about', 'today', 'welcome',
+  'official', 'video', 'videos', 'youtube', 'live', 'full', 'part', 'episode',
+  'new', 'now', 'how', 'why', 'what', 'when', 'where', 'into', 'after', 'before',
+])
+
 const CREATIVE_TERMS = [
   'challenge', 'experiment', 'secret', 'myth', 'testing', 'built', 'survived',
   'paint', 'hide', 'seek', 'modded', 'finally', 'breakdown', 'analyzed',
@@ -97,10 +140,6 @@ function textFor(video: YouTubeVideo) {
     video.snippet?.description || '',
     video.snippet?.channelTitle || '',
   ].join(' ').toLowerCase()
-}
-
-function includesAny(text: string, terms: string[]) {
-  return terms.some((term) => text.includes(term))
 }
 
 function detectCategory(video: YouTubeVideo): TrendBoardCategoryId {
@@ -197,12 +236,118 @@ function uniqueByVideoId(items: TrendBoardVideo[]) {
   })
 }
 
+function uniqueVideos(videos: YouTubeVideo[]) {
+  const seen = new Set<string>()
+  return videos.filter((video) => {
+    if (!video.id || seen.has(video.id)) return false
+    seen.add(video.id)
+    return true
+  })
+}
+
+function getSourceRegions(region: Region) {
+  return REGION_POOL[region] || REGION_POOL.US
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), timeoutMs)
+      }),
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
+async function buildRegionVideoPool(region: Region) {
+  const sourceRegions = getSourceRegions(region)
+  const batches = await Promise.allSettled(sourceRegions.map((sourceRegion, index) =>
+    withTimeout(
+      fetchTrendingVideos(sourceRegion, index === 0 ? PRIMARY_REGION_RESULTS : RELATED_REGION_RESULTS, {
+        retries: 0,
+        timeoutMs: 3000,
+        revalidateSeconds: TREND_BOARD_REVALIDATE_SECONDS,
+      }),
+      SOURCE_REGION_TIMEOUT_MS,
+      []
+    )
+  ))
+
+  const videos = uniqueVideos(batches.flatMap((batch) => batch.status === 'fulfilled' ? batch.value : []))
+  return {
+    sourceRegions,
+    videos: videos.slice(0, MAX_POOL_VIDEOS),
+  }
+}
+
 function topBy(items: TrendBoardVideo[], lane: TrendBoardLaneId, limit: number) {
   const key = lane === 'viral' ? 'viralScore' : lane === 'niche' ? 'nicheScore' : 'creativeScore'
   return uniqueByVideoId([...items].sort((a, b) => {
     if (b[key] !== a[key]) return b[key] - a[key]
     return b.velocity - a.velocity
   })).slice(0, limit)
+}
+
+function buildCategoryBreakdown(items: TrendBoardVideo[]): TrendBoardCategorySummary[] {
+  const total = Math.max(1, items.length)
+  return (Object.keys(CATEGORY_META) as TrendBoardCategoryId[]).map((id) => {
+    const count = items.filter((item) => item.category === id).length
+    return {
+      id,
+      label: CATEGORY_META[id].label,
+      count,
+      share: Math.round((count / total) * 100),
+    }
+  }).filter((item) => item.count > 0)
+    .sort((a, b) => b.count - a.count)
+}
+
+function normalizeKeyword(word: string) {
+  return word.toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function buildKeywordSignals(items: TrendBoardVideo[]): TrendBoardKeywordSignal[] {
+  const keywordCounts = new Map<string, { count: number; totalViews: number; velocity: number }>()
+
+  items.forEach((item) => {
+    const words = (item.video.snippet?.title || '')
+      .split(/\s+/)
+      .map(normalizeKeyword)
+      .filter((word) => word.length > 3 && !/^\d+$/.test(word) && !KEYWORD_STOP_WORDS.has(word))
+
+    Array.from(new Set(words)).forEach((word) => {
+      const existing = keywordCounts.get(word)
+      if (existing) {
+        existing.count += 1
+        existing.totalViews += item.views
+        existing.velocity += item.velocity
+      } else {
+        keywordCounts.set(word, {
+          count: 1,
+          totalViews: item.views,
+          velocity: item.velocity,
+        })
+      }
+    })
+  })
+
+  return Array.from(keywordCounts.entries())
+    .map(([keyword, data]) => ({
+      keyword,
+      count: data.count,
+      totalViews: data.totalViews,
+      avgVelocity: Math.round(data.velocity / data.count),
+    }))
+    .sort((a, b) => {
+      const bScore = b.avgVelocity + b.count * 10000 + Math.log10(b.totalViews + 1) * 1000
+      const aScore = a.avgVelocity + a.count * 10000 + Math.log10(a.totalViews + 1) * 1000
+      return bScore - aScore
+    })
+    .slice(0, 12)
 }
 
 function buildSections(items: TrendBoardVideo[]): TrendBoardSection[] {
@@ -217,13 +362,13 @@ function buildSections(items: TrendBoardVideo[]): TrendBoardSection[] {
         id: laneId,
         label: LANE_META[laneId].label,
         description: LANE_META[laneId].description,
-        videos: topBy(videos, laneId, 4),
+        videos: topBy(videos, laneId, LANE_VIDEO_LIMIT),
       })),
     }
   }).filter((section) => section.videos.length > 0)
 }
 
-export function buildTrendBoard(videos: YouTubeVideo[], region: Region): TrendBoard {
+export function buildTrendBoard(videos: YouTubeVideo[], region: Region, sourceRegions: string[] = [region]): TrendBoard {
   const scored = uniqueByVideoId(videos.map(scoreVideo))
   const totalViews = scored.reduce((sum, item) => sum + item.views, 0)
   const avgEngagement = scored.length > 0
@@ -237,24 +382,27 @@ export function buildTrendBoard(videos: YouTubeVideo[], region: Region): TrendBo
     region,
     generatedAt: new Date().toISOString(),
     refreshCadence: 'hourly',
+    sourceRegions,
+    videoPoolSize: videos.length,
     videosTracked: scored.length,
     totalViews,
     avgEngagement,
     avgVelocity,
+    categoryBreakdown: buildCategoryBreakdown(scored),
+    keywordSignals: buildKeywordSignals(scored),
+    topVideos: [...scored]
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 48)
+      .map((item) => item.video),
     sections: buildSections(scored),
   }
 }
 
 export const getCachedTrendBoard = unstable_cache(
   async (region: Region) => {
-    const videos = await fetchTrendingVideos(region, 50, {
-      retries: 0,
-      timeoutMs: 3500,
-      revalidateSeconds: 3600,
-    })
-    return buildTrendBoard(videos, region)
+    const pool = await buildRegionVideoPool(region)
+    return buildTrendBoard(pool.videos, region, pool.sourceRegions)
   },
-  ['tubefission-trend-board-v1'],
-  { revalidate: 3600, tags: ['trend-board'] }
+  ['tubefission-trend-board-v2'],
+  { revalidate: TREND_BOARD_REVALIDATE_SECONDS, tags: ['trend-board'] }
 )
-
