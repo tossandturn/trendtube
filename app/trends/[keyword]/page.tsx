@@ -1086,21 +1086,11 @@ export default async function TrendPage({ params }: TrendPageProps) {
                   {/* Metrics */}
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Confidence</span>
+                      <span className="text-gray-500">Evidence fit</span>
                       <span className="font-bold data-mono">{rec.confidence}%</span>
                     </div>
                     <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full" style={{ width: `${rec.confidence}%` }} />
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Difficulty</span>
-                      <span className={`font-bold ${
-                        rec.difficulty === 'easy' ? 'text-green-600' :
-                        rec.difficulty === 'medium' ? 'text-yellow-600' : 'text-red-600'
-                      }`}>
-                        {rec.difficulty === 'easy' ? '🟢 Easy' :
-                         rec.difficulty === 'medium' ? '🟡 Medium' : '🔴 Hard'}
-                      </span>
                     </div>
                   </div>
 
