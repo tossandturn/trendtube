@@ -13,8 +13,23 @@ type AdSenseWindow = Window & {
 }
 
 export default function AdBanner({ slot, className = '' }: AdBannerProps) {
+  const adsEnabled = process.env.NEXT_PUBLIC_ENABLE_ADSENSE === 'true'
   const pathname = usePathname() || '/'
-  const shouldRender = !['/login', '/signup', '/workspace', '/watchlist', '/alerts', '/compare-new', '/ai-assistant', '/status'].some((path) => pathname === path || pathname.startsWith(`${path}/`))
+  const shouldRender = adsEnabled && ![
+    '/login',
+    '/signup',
+    '/workspace',
+    '/watchlist',
+    '/alerts',
+    '/compare-new',
+    '/ai-assistant',
+    '/status',
+    '/tag',
+    '/download-youtube-video',
+    '/download-youtube-mp3',
+    '/download-youtube-shorts',
+    '/youtube-thumbnail-downloader',
+  ].some((path) => pathname === path || pathname.startsWith(`${path}/`))
 
   useEffect(() => {
     if (!shouldRender) return

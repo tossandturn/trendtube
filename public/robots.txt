@@ -13,6 +13,8 @@ Disallow: /status
 Disallow: /download-youtube-video
 Disallow: /download-youtube-mp3
 Disallow: /download-youtube-shorts
+Disallow: /youtube-thumbnail-downloader
+Disallow: /tag/
 Disallow: /video/analyze
 Disallow: /breakout
 Disallow: /insights

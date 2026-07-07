@@ -27,6 +27,7 @@ const HIGH_VALUE_ROUTES = [
   '/youtube-trends',
   '/about',
   '/contact',
+  '/methodology',
   '/privacy',
   '/terms',
 ]

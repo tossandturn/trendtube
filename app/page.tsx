@@ -196,6 +196,9 @@ export default function HomePage() {
               <p className="mt-3 text-sm leading-7 text-gray-600">
                 TubeFission explains why a video or trend may matter, shows the public evidence behind the score, and labels the limits of the data before you copy an idea.
               </p>
+              <Link href="/methodology" className="mt-4 inline-flex rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-900 hover:bg-gray-50">
+                Read methodology
+              </Link>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {[

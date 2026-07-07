@@ -17,11 +17,14 @@ const DISALLOWED_PREFIXES = [
   '/download-youtube-video',
   '/download-youtube-mp3',
   '/download-youtube-shorts',
+  '/youtube-thumbnail-downloader',
+  '/tag',
 ]
 
 export default function AdSenseScript() {
+  const adsEnabled = process.env.NEXT_PUBLIC_ENABLE_ADSENSE === 'true'
   const pathname = usePathname() || '/'
-  const shouldLoadAds = !DISALLOWED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+  const shouldLoadAds = adsEnabled && !DISALLOWED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
 
   if (!shouldLoadAds) return null
 
