@@ -24,6 +24,7 @@ interface DailyDigest {
 
 const DATA_DIR = join(process.cwd(), 'data')
 const DIGEST_FILE = join(DATA_DIR, 'daily-digest.json')
+const IS_VERCEL = Boolean(process.env.VERCEL)
 
 export interface HealthReport {
   status: 'healthy' | 'degraded' | 'down'
@@ -43,6 +44,7 @@ function getTodayKey(): string {
 }
 
 function ensureDataDir(): void {
+  if (IS_VERCEL) return
   if (!existsSync(DATA_DIR)) {
     mkdirSync(DATA_DIR, { recursive: true })
   }
@@ -73,6 +75,7 @@ function loadDigest(): DailyDigest {
 }
 
 function saveDigest(digest: DailyDigest): void {
+  if (IS_VERCEL) return
   ensureDataDir()
   writeFileSync(DIGEST_FILE, JSON.stringify(digest, null, 2))
 }
