@@ -539,7 +539,18 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
       verdict: decision.headline,
       recommendation: `${brief.primaryGoal}: ${brief.titleAngle}`,
       href: benchmarkId ? `/video/${benchmarkId}` : compareHref,
+      researchHref: benchmarkId ? `/video/${benchmarkId}` : compareHref,
       compareHref,
+      briefHref: `/ai-assistant?topic=${encodeURIComponent(brief.benchmark.topic)}&niche=${encodeURIComponent(`${brief.benchmark.topic} benchmark`)}&type=script&source=compare&angle=${encodeURIComponent(brief.titleAngle)}`,
+      sampleVideos: [leftVideo, rightVideo]
+        .filter((video) => Boolean(video.id))
+        .map((video) => ({
+          id: video.id || '',
+          title: video.snippet?.title,
+          channelTitle: video.snippet?.channelTitle,
+          thumbnailUrl: video.id ? `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg` : undefined,
+          sourceLabel: `${brief.benchmark.topic} comparison`,
+        })),
     })
     setSavedBrief('saved')
   }

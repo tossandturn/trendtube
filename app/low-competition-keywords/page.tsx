@@ -19,6 +19,11 @@ interface YouTubeVideo {
     title?: string
     channelTitle?: string
     publishedAt?: string
+    thumbnails?: {
+      default?: { url?: string }
+      medium?: { url?: string }
+      high?: { url?: string }
+    }
   }
   statistics?: {
     viewCount?: string
@@ -96,6 +101,12 @@ const JOURNEY_STEPS = [
   },
 ]
 
+interface LowCompetitionKeywordsPageProps {
+  searchParams?: Promise<{
+    focus?: string | string[]
+  }>
+}
+
 function formatNumber(n: string | undefined) {
   const num = Number(n || 0)
   if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B'
@@ -107,6 +118,10 @@ function formatNumber(n: string | undefined) {
 function getVideoId(video?: YouTubeVideo) {
   if (!video) return ''
   return typeof video.id === 'string' ? video.id : ''
+}
+
+function getNicheId(input: string) {
+  return input.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
 function analyzeCompetition(videos: YouTubeVideo[]) {
@@ -304,9 +319,38 @@ function getTopVideoHref(videos: YouTubeVideo[]) {
   return id ? `/video/${encodeURIComponent(id)}` : '/youtube-video-analyzer'
 }
 
+function getResearchHref(niche: NicheAnalysis) {
+  return `/low-competition-keywords?focus=${encodeURIComponent(getNicheId(niche.query))}#opportunities`
+}
+
+function getBriefHref(niche: NicheAnalysis) {
+  const params = new URLSearchParams({
+    topic: niche.query,
+    niche: niche.niche,
+    type: 'script',
+    source: 'low-competition-keywords',
+    angle: niche.valueScore.recommendation,
+  })
+
+  return `/ai-assistant?${params.toString()}`
+}
+
+function getSampleVideos(niche: NicheAnalysis) {
+  return niche.videos
+    .slice(0, 6)
+    .map((video) => ({
+      id: getVideoId(video),
+      title: video.snippet?.title,
+      channelTitle: video.snippet?.channelTitle,
+      thumbnailUrl: video.snippet?.thumbnails?.medium?.url || video.snippet?.thumbnails?.high?.url || video.snippet?.thumbnails?.default?.url,
+      sourceLabel: niche.niche,
+    }))
+    .filter((video) => Boolean(video.id))
+}
+
 function getOpportunityHistoryItem(niche: NicheAnalysis) {
   return {
-    id: niche.query.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+    id: getNicheId(niche.query),
     niche: niche.niche,
     query: niche.query,
     score: niche.valueScore.total,
@@ -314,11 +358,20 @@ function getOpportunityHistoryItem(niche: NicheAnalysis) {
     verdict: niche.valueScore.verdict,
     recommendation: niche.valueScore.recommendation,
     href: getTopVideoHref(niche.videos),
+    researchHref: getResearchHref(niche),
     compareHref: getCompareHref(niche.videos),
+    briefHref: getBriefHref(niche),
+    sampleVideos: getSampleVideos(niche),
   }
 }
 
-export default async function LowCompetitionKeywordsPage() {
+export default async function LowCompetitionKeywordsPage({ searchParams }: LowCompetitionKeywordsPageProps) {
+  const resolvedSearchParams = await searchParams
+  const focusParam = Array.isArray(resolvedSearchParams?.focus)
+    ? resolvedSearchParams?.focus[0]
+    : resolvedSearchParams?.focus
+  const normalizedFocus = focusParam ? getNicheId(focusParam) : ''
+
   const nicheAnalysis: NicheAnalysis[] = await Promise.all(
     NICHE_QUERIES.map(async ({ niche, query }) => {
       const videos = await searchYouTubeMulti([query], 20, 'relevance')
@@ -354,7 +407,12 @@ export default async function LowCompetitionKeywordsPage() {
   )
 
   const sortedNiches = nicheAnalysis.sort((a, b) => b.opportunityScore - a.opportunityScore)
-  const featuredNiche = sortedNiches[0]
+  const focusedNiche = normalizedFocus
+    ? sortedNiches.find((niche) => {
+        return [niche.query, niche.niche, getNicheId(niche.query), getNicheId(niche.niche)].some((value) => getNicheId(value) === normalizedFocus)
+      })
+    : undefined
+  const featuredNiche = focusedNiche || sortedNiches[0]
 
   return (
     <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">
@@ -387,7 +445,7 @@ export default async function LowCompetitionKeywordsPage() {
               <Link href={featuredNiche ? getCompareHref(featuredNiche.videos) : '/compare-new?type=videos'} className="rounded-xl border border-gray-200 bg-white p-3 text-sm font-semibold text-gray-800 hover:border-red-200 hover:bg-red-50">
                 Compare samples
               </Link>
-              <Link href="/ai-assistant" className="rounded-xl border border-gray-200 bg-white p-3 text-sm font-semibold text-gray-800 hover:border-red-200 hover:bg-red-50">
+              <Link href={featuredNiche ? getBriefHref(featuredNiche) : '/ai-assistant'} className="rounded-xl border border-gray-200 bg-white p-3 text-sm font-semibold text-gray-800 hover:border-red-200 hover:bg-red-50">
                 Build plan
               </Link>
             </div>
@@ -455,7 +513,7 @@ export default async function LowCompetitionKeywordsPage() {
                 </thead>
                 <tbody>
                   {sortedNiches.map((niche) => (
-                    <tr key={niche.niche} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                    <tr key={niche.niche} className={`border-b border-gray-100 last:border-0 hover:bg-gray-50 ${featuredNiche?.niche === niche.niche ? 'bg-red-50/60' : ''}`}>
                       <td className="px-4 py-4">
                         <div className="font-medium text-gray-900">{niche.niche}</div>
                         <div className="text-xs text-gray-400">{niche.videoCount} videos analyzed</div>
@@ -493,6 +551,9 @@ export default async function LowCompetitionKeywordsPage() {
                           <Link href={getCompareHref(niche.videos)} className="rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-bold text-gray-700 hover:bg-gray-50">
                             Compare
                           </Link>
+                          <Link href={getBriefHref(niche)} className="rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-bold text-gray-700 hover:bg-gray-50">
+                            Brief
+                          </Link>
                         </div>
                       </td>
                     </tr>
@@ -503,7 +564,7 @@ export default async function LowCompetitionKeywordsPage() {
 
             <div className="grid gap-3 p-4 md:hidden">
               {sortedNiches.map((niche) => (
-                <div key={niche.niche} className="rounded-xl border border-gray-200 bg-white p-4">
+                <div key={niche.niche} className={`rounded-xl border bg-white p-4 ${featuredNiche?.niche === niche.niche ? 'border-red-200 ring-2 ring-red-100' : 'border-gray-200'}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="font-bold text-gray-900">{niche.niche}</h3>
@@ -541,6 +602,9 @@ export default async function LowCompetitionKeywordsPage() {
                     </Link>
                     <Link href={getCompareHref(niche.videos)} className="rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-bold text-gray-700">
                       Compare
+                    </Link>
+                    <Link href={getBriefHref(niche)} className="col-span-2 rounded-lg border border-gray-200 px-3 py-2 text-center text-xs font-bold text-gray-700">
+                      Build brief
                     </Link>
                   </div>
                 </div>
@@ -668,7 +732,7 @@ export default async function LowCompetitionKeywordsPage() {
               <Link href={featuredNiche ? getTopVideoHref(featuredNiche.videos) : '/youtube-video-analyzer'} className="inline-flex items-center justify-center rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700">
                 Analyze sample
               </Link>
-              <Link href="/ai-assistant" className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-bold text-gray-800 hover:bg-gray-50">
+              <Link href={featuredNiche ? getBriefHref(featuredNiche) : '/ai-assistant'} className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-bold text-gray-800 hover:bg-gray-50">
                 Build next brief
               </Link>
             </div>

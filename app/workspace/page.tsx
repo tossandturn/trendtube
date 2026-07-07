@@ -3,17 +3,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Bell, BookmarkCheck, CheckCircle2, Cloud, GitCompare, History, Plus, Rocket } from 'lucide-react'
-
-interface OpportunityHistoryItem {
-  id: string
-  niche: string
-  score: number
-  grade: string
-  verdict: string
-  recommendation: string
-  href: string
-  compareHref: string
-}
+import {
+  addOpportunitySamplesToCompareBasket,
+  getOpportunityBriefHref,
+  getOpportunityCompareHref,
+  getOpportunityResearchHref,
+  getOpportunitySampleIds,
+  type OpportunityHistoryItem,
+} from '@/app/components/opportunityActions'
 
 interface WatchlistItem {
   id: string
@@ -165,7 +162,7 @@ export default function WorkspacePage() {
         ? 'Local saved, cloud sync needs retry'
         : 'Local workspace only'
   const nextAction = useMemo(() => {
-    if (topOpportunity) return { label: 'Continue best saved opportunity', href: topOpportunity.href }
+    if (topOpportunity) return { label: 'Continue best saved opportunity', href: getOpportunityResearchHref(topOpportunity) }
     if (compareIds.length > 0) return { label: 'Open comparison queue', href: `/compare-new?type=videos&left=${encodeURIComponent(compareIds[0])}${compareIds[1] ? `&right=${encodeURIComponent(compareIds[1])}` : ''}` }
     if (watchlist.length > 0) return { label: 'Review watchlist', href: '/watchlist' }
     return { label: 'Find first opportunity', href: '/low-competition-keywords' }
@@ -241,26 +238,41 @@ export default function WorkspacePage() {
 
             {opportunities.length > 0 ? (
               <div className="grid gap-3">
-                {opportunities.slice(0, 6).map((item) => (
-                  <div key={item.id} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <h3 className="font-bold text-gray-900">{item.niche}</h3>
-                        <p className="mt-1 text-xs font-semibold text-red-600">{item.verdict}</p>
-                        <p className="mt-2 text-sm leading-relaxed text-gray-500">{item.recommendation}</p>
+                {opportunities.slice(0, 6).map((item) => {
+                  const sampleIds = getOpportunitySampleIds(item)
+                  const hasCompareSamples = sampleIds.length >= 2
+
+                  return (
+                    <div key={item.id} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <h3 className="font-bold text-gray-900">{item.niche}</h3>
+                          {item.query && <p className="mt-1 text-xs font-semibold text-gray-500">Query: {item.query}</p>}
+                          <p className="mt-1 text-xs font-semibold text-red-600">{item.verdict}</p>
+                          <p className="mt-2 text-sm leading-relaxed text-gray-500">{item.recommendation}</p>
+                          <p className="mt-2 text-xs font-medium text-gray-400">
+                            {sampleIds.length > 0 ? `${sampleIds.length} saved sample videos available for compare.` : 'Open research to collect sample videos before comparing.'}
+                          </p>
+                        </div>
+                        <div className="shrink-0 rounded-xl bg-white px-3 py-2 text-center">
+                          <div className="text-xl font-black text-gray-900">{item.score}</div>
+                          <div className="text-xs font-bold text-gray-500">Grade {item.grade}</div>
+                        </div>
                       </div>
-                      <div className="shrink-0 rounded-xl bg-white px-3 py-2 text-center">
-                        <div className="text-xl font-black text-gray-900">{item.score}</div>
-                        <div className="text-xs font-bold text-gray-500">Grade {item.grade}</div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Link href={getOpportunityResearchHref(item)} className="rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white">Open research</Link>
+                        <Link
+                          href={hasCompareSamples ? getOpportunityCompareHref(item) : getOpportunityResearchHref(item)}
+                          onClick={() => addOpportunitySamplesToCompareBasket(item)}
+                          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700"
+                        >
+                          {hasCompareSamples ? 'Compare samples' : 'Find samples'}
+                        </Link>
+                        <Link href={getOpportunityBriefHref(item)} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700">Create brief</Link>
                       </div>
                     </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Link href={item.href} className="rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white">Analyze</Link>
-                      <Link href={item.compareHref} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700">Compare</Link>
-                      <Link href="/ai-assistant" className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700">Plan brief</Link>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 interface AIOutput {
   type: 'title' | 'hook' | 'thumbnail' | 'script'
@@ -9,10 +10,16 @@ interface AIOutput {
   source: string
 }
 
-export default function AIAssistantPage() {
-  const [topic, setTopic] = useState('')
+function AIAssistantContent() {
+  const searchParams = useSearchParams()
+  const initialType = searchParams.get('type')
+  const initialTool = initialType === 'hook' || initialType === 'thumbnail' || initialType === 'script' ? initialType : 'title'
+  const source = searchParams.get('source')
+  const niche = searchParams.get('niche')
+  const angle = searchParams.get('angle')
+  const [topic, setTopic] = useState(searchParams.get('topic') || niche || '')
   const [outputs, setOutputs] = useState<AIOutput[]>([])
-  const [activeTool, setActiveTool] = useState<'title' | 'hook' | 'thumbnail' | 'script'>('title')
+  const [activeTool, setActiveTool] = useState<'title' | 'hook' | 'thumbnail' | 'script'>(initialTool)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -40,7 +47,7 @@ export default function AIAssistantPage() {
         ...prev.slice(0, -1),
         { type: data.type, content: data.content, source: data.source }
       ])
-    } catch (err) {
+    } catch {
       setError('Failed to generate content. Please try again.')
       setOutputs(prev => prev.slice(0, -1))
     } finally {
@@ -54,6 +61,7 @@ export default function AIAssistantPage() {
     { id: 'thumbnail' as const, name: 'Thumbnail Ideas', icon: '🖼️', desc: 'AI thumbnail concepts from viral patterns' },
     { id: 'script' as const, name: 'Script Outlines', icon: '📝', desc: 'Video structure templates from proven content' },
   ]
+  const hasBriefContext = Boolean(source || niche || angle)
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
@@ -63,6 +71,14 @@ export default function AIAssistantPage() {
           <h1 className="text-3xl font-bold mb-2">AI Creator Assistant</h1>
           <p className="text-gray-600">Generate titles, hooks, thumbnails, and scripts powered by real YouTube trend data</p>
         </div>
+
+        {hasBriefContext && (
+          <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 p-4">
+            <div className="text-xs font-bold uppercase tracking-wider text-red-700">Workspace brief context</div>
+            <h2 className="mt-1 text-lg font-black text-gray-900">{niche || topic}</h2>
+            {angle && <p className="mt-2 text-sm leading-relaxed text-gray-700">{angle}</p>}
+          </div>
+        )}
 
         {/* Tool Selection */}
         <div className="grid sm:grid-cols-4 gap-4 mb-8">
@@ -88,7 +104,7 @@ export default function AIAssistantPage() {
           <label className="block font-medium mb-2">
             Enter your topic or video idea
           </label>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <input
               type="text"
               value={topic}
@@ -101,7 +117,7 @@ export default function AIAssistantPage() {
               disabled={!topic || loading}
               className="px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition disabled:opacity-50"
             >
-              {loading ? 'Analyzing...' : 'Generate'}
+              {loading ? 'Analyzing...' : hasBriefContext ? 'Generate brief' : 'Generate'}
             </button>
           </div>
           {error && (
@@ -207,6 +223,27 @@ export default function AIAssistantPage() {
           >
             Upgrade to Pro →
           </Link>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+export default function AIAssistantPage() {
+  return (
+    <Suspense fallback={<AIAssistantLoading />}>
+      <AIAssistantContent />
+    </Suspense>
+  )
+}
+
+function AIAssistantLoading() {
+  return (
+    <main className="min-h-screen bg-white text-gray-900">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-red-600" aria-hidden="true" />
+          <div className="font-bold text-gray-900">Loading creator assistant...</div>
         </div>
       </div>
     </main>

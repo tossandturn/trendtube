@@ -443,7 +443,16 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
       verdict: virality.verdict,
       recommendation: `${nextBrief[0]?.value || virality.mainReason}`,
       href: videoHref,
+      researchHref: videoHref,
       compareHref: video.id ? `/compare-new?type=videos&left=${encodeURIComponent(video.id)}` : '/compare-new?type=videos',
+      briefHref: `/ai-assistant?topic=${encodeURIComponent(keywords[0] || topic)}&niche=${encodeURIComponent(topic)}&type=script&source=video-analysis&angle=${encodeURIComponent(nextBrief[0]?.value || virality.mainReason)}`,
+      sampleVideos: video.id ? [{
+        id: video.id,
+        title: video.snippet?.title,
+        channelTitle: video.snippet?.channelTitle,
+        thumbnailUrl: `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`,
+        sourceLabel: `${topic} analysis`,
+      }] : [],
       savedAt: new Date().toISOString(),
     })
     setSavedBrief('saved')
