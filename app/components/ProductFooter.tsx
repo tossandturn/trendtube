@@ -37,6 +37,15 @@ const groups = [
       { label: 'Low Competition Keywords', href: '/low-competition-keywords' },
     ],
   },
+  {
+    title: 'Company',
+    links: [
+      { label: 'About', href: '/about' },
+      { label: 'Contact', href: '/contact' },
+      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Terms of Service', href: '/terms' },
+    ],
+  },
 ]
 
 export default function ProductFooter() {
@@ -55,7 +64,7 @@ export default function ProductFooter() {
             Analyze videos and channels, discover regional trends, compare competitors, and plan stronger creator decisions with real YouTube data.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-5">
           {groups.map((group) => (
             <div key={group.title}>
               <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">{group.title}</h2>

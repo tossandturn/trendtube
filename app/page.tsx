@@ -186,6 +186,34 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== TRUST AND DATA QUALITY ===== */}
+      <section className="border-y border-gray-200 bg-gray-50">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-red-600">Data quality</div>
+              <h2 className="mt-2 text-2xl font-black text-gray-950">Built for decisions, not recycled trend lists.</h2>
+              <p className="mt-3 text-sm leading-7 text-gray-600">
+                TubeFission explains why a video or trend may matter, shows the public evidence behind the score, and labels the limits of the data before you copy an idea.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                { title: 'Public YouTube evidence', copy: 'Analysis uses public metadata and performance signals such as views, likes, comments, publish age, channel title, video title, and descriptions.' },
+                { title: 'Creator brief output', copy: 'Results prioritize next actions: whether to test the idea, what angle to use, what risks to avoid, and which benchmark to compare.' },
+                { title: 'Account-scoped workspace', copy: 'Saved opportunities, alerts, watchlists, and Analysis Basket belong to a logged-in account so research can be resumed safely.' },
+                { title: 'Clear limitations', copy: 'Scores do not use private retention, revenue, or creator studio data. They are decision aids, not guarantees of future performance.' },
+              ].map((item) => (
+                <div key={item.title} className="rounded-xl border border-gray-200 bg-white p-5">
+                  <h3 className="font-bold text-gray-950">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-gray-600">{item.copy}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== CREATOR WORKSPACE ===== */}
       <section className="bg-gradient-to-b from-white to-gray-50">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">

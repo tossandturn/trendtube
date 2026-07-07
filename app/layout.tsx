@@ -5,6 +5,7 @@ import ProductHeader from "./components/ProductHeader";
 import ProductFooter from "./components/ProductFooter";
 import PerformanceMonitor from "./components/PerformanceMonitor";
 import VideoCompareBasketDock from "./components/VideoCompareBasketDock";
+import AdSenseScript from "./components/AdSenseScript";
 import { getRegion } from "@/lib/region-server";
 import { REGION_META } from "@/lib/region";
 
@@ -97,17 +98,13 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2329966945529740"
-          crossOrigin="anonymous"
-        ></script>
         <meta name="google-adsense-account" content="ca-pub-2329966945529740" />
         {/* Plausible Analytics */}
         <script defer data-domain="tubefission.com" src="https://plausible.io/js/script.js" />
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900">
         <PerformanceMonitor />
+        <AdSenseScript />
         <ProductHeader />
         <div className="flex-1">{children}</div>
         <VideoCompareBasketDock />

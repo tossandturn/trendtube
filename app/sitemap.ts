@@ -1,5 +1,4 @@
 import { MetadataRoute } from 'next'
-import { TREND_KEYWORDS } from './trends/[keyword]/page'
 
 const BASE_URL = 'https://tubefission.com'
 const now = new Date()
@@ -19,7 +18,6 @@ const HIGH_VALUE_ROUTES = [
   '/viral-video-ideas',
   '/low-competition-keywords',
   '/youtube-keyword-research',
-  '/compare-new',
   '/gaming',
   '/gaming-youtube-trends',
   '/viral-music-trends',
@@ -27,6 +25,10 @@ const HIGH_VALUE_ROUTES = [
   '/mrbeast-style-videos',
   '/youtube-shorts-trends',
   '/youtube-trends',
+  '/about',
+  '/contact',
+  '/privacy',
+  '/terms',
 ]
 
 const GUIDE_ROUTES = [
@@ -64,17 +66,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.68,
   }))
 
-  const trendRoutes: MetadataRoute.Sitemap = TREND_KEYWORDS.map((keyword) => ({
-    url: `${BASE_URL}/trends/${keyword}`,
-    lastModified: now,
-    changeFrequency: 'daily',
-    priority: 0.82,
-  }))
-
   return [
     ...coreRoutes,
     ...guideRoutes,
     ...compareRoutes,
-    ...trendRoutes,
   ]
 }

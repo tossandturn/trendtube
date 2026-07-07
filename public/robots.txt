@@ -1,5 +1,20 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /login
+Disallow: /signup
+Disallow: /verify-email
+Disallow: /workspace
+Disallow: /watchlist
+Disallow: /alerts
+Disallow: /compare-new
+Disallow: /ai-assistant
+Disallow: /status
+Disallow: /download-youtube-video
+Disallow: /download-youtube-mp3
+Disallow: /download-youtube-shorts
+Disallow: /video/analyze
+Disallow: /breakout
+Disallow: /insights
 
 Sitemap: https://tubefission.com/sitemap.xml
