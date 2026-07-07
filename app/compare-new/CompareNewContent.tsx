@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -31,6 +31,11 @@ export default function CompareNewContent() {
   const basketIds = basketItems.map((item) => item.id)
   const selectedLeft = basketItems.find((item) => item.id === leftId)
   const selectedRight = basketItems.find((item) => item.id === rightId)
+
+  useEffect(() => {
+    if (initialType || basketIds.length === 0 || leftId || rightId) return
+    setMode('videos')
+  }, [basketIds.length, initialType, leftId, rightId])
 
   const handleCompare = () => {
     if (!leftId || !rightId || leftId === rightId) return
@@ -87,16 +92,38 @@ export default function CompareNewContent() {
     setIsComparing(false)
   }
 
-  const chooseBasketVideo = (id: string, side: 'left' | 'right') => {
+  const syncVideoCompareUrl = (nextLeft: string, nextRight: string) => {
+    if (!nextLeft || !nextRight || nextLeft === nextRight) return false
+
+    const params = new URLSearchParams({ type: 'videos' })
+    params.set('left', nextLeft)
+    params.set('right', nextRight)
+    router.replace(`/compare-new?${params.toString()}`)
+    return true
+  }
+
+  const chooseBasketVideo = (id: string, side: 'left' | 'right', compareNow = false) => {
     setMode('videos')
-    setIsComparing(false)
+    let nextLeft = leftId
+    let nextRight = rightId
+
     if (side === 'left') {
-      setLeftId(id)
-      if (rightId === id) setRightId('')
+      nextLeft = id
+      if (nextRight === id) nextRight = ''
     } else {
-      setRightId(id)
-      if (leftId === id) setLeftId('')
+      nextRight = id
+      if (nextLeft === id) nextLeft = ''
     }
+
+    setLeftId(nextLeft)
+    setRightId(nextRight)
+
+    if (compareNow && syncVideoCompareUrl(nextLeft, nextRight)) {
+      setIsComparing(true)
+      return
+    }
+
+    setIsComparing(false)
   }
 
   const removeBasketVideo = (id: string) => {
@@ -108,6 +135,127 @@ export default function CompareNewContent() {
 
   const getItemLabel = (item?: VideoCompareItem, fallbackId?: string) => {
     return item?.title || fallbackId || 'Choose from basket'
+  }
+
+  const renderBasketPicker = (variant: 'full' | 'compact') => {
+    if (mode !== 'videos' || basketIds.length === 0) return null
+
+    const isCompact = variant === 'compact'
+
+    return (
+      <div className={`rounded-xl border border-amber-200 bg-amber-50 p-4 ${isCompact ? 'mb-6' : 'mb-6'}`}>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div className="text-sm font-bold text-amber-950">Analysis Basket</div>
+            <p className="text-xs text-amber-800">
+              {isCompact
+                ? 'Switch A/B from saved basket videos without leaving compare.'
+                : 'Save many candidates here, then pick exactly two videos for A/B analysis.'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="rounded-full bg-white px-3 py-1 text-xs font-bold text-amber-900">
+              {basketIds.length} videos
+            </div>
+            <button
+              type="button"
+              onClick={clearBasket}
+              className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 hover:bg-amber-200"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-3 grid gap-2 sm:grid-cols-2">
+          <div className="rounded-lg border border-blue-100 bg-white px-3 py-2">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-blue-500">Selected A</div>
+            <div className="truncate text-sm font-semibold text-gray-900">{getItemLabel(selectedLeft, leftId)}</div>
+          </div>
+          <div className="rounded-lg border border-red-100 bg-white px-3 py-2">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-red-500">Selected B</div>
+            <div className="truncate text-sm font-semibold text-gray-900">{getItemLabel(selectedRight, rightId)}</div>
+          </div>
+        </div>
+
+        <div className={`${isCompact ? 'flex gap-2 overflow-x-auto pb-1' : 'grid max-h-[28rem] gap-2 overflow-y-auto pr-1'}`}>
+          {basketItems.map((item) => {
+            const isLeft = leftId === item.id
+            const isRight = rightId === item.id
+            const thumbnail = item.thumbnailUrl || `https://i.ytimg.com/vi/${item.id}/mqdefault.jpg`
+
+            return (
+              <div
+                key={item.id}
+                className={isCompact
+                  ? 'w-72 shrink-0 rounded-lg border border-amber-200 bg-white p-3'
+                  : 'grid gap-3 rounded-lg border border-amber-200 bg-white p-3 sm:grid-cols-[120px_1fr]'}
+              >
+                <div className={`relative aspect-video overflow-hidden rounded-md bg-gray-100 ${isCompact ? 'mb-2' : ''}`}>
+                  <Image
+                    src={thumbnail}
+                    alt={item.title || 'Video thumbnail'}
+                    fill
+                    sizes={isCompact ? '288px' : '(min-width: 640px) 120px, 100vw'}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="line-clamp-2 text-sm font-bold leading-snug text-gray-900">
+                        {item.title || item.id}
+                      </div>
+                      <div className="mt-1 truncate text-xs text-gray-500">
+                        {item.channelTitle || 'Unknown channel'} - {item.sourceLabel || 'Saved video'}
+                      </div>
+                    </div>
+                    {!isCompact && (
+                      <Link
+                        href={`/video/${item.id}`}
+                        className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-200"
+                      >
+                        View
+                      </Link>
+                    )}
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2">
+                    <button
+                      type="button"
+                      onClick={() => chooseBasketVideo(item.id, 'left', isComparing)}
+                      className={`rounded-md px-2 py-1.5 text-xs font-bold ${
+                        isLeft ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                      }`}
+                    >
+                      {isLeft ? 'A selected' : 'Set A'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => chooseBasketVideo(item.id, 'right', isComparing)}
+                      className={`rounded-md px-2 py-1.5 text-xs font-bold ${
+                        isRight ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100'
+                      }`}
+                    >
+                      {isRight ? 'B selected' : 'Set B'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeBasketVideo(item.id)}
+                      className="rounded-md bg-gray-100 px-2 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200"
+                      aria-label={`Remove ${item.id} from basket`}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
   }
 
   const modeCopy = mode === 'channels'
@@ -219,110 +367,7 @@ export default function CompareNewContent() {
               </div>
             </div>
 
-            {mode === 'videos' && basketIds.length > 0 && (
-              <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <div className="text-sm font-bold text-amber-950">Analysis Basket</div>
-                    <p className="text-xs text-amber-800">
-                      Save many candidates here, then pick exactly two videos for A/B analysis.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="rounded-full bg-white px-3 py-1 text-xs font-bold text-amber-900">
-                      {basketIds.length} videos
-                    </div>
-                    <button
-                      type="button"
-                      onClick={clearBasket}
-                      className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 hover:bg-amber-200"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-3 grid gap-2 sm:grid-cols-2">
-                  <div className="rounded-lg border border-blue-100 bg-white px-3 py-2">
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-blue-500">Selected A</div>
-                    <div className="truncate text-sm font-semibold text-gray-900">{getItemLabel(selectedLeft, leftId)}</div>
-                  </div>
-                  <div className="rounded-lg border border-red-100 bg-white px-3 py-2">
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-red-500">Selected B</div>
-                    <div className="truncate text-sm font-semibold text-gray-900">{getItemLabel(selectedRight, rightId)}</div>
-                  </div>
-                </div>
-
-                <div className="grid max-h-[28rem] gap-2 overflow-y-auto pr-1">
-                  {basketItems.map((item) => {
-                    const isLeft = leftId === item.id
-                    const isRight = rightId === item.id
-                    const thumbnail = item.thumbnailUrl || `https://i.ytimg.com/vi/${item.id}/mqdefault.jpg`
-                    return (
-                      <div key={item.id} className="grid gap-3 rounded-lg border border-amber-200 bg-white p-3 sm:grid-cols-[120px_1fr]">
-                        <div className="relative aspect-video overflow-hidden rounded-md bg-gray-100">
-                          <Image
-                            src={thumbnail}
-                            alt={item.title || 'Video thumbnail'}
-                            fill
-                            sizes="(min-width: 640px) 120px, 100vw"
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="line-clamp-2 text-sm font-bold leading-snug text-gray-900">
-                                {item.title || item.id}
-                              </div>
-                              <div className="mt-1 truncate text-xs text-gray-500">
-                                {item.channelTitle || 'Unknown channel'} - {item.sourceLabel || 'Saved video'}
-                              </div>
-                            </div>
-                            <Link
-                              href={`/video/${item.id}`}
-                              className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-200"
-                            >
-                              View
-                            </Link>
-                          </div>
-
-                          <div className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2">
-                            <button
-                              type="button"
-                              onClick={() => chooseBasketVideo(item.id, 'left')}
-                              className={`rounded-md px-2 py-1.5 text-xs font-bold ${
-                                isLeft ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                              }`}
-                            >
-                              {isLeft ? 'A selected' : 'Set A'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => chooseBasketVideo(item.id, 'right')}
-                              className={`rounded-md px-2 py-1.5 text-xs font-bold ${
-                                isRight ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100'
-                              }`}
-                            >
-                              {isRight ? 'B selected' : 'Set B'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => removeBasketVideo(item.id)}
-                              className="rounded-md bg-gray-100 px-2 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200"
-                              aria-label={`Remove ${item.id} from basket`}
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+            {renderBasketPicker('full')}
 
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <button
@@ -357,6 +402,12 @@ export default function CompareNewContent() {
               </ul>
             </div>
           </div>
+        </div>
+      )}
+
+      {isComparing && mode === 'videos' && basketIds.length > 0 && (
+        <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+          {renderBasketPicker('compact')}
         </div>
       )}
 
