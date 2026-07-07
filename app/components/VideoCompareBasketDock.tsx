@@ -28,6 +28,8 @@ export default function VideoCompareBasketDock() {
     router.push('/login')
   }
 
+  if (!isAvailable && items.length === 0) return null
+
   if (!isAvailable) {
     return (
       <div className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-md sm:left-auto sm:right-5 sm:mx-0">
@@ -45,7 +47,7 @@ export default function VideoCompareBasketDock() {
                 </span>
               </div>
               <p className="mt-1 text-xs leading-5 text-gray-600">
-                Sign in to save videos to your account basket and reuse them in Compare.
+                Saved locally. Sign in to keep these videos across devices and use them in Compare.
               </p>
 
               <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
@@ -55,7 +57,7 @@ export default function VideoCompareBasketDock() {
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-3 py-2 text-xs font-bold text-white hover:bg-gray-800"
                 >
                   <GitCompare className="h-4 w-4" />
-                  Sign in to use Basket
+                  Save this analysis
                 </button>
                 <Link
                   href="/trends"

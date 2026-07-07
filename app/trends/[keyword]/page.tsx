@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { fetchTrendingVideos, searchYouTubeMulti, type YouTubeVideo } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
-import { getViewVelocity, getEngagementRate, getTagColor, getTagEmoji } from '@/lib/analytics'
+import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
 import { REGION_META, type Region } from '@/lib/region'
 import { extractTrendsFromVideos } from '@/lib/trend-extractor'
 import TrendVideosGrid from '@/app/components/TrendVideosGrid'
@@ -624,6 +624,71 @@ function getVideoEvidenceAngles(videos: YouTubeVideo[], keyword: string) {
   })
 }
 
+function getTrendDataGate(sourceVideos: number, totalViews: number, regionLabel: string) {
+  if (sourceVideos === 0) {
+    return {
+      stage: 'insufficient' as const,
+      label: 'Insufficient data',
+      confidence: 0,
+      canShowGrowthJudgment: false,
+      canShowRecommendations: false,
+      message: `当前${regionLabel}市场样本不足，暂不建议基于此页做选题决策。`,
+      detail: 'No matched source videos have enough public signal yet. Use related trends while this topic keeps collecting evidence.',
+    }
+  }
+
+  if (sourceVideos < 3 || totalViews === 0) {
+    return {
+      stage: 'early' as const,
+      label: 'Early signal',
+      confidence: totalViews > 0 ? 35 : 20,
+      canShowGrowthJudgment: false,
+      canShowRecommendations: false,
+      message: `Only ${sourceVideos} matched source video${sourceVideos === 1 ? '' : 's'} found in ${regionLabel}.`,
+      detail: 'Treat this as a weak early signal. Do not use it for upload timing, opportunity scoring, or growth predictions yet.',
+    }
+  }
+
+  if (sourceVideos < 10) {
+    return {
+      stage: 'emerging' as const,
+      label: 'Emerging trend',
+      confidence: Math.min(74, 45 + sourceVideos * 4 + Math.min(12, Math.log10(totalViews + 1) * 2)),
+      canShowGrowthJudgment: true,
+      canShowRecommendations: false,
+      message: `${sourceVideos} matched source videos show a usable but still developing signal.`,
+      detail: 'Use the confidence score and source videos first. Recommendations stay conservative until the sample is stronger.',
+    }
+  }
+
+  return {
+    stage: 'stronger' as const,
+    label: 'Stronger trend',
+    confidence: Math.min(92, 68 + Math.min(14, sourceVideos) + Math.min(10, Math.log10(totalViews + 1))),
+    canShowGrowthJudgment: true,
+    canShowRecommendations: true,
+    message: `${sourceVideos} matched source videos provide enough public evidence for creator recommendations.`,
+    detail: 'Recommendations are modeled from public data, not private YouTube Studio retention or revenue.',
+  }
+}
+
+function RelatedTrendLinks({ keyword }: { keyword: string }) {
+  return (
+    <div className="space-y-2">
+      {Object.keys(TREND_KNOWLEDGE).filter(k => k !== keyword).slice(0, 3).map((related) => (
+        <Link
+          key={related}
+          href={`/trends/${related}`}
+          className="block rounded-lg border border-gray-200 bg-white p-3 transition hover:border-red-300"
+        >
+          <div className="font-medium">{TREND_KNOWLEDGE[related].title}</div>
+          <div className="text-xs text-gray-500">View related signal</div>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
 export default async function TrendPage({ params }: TrendPageProps) {
   const { keyword } = await params
   const trendData = TREND_KNOWLEDGE[keyword] || generateTrendData(keyword)
@@ -657,6 +722,8 @@ export default async function TrendPage({ params }: TrendPageProps) {
   const avgVelocity = displayVideos.length > 0
     ? displayVideos.reduce((sum: number, v: YouTubeVideo) => sum + getViewVelocity(v), 0) / displayVideos.length
     : 0
+  const regionLabel = REGION_META[region]?.label || region
+  const dataGate = getTrendDataGate(displayVideos.length, totalViews, regionLabel)
 
   const matchedTrendTerms = getTrendTerms(keyword, trendData.title).slice(0, 8)
   const noiseFilteredTerms = ['about', 'today', 'welcome', 'watch', 'full', 'official', 'latest', 'update']
@@ -794,6 +861,40 @@ export default async function TrendPage({ params }: TrendPageProps) {
           <p className="text-gray-600 text-lg max-w-3xl">{trendData.description}</p>
         </div>
 
+        <section className={`mb-8 rounded-2xl border p-5 sm:p-6 ${
+          dataGate.stage === 'insufficient'
+            ? 'border-amber-200 bg-amber-50'
+            : dataGate.stage === 'early'
+              ? 'border-blue-200 bg-blue-50'
+              : 'border-green-200 bg-green-50'
+        }`}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Data confidence</div>
+              <h2 className="mt-1 text-xl font-black text-gray-950">{dataGate.label}</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-gray-700">{dataGate.message}</p>
+              <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-600">{dataGate.detail}</p>
+            </div>
+            <div className="rounded-xl border border-white/70 bg-white px-4 py-3 text-center shadow-sm">
+              <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Confidence</div>
+              <div className="mt-1 text-2xl font-black text-gray-950">{Math.round(dataGate.confidence)}%</div>
+              <div className="mt-1 text-xs text-gray-500">{displayVideos.length} source videos</div>
+            </div>
+          </div>
+        </section>
+
+        {dataGate.stage === 'insufficient' && (
+          <section className="mb-12 rounded-2xl border border-gray-200 bg-gray-50 p-5 sm:p-6">
+            <h2 className="text-lg font-bold text-gray-900">Related trends with better evidence</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              No reliable signal is available for this topic yet. Start from adjacent trend pages or return after the next hourly refresh.
+            </p>
+            <div className="mt-4">
+              <RelatedTrendLinks keyword={keyword} />
+            </div>
+          </section>
+        )}
+
         {/* Today's Top Video */}
         {displayVideos.length > 0 && (
           <section className="mb-12">
@@ -888,6 +989,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
         )}
 
         {/* Professional Analytics Dashboard */}
+        {dataGate.canShowGrowthJudgment && (
         <section className="mb-12">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-1 h-6 rounded-full bg-gradient-to-b from-blue-400 to-blue-600" />
@@ -1084,11 +1186,14 @@ export default async function TrendPage({ params }: TrendPageProps) {
             </div>
           </div>
         </section>
+        )}
 
         {/* Potential Video Ranking */}
+        {dataGate.canShowRecommendations && (
         <section className="mb-12">
           <PotentialVideoRanking videos={displayVideos} region={region} />
         </section>
+        )}
 
           {/* Evidence-Based Angles */}
         <section className="mb-12">
@@ -1218,6 +1323,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
         )}
 
         {/* Main Content Grid */}
+        {dataGate.canShowRecommendations && (
         <div className="grid lg:grid-cols-3 gap-8 mb-12">
           {/* Left: Long-form Content */}
           <div className="lg:col-span-2">
@@ -1296,15 +1402,16 @@ export default async function TrendPage({ params }: TrendPageProps) {
             </div>
           </div>
         </div>
+        )}
 
         {/* FAQ Section */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
           <div className="space-y-4">
             {[
-              { q: `How long will this ${keyword} trend last?`, a: 'Based on velocity analysis, we predict this trend will peak within 24-48 hours. Early uploaders capture 70% of total views.' },
-              { q: 'Is it too late to start creating content?', a: 'There is still opportunity for quality content. Focus on unique angles or sub-niches within this trend to differentiate.' },
-              { q: 'What type of content performs best?', a: 'Educational and tutorial-style content consistently outperforms in emerging trends. Viewers seek to understand the topic deeply.' },
+              { q: `How reliable is this ${keyword} page?`, a: `${dataGate.label}: ${dataGate.detail}` },
+              { q: `How long will this ${keyword} trend last?`, a: dataGate.canShowGrowthJudgment ? 'Use the velocity chart as a public-data proxy, then recheck after the next hourly refresh before committing production resources.' : 'The sample is too small to estimate trend duration. Do not make a timing decision from this page yet.' },
+              { q: 'Is it too late to start creating content?', a: dataGate.canShowRecommendations ? 'There is enough evidence to test a differentiated angle, but avoid copying the surface topic directly.' : 'Not enough evidence yet. Validate with related trends or wait for more source videos.' },
               { q: 'How can I track this trend over time?', a: 'Create a free TubeFission account to save this trend and receive alerts when momentum changes or related opportunities emerge.' },
             ].map((item, i) => (
               <div key={i} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
@@ -1317,9 +1424,11 @@ export default async function TrendPage({ params }: TrendPageProps) {
 
         {/* CTA Section */}
         <div className="bg-gray-50 rounded-2xl p-8 sm:p-12 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to Capitalize on This Trend?</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">{dataGate.canShowRecommendations ? 'Ready to Act on This Trend?' : 'Need More Evidence First?'}</h2>
           <p className="text-gray-600 max-w-xl mx-auto mb-6">
-            Get AI-powered trend predictions, upload timing recommendations, and competition analysis.
+            {dataGate.canShowRecommendations
+              ? 'Use the matched videos, confidence score, and comparison workflow before producing.'
+              : 'This page is currently evidence-light. Browse stronger trend pages or return after the next hourly refresh.'}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link

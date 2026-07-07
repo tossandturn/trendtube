@@ -49,6 +49,14 @@ function CheckCard({
 
 export default async function StatusPage() {
   const report = await runHealthCheck()
+  const dataAge = report.checks.dataFreshness.hoursSince
+  const dataFreshnessLabel = dataAge === Infinity
+    ? 'No data yet'
+    : dataAge <= 3
+      ? 'Fresh'
+      : dataAge <= 48
+        ? 'Delayed but usable'
+        : 'Stale'
 
   return (
     <main className="min-h-screen bg-[#070707] text-white terminal-grid relative overflow-hidden">
@@ -61,10 +69,10 @@ export default async function StatusPage() {
         </Link>
 
         <div className="mb-8 sm:mb-10">
-          <div className="text-zinc-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">SYSTEM MONITORING</div>
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow">Status Dashboard</h1>
+          <div className="text-zinc-500 text-xs font-bold tracking-[0.2em] uppercase mb-2 data-mono">DATA COLLECTION HEALTH</div>
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 text-glow">TubeFission Status</h1>
           <p className="text-zinc-400 text-sm sm:text-base max-w-2xl leading-relaxed">
-            Real-time health checks, API quota usage, and data freshness for unattended operation.
+            Data collection health, API availability, quota usage, and freshness signals for creator research pages.
           </p>
         </div>
 
@@ -89,8 +97,11 @@ export default async function StatusPage() {
             </div>
             <div className="glass-panel rounded-xl p-3 text-center">
               <div className="text-zinc-500 text-[10px] data-mono tracking-wider mb-1">DATA AGE</div>
-              <div className={`text-lg font-black data-mono ${report.checks.dataFreshness.ok ? 'text-green-400' : 'text-yellow-400'}`}>
+              <div className={`text-lg font-black data-mono ${report.checks.dataFreshness.ok ? 'text-green-400' : dataAge <= 48 ? 'text-yellow-400' : 'text-red-400'}`}>
                 {report.checks.dataFreshness.hoursSince === Infinity ? 'N/A' : `${report.checks.dataFreshness.hoursSince}h`}
+              </div>
+              <div className={`mt-1 text-[10px] font-bold ${report.checks.dataFreshness.ok ? 'text-green-400' : dataAge <= 48 ? 'text-yellow-400' : 'text-red-400'}`}>
+                {dataFreshnessLabel}
               </div>
             </div>
             <div className="glass-panel rounded-xl p-3 text-center">

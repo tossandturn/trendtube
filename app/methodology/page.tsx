@@ -67,6 +67,39 @@ const workflow = [
   },
 ]
 
+const scoringRules = [
+  {
+    title: 'Velocity',
+    formula: 'current public views / video age in days',
+    copy: 'Velocity favors videos gaining attention now. A newer video with fewer total views can outrank an older large video if its daily pace is stronger.',
+  },
+  {
+    title: 'Saturation',
+    formula: 'creator count + matched video count + topic breadth',
+    copy: 'Saturation rises when many different creators cover the same topic. Higher saturation means creators need a sharper angle before copying the format.',
+  },
+  {
+    title: 'Opportunity score',
+    formula: 'demand signal + engagement quality + low-supply room',
+    copy: 'Opportunity improves when public demand is rising, engagement is healthy, and the sample is not crowded by too many similar uploads.',
+  },
+  {
+    title: 'Sample confidence',
+    formula: '0, 1-2, 3-10, and 10+ matched source videos',
+    copy: 'TubeFission withholds timing and opportunity recommendations when source evidence is thin. Stronger recommendations require at least 10 matched source videos.',
+  },
+  {
+    title: 'Refresh cadence',
+    formula: 'hourly cached trend snapshots',
+    copy: 'Trend pages use hourly snapshots so users see stable evidence while the site avoids slow real-time calls on every page view.',
+  },
+  {
+    title: 'YouTube API boundary',
+    formula: 'public metadata and public engagement only',
+    copy: 'Private CTR, retention, revenue, subscriber demographics, and traffic-source data are not available unless a creator connects their own analytics elsewhere.',
+  },
+]
+
 export default function MethodologyPage() {
   return (
     <main className="min-h-screen bg-white">
@@ -129,6 +162,25 @@ export default function MethodologyPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+        <div className="mb-6 max-w-2xl">
+          <div className="text-xs font-bold uppercase tracking-wider text-red-600">Scoring logic</div>
+          <h2 className="mt-2 text-2xl font-black text-gray-950">How the core scores are calculated</h2>
+          <p className="mt-3 text-sm leading-7 text-gray-600">
+            Scores are designed to support creator decisions, not to pretend that an AI can guarantee performance. Each score is tied to visible evidence and sample confidence.
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {scoringRules.map((rule) => (
+            <div key={rule.title} className="rounded-xl border border-gray-200 bg-white p-5">
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-500">{rule.title}</div>
+              <div className="mt-2 rounded-lg bg-gray-50 px-3 py-2 text-sm font-bold text-gray-950">{rule.formula}</div>
+              <p className="mt-3 text-sm leading-6 text-gray-600">{rule.copy}</p>
+            </div>
+          ))}
         </div>
       </section>
 

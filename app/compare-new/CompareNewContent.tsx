@@ -371,15 +371,15 @@ export default function CompareNewContent() {
 
             {mode === 'videos' && !basketAvailable && (
               <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <div className="text-sm font-bold text-amber-950">Analysis Basket requires login</div>
+                <div className="text-sm font-bold text-amber-950">Save this analysis</div>
                 <p className="mt-1 text-xs leading-relaxed text-amber-800">
-                  Sign in to save video candidates to your account basket and reuse them across Workspace and Compare.
+                  Local candidates can fill this comparison. Sign in when you want to keep the basket across devices and workspace sessions.
                 </p>
                 <Link
                   href="/login"
                   className="mt-3 inline-flex rounded-lg bg-amber-900 px-4 py-2 text-xs font-bold text-white hover:bg-amber-800"
                 >
-                  Sign in to use Basket
+                  Save this analysis
                 </Link>
               </div>
             )}

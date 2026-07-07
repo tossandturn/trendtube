@@ -6,6 +6,7 @@ import { ArrowRight, Check, GitCompare } from 'lucide-react'
 
 const STORAGE_KEY = 'tubefission:videoCompareIds'
 const ITEMS_STORAGE_KEY = 'tubefission:videoCompareItems'
+const GUEST_SCOPE = 'guest'
 const CHANGE_EVENT = 'tubefission:videoCompareChanged'
 const MAX_BASKET_VIDEOS = 50
 
@@ -42,8 +43,7 @@ function readBasketUser(): BasketUser | null {
 
 function getScopedStorageKey(baseKey: string) {
   const user = readBasketUser()
-  if (!user) return null
-  return `${baseKey}:${encodeURIComponent(user.id)}`
+  return `${baseKey}:${encodeURIComponent(user?.id || GUEST_SCOPE)}`
 }
 
 export function isVideoCompareBasketAvailable() {
@@ -98,8 +98,6 @@ export function readVideoCompareItems(): VideoCompareItem[] {
   try {
     const itemsKey = getScopedStorageKey(ITEMS_STORAGE_KEY)
     const idsKey = getScopedStorageKey(STORAGE_KEY)
-    if (!itemsKey || !idsKey) return []
-
     const rawItems = window.localStorage.getItem(itemsKey) || '[]'
     const rawIds = window.localStorage.getItem(idsKey) || '[]'
     const cacheKey = `${itemsKey}\n${rawItems}\n${rawIds}`
@@ -121,7 +119,6 @@ export function readVideoCompareIds(): string[] {
 
   try {
     const idsKey = getScopedStorageKey(STORAGE_KEY)
-    if (!idsKey) return []
     return normalizeIds(JSON.parse(window.localStorage.getItem(idsKey) || '[]'))
   } catch {
     return []
@@ -131,8 +128,6 @@ export function readVideoCompareIds(): string[] {
 export function writeVideoCompareItems(items: VideoCompareItem[]) {
   const itemsKey = getScopedStorageKey(ITEMS_STORAGE_KEY)
   const idsKey = getScopedStorageKey(STORAGE_KEY)
-  if (!itemsKey || !idsKey) return
-
   const nextItems = normalizeCompareItems(items)
   const nextIds = nextItems.map((item) => item.id)
   window.localStorage.setItem(itemsKey, JSON.stringify(nextItems))
@@ -195,6 +190,7 @@ export default function AddToVideoCompareButton({
   const [ids, setIds] = useState<string[]>([])
   const [hydrated, setHydrated] = useState(false)
   const [requiresLogin, setRequiresLogin] = useState(false)
+  const [localSaved, setLocalSaved] = useState(false)
 
   useEffect(() => {
     const syncIds = () => {
@@ -215,11 +211,13 @@ export default function AddToVideoCompareButton({
 
   const isSelected = ids.includes(videoId)
   const label = useMemo(() => {
+    if (localSaved) return compact ? 'Saved' : 'Saved locally'
     if (!hydrated) return compact ? 'Basket' : 'Add to Basket'
-    if (requiresLogin) return compact ? 'Login' : 'Sign in to Basket'
+    if (requiresLogin && isSelected) return compact ? 'Saved' : 'Save this analysis'
+    if (requiresLogin) return compact ? 'Basket' : 'Add to Basket'
     if (isSelected) return compact ? 'Open Basket' : `Open Basket (${ids.length})`
     return compact ? 'Basket' : `Add to Basket${ids.length > 0 ? ` (${ids.length})` : ''}`
-  }, [compact, hydrated, ids.length, isSelected, requiresLogin])
+  }, [compact, hydrated, ids.length, isSelected, localSaved, requiresLogin])
 
   const Icon = isSelected ? Check : ids.length > 0 ? ArrowRight : GitCompare
 
@@ -227,7 +225,11 @@ export default function AddToVideoCompareButton({
     event.preventDefault()
     event.stopPropagation()
 
-    if (!isVideoCompareBasketAvailable()) {
+    const currentItems = readVideoCompareItems()
+    const currentIds = currentItems.map((item) => item.id)
+    const isSignedIn = isVideoCompareBasketAvailable()
+
+    if (!isSignedIn && currentIds.includes(videoId)) {
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('tubefission:postLoginRedirect', `${window.location.pathname}${window.location.search}${window.location.hash}`)
       }
@@ -235,8 +237,6 @@ export default function AddToVideoCompareButton({
       return
     }
 
-    const currentItems = readVideoCompareItems()
-    const currentIds = currentItems.map((item) => item.id)
     let nextItems = currentIds.includes(videoId)
       ? currentItems
       : [
@@ -258,6 +258,12 @@ export default function AddToVideoCompareButton({
     const nextIds = nextItems.map((item) => item.id)
     writeVideoCompareItems(nextItems)
     setIds(nextIds)
+
+    if (!isSignedIn) {
+      setLocalSaved(true)
+      window.setTimeout(() => setLocalSaved(false), 1800)
+      return
+    }
 
     if (currentIds.includes(videoId)) {
       router.push(getCompareUrl(nextIds))
@@ -283,6 +289,7 @@ export default function AddToVideoCompareButton({
     >
       <Icon className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} aria-hidden="true" />
       <span className="truncate">{label}</span>
+      {localSaved && <span className="sr-only" role="status">Saved locally. Sign in to keep it across devices.</span>}
     </button>
   )
 }

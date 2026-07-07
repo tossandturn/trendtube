@@ -34,6 +34,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${regionLabel} Viral Content Board | Hourly YouTube Snapshot`,
     description: `Hourly YouTube trend board for ${regionLabel}: gaming, lifestyle, music, and film viral opportunities, niches, and creative formats.`,
+    alternates: {
+      canonical: 'https://tubefission.com/trends',
+    },
+    openGraph: {
+      title: `${regionLabel} Viral Content Board | TubeFission`,
+      description: `Hourly YouTube trend board for ${regionLabel}: gaming, lifestyle, music, and film viral opportunities, niches, and creative formats.`,
+      url: 'https://tubefission.com/trends',
+      type: 'website',
+    },
   }
 }
 

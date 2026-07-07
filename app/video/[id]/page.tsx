@@ -18,7 +18,6 @@ import AudienceDemographics from '@/app/components/AudienceDemographics'
 import { fetchVideoById, fetchRelatedVideos } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
-import { analyzeVideoIntelligence } from '@/lib/ai-insights'
 
 interface VideoPageProps {
   params: Promise<{ id: string }>
@@ -294,13 +293,18 @@ function buildTopCreatorDecision(actionPlan: ReturnType<typeof buildActionPlan>,
       : `Signals are mixed: ${formatNumber(velocity.toString())}/day velocity and ${engagementRate.toFixed(2)}% engagement.`
 
   const nextAction = actionPlan[0]?.description || 'Start by rewriting the hook and title promise before copying the topic.'
+  const bestAngle = velocity >= 100_000 && engagementRate >= 2.5
+    ? 'Rebuild the format with a sharper viewer payoff, not the same topic.'
+    : engagementRate >= 4
+      ? 'Use the audience reaction pattern and add your own proof or comparison.'
+      : 'Study the hook and pacing first; treat the topic as unproven for your channel.'
   const risk = titleScore < 60
     ? 'Packaging is not strong enough to copy as-is.'
     : engagementRate < 2
       ? 'Views may be broader than audience satisfaction.'
       : 'Copying the surface topic may miss the hook that actually worked.'
 
-  return { shouldModel, why, nextAction, risk }
+  return { shouldModel, why, bestAngle, nextAction, risk }
 }
 
 
@@ -308,9 +312,27 @@ export async function generateMetadata({ params }: VideoPageProps): Promise<Meta
   const { id } = await params
   const video = await fetchVideoById(id)
   const title = video?.snippet?.title || 'Video Analysis'
+  const url = `https://tubefission.com/video/${encodeURIComponent(id)}`
+  const image = video?.snippet?.thumbnails?.high?.url || video?.snippet?.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
   return {
     title: `Why "${title}" Went Viral on YouTube — TubeFission`,
     description: `Analyze why "${title}" is trending, view retention stats, viral growth trajectory, and AI-powered creator insights. Discover actionable opportunity.`,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      title: `Video Analysis: ${title}`,
+      description: `Creator analysis for "${title}": verdict, reason, best angle, risk, next action, velocity, engagement, and content breakdown.`,
+      url,
+      type: 'video.other',
+      images: [{ url: image, alt: title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `Video Analysis: ${title}`,
+      description: `Creator analysis for "${title}": verdict, reason, best angle, risk, next action, velocity, engagement, and content breakdown.`,
+      images: [image],
+    },
   }
 }
 
@@ -325,9 +347,6 @@ export default async function VideoPage({ params }: VideoPageProps) {
   const engagement = calculateEngagement(video)
   const velocity = getViewVelocity(video)
   const engagementRate = getEngagementRate(video)
-
-  // Get deep AI intelligence
-  const aiIntelligence = analyzeVideoIntelligence(video, related)
 
   const titleAnalysis = analyzeTitle(video.snippet?.title || '')
   const titleScore = getTitleScore(titleAnalysis)
@@ -416,36 +435,29 @@ export default async function VideoPage({ params }: VideoPageProps) {
         </div>
 
         <section className="mb-6 rounded-2xl border border-gray-900 bg-gray-950 p-5 text-white shadow-xl shadow-gray-200/60">
-          <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-red-300">Top creator decision</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-red-300">Creator Brief</div>
               <h2 className="mt-2 text-2xl font-black sm:text-3xl">{topDecision.shouldModel}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-gray-300">
-                {topDecision.why} Use this as a decision brief before reading the full dashboard.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Link href="#next-moves" className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-gray-950 hover:bg-gray-100">
-                  See next move
-                </Link>
-                <Link href={`/compare-new?type=videos&left=${encodeURIComponent(id)}`} className="rounded-xl border border-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-white/10">
-                  Compare before copying
-                </Link>
-              </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <div className="text-xs font-bold uppercase tracking-wide text-gray-400">Next action</div>
-                <div className="mt-2 text-sm leading-relaxed text-gray-100">{topDecision.nextAction}</div>
+            <Link href={`/compare-new?type=videos&left=${encodeURIComponent(id)}`} className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-gray-950 hover:bg-gray-100">
+              Compare before copying
+            </Link>
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-5">
+            {[
+              ['Verdict', topDecision.shouldModel],
+              ['Why', topDecision.why],
+              ['Best angle', topDecision.bestAngle],
+              ['Risk', topDecision.risk],
+              ['Next action', topDecision.nextAction],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-400">{label}</div>
+                <div className="mt-2 text-sm leading-relaxed text-gray-100">{value}</div>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <div className="text-xs font-bold uppercase tracking-wide text-gray-400">Main risk</div>
-                <div className="mt-2 text-sm leading-relaxed text-gray-100">{topDecision.risk}</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                <div className="text-xs font-bold uppercase tracking-wide text-gray-400">Watch first</div>
-                <div className="mt-2 text-sm leading-relaxed text-gray-100">Hook, title promise, first-day velocity, and comment quality.</div>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
 

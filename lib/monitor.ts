@@ -5,6 +5,7 @@
 
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
+import { execSync } from 'child_process'
 
 export interface AlertPayload {
   level: 'critical' | 'warning' | 'info'
@@ -166,8 +167,23 @@ export async function sendDailyDigest(): Promise<void> {
 /* ---- Config ---- */
 const ALERT_EMAIL = process.env.ALERT_EMAIL || ''
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
-const ALERT_WEBHOOK_URL = process.env.ALERT_WEBHOOK_URL || ''
 const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || ''
+
+function getReleaseVersion() {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)
+  if (process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA) return process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA.slice(0, 7)
+  if (process.env.RELEASE_TAG) return process.env.RELEASE_TAG
+
+  try {
+    return execSync('git rev-parse --short HEAD', {
+      cwd: process.cwd(),
+      stdio: ['ignore', 'pipe', 'ignore'],
+      encoding: 'utf8',
+    }).trim()
+  } catch {
+    return 'local-build'
+  }
+}
 
 /* ---- Quota tracking (approximate) ---- */
 let quotaUsedToday = 0
@@ -283,7 +299,7 @@ export async function runHealthCheck(): Promise<HealthReport> {
       errors: { ok: true, count1h: 0, recent: [] },
     },
     timestamp: now.toISOString(),
-    version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev',
+    version: getReleaseVersion(),
   }
 
   // Check YouTube API
@@ -322,7 +338,7 @@ export async function runHealthCheck(): Promise<HealthReport> {
       report.checks.dataFreshness.lastUpdate = last.timestamp
       const hoursSince = (now.getTime() - new Date(last.timestamp).getTime()) / (1000 * 60 * 60)
       report.checks.dataFreshness.hoursSince = Math.round(hoursSince * 10) / 10
-      report.checks.dataFreshness.ok = hoursSince < 48
+      report.checks.dataFreshness.ok = hoursSince <= 3
     }
   } catch {
     report.checks.dataFreshness.error = 'history.json not found'
@@ -336,7 +352,9 @@ export async function runHealthCheck(): Promise<HealthReport> {
   report.checks.errors.ok = report.checks.errors.count1h < 5
 
   // Overall status
-  if (!report.checks.errors.ok || (!report.checks.youtubeApi.ok && !report.checks.dataFreshness.ok)) {
+  const dataVeryStale = report.checks.dataFreshness.hoursSince === Infinity || report.checks.dataFreshness.hoursSince > 48
+
+  if (!report.checks.errors.ok || (!report.checks.youtubeApi.ok && dataVeryStale)) {
     report.status = 'down'
   } else if (!report.checks.youtubeApi.ok || !report.checks.quota.ok || !report.checks.dataFreshness.ok) {
     report.status = 'degraded'
