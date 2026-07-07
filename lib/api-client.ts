@@ -14,6 +14,7 @@ export interface YouTubeVideo {
     channelTitle: string
     description?: string
     publishedAt?: string
+    tags?: string[]
     thumbnails?: {
       high?: { url: string }
       medium?: { url: string }

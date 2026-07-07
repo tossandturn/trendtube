@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { fetchTrendingVideos, searchYouTube, type YouTubeVideo } from '@/lib/api-client'
+import { fetchTrendingVideos, searchYouTubeMulti, type YouTubeVideo } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate, getTagColor, getTagEmoji } from '@/lib/analytics'
 import { REGION_META, type Region } from '@/lib/region'
@@ -408,10 +408,39 @@ function getTrendDisplayTitle(title: string) {
   return title.replace(/\s+2026\b/gi, '').replace(/\s+/g, ' ').trim()
 }
 
-function buildTrendSearchQuery(keyword: string, title: string) {
+function buildTrendSearchQueries(keyword: string, title: string) {
   const normalized = normalizeTrendKeyword(keyword)
   const titleBase = trendTitleBase(title)
-  return normalized.length > 2 ? normalized : titleBase
+  const terms = getTrendTerms(keyword, title)
+  const queries = new Set<string>()
+
+  if (normalized.length > 2) queries.add(normalized)
+  if (titleBase.length > 2) queries.add(titleBase)
+
+  const joined = `${normalized} ${titleBase}`.toLowerCase()
+  const isMusicLike = /\b(music|song|mv|m\/v|album|artist|cover|dance|lyrics|remix|babymonster|kpop|pop)\b/.test(joined)
+  const isFilmLike = /\b(trailer|teaser|movie|film|series|episode|anime)\b/.test(joined)
+  const isGameLike = /\b(game|gaming|roblox|minecraft|fortnite|gameplay)\b/.test(joined)
+
+  if (terms.length >= 2) queries.add(terms.slice(0, 4).join(' '))
+  if (isMusicLike) {
+    queries.add(`${normalized} official`)
+    queries.add(`${normalized} performance`)
+    queries.add(`${normalized} reaction`)
+  } else if (isFilmLike) {
+    queries.add(`${normalized} trailer breakdown`)
+    queries.add(`${normalized} reaction`)
+  } else if (isGameLike) {
+    queries.add(`${normalized} gameplay`)
+    queries.add(`${normalized} challenge`)
+  } else {
+    queries.add(`${normalized} tutorial`)
+  }
+
+  return Array.from(queries)
+    .map((query) => query.replace(/\s+/g, ' ').trim())
+    .filter((query) => query.length > 2)
+    .slice(0, 4)
 }
 
 function mergeUniqueVideos(...videoLists: YouTubeVideo[][]) {
@@ -512,6 +541,7 @@ function getTrendRelevanceScore(video: YouTubeVideo, keyword: string, title: str
     video.snippet?.title || '',
     video.snippet?.description || '',
     video.snippet?.channelTitle || '',
+    ...(video.snippet?.tags || []),
   ].join(' ').toLowerCase()
 
   let score = 0
@@ -565,7 +595,8 @@ function getVideoEvidenceAngles(videos: YouTubeVideo[], keyword: string) {
     const views = Number(video.statistics?.viewCount || 0)
     const velocity = getViewVelocity(video)
     const engagement = getEngagementRate(video)
-    const titleLower = title.toLowerCase()
+    const tagText = (video.snippet?.tags || []).join(' ').toLowerCase()
+    const titleLower = `${title} ${tagText}`.toLowerCase()
     const hookPattern = /\b(how|why|what|secret|test|tried|vs|before|after|explained|guide|tutorial)\b/i.test(title)
       ? 'clear curiosity or utility hook'
       : title.includes('?')
@@ -588,6 +619,7 @@ function getVideoEvidenceAngles(videos: YouTubeVideo[], keyword: string) {
       hookPattern,
       reason,
       matchedKeyword: normalizeTrendKeyword(keyword).split(' ').some((term) => titleLower.includes(term.toLowerCase())),
+      matchedTag: getTrendTerms(keyword, title).some((term) => tagText.includes(term.toLowerCase())),
     }
   })
 }
@@ -598,10 +630,10 @@ export default async function TrendPage({ params }: TrendPageProps) {
   const trendDisplayTitle = getTrendDisplayTitle(trendData.title)
 
   const region = getTrendAnalysisRegion(await getRegion())
-  const searchQuery = buildTrendSearchQuery(keyword, trendData.title)
+  const searchQueries = buildTrendSearchQueries(keyword, trendData.title)
   const [videos, searchVideos] = await Promise.all([
     fetchTrendingVideos(region, 50, { cache: 'no-store', timeoutMs: 3500 }),
-    searchYouTube(searchQuery, 24, 'relevance'),
+    searchYouTubeMulti(searchQueries, 10, 'relevance'),
   ])
 
   const extractedTrends = extractTrendsFromVideos(videos, region, 50)
@@ -637,7 +669,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
     {
       label: 'Source videos',
       value: `${displayVideos.length}`,
-      note: `Keyword-matched public videos in ${REGION_META[region]?.label || region}.`,
+      note: `Keyword or tag-matched public videos in ${REGION_META[region]?.label || region}.`,
     },
     {
       label: 'Evidence sample',
@@ -664,7 +696,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
   const dailyRecommendations = evidenceAngles.map((angle, index) => ({
     id: angle.id,
     title: angle.hookPattern,
-    category: angle.matchedKeyword ? 'Keyword-matched evidence' : 'Related evidence',
+    category: angle.matchedTag ? 'Tag-matched evidence' : angle.matchedKeyword ? 'Keyword-matched evidence' : 'Related evidence',
     href: angle.href,
     sourceTitle: angle.title,
     sourceChannel: angle.channel,
