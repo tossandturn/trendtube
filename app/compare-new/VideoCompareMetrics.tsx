@@ -5,6 +5,10 @@ import Link from 'next/link'
 import {
   Bar,
   BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
   Radar,
   RadarChart,
   PolarAngleAxis,
@@ -80,6 +84,17 @@ interface EvidenceItem {
   label: string
   status: 'available' | 'inferred' | 'missing'
   detail: string
+}
+
+interface RetentionStage {
+  key: string
+  time: string
+  stage: string
+  retained: number
+  stageDrop: number
+  cumulativeDrop: number
+  diagnosis: string
+  fix: string
 }
 
 function clamp(value: number, min = 0, max = 100) {
@@ -434,6 +449,185 @@ function buildEvidence(video: CompareVideo, analysis: VideoAnalysis): EvidenceIt
   ]
 }
 
+function buildRetentionCurve(analysis: VideoAnalysis, video: CompareVideo): RetentionStage[] {
+  const title = video.snippet?.title || analysis.title
+  const description = video.snippet?.description || ''
+  const text = getText(video)
+  const hasOutcome = /how to|why|what happens|i tried|tested|before|after|without|vs|best|worst/i.test(title)
+  const hasCuriosity = /\?|secret|hidden|finally|never|truth|mistake|shocking|insane/i.test(title)
+  const hasSearchIntent = /how to|tutorial|guide|explained|review|best|vs|tips|learn/.test(text)
+  const isShort = analysis.format === 'Short-form discovery'
+  const isTutorial = analysis.format === 'Tutorial / evergreen'
+  const isChallenge = analysis.format === 'Challenge / spectacle'
+  const titlePenalty = title.length > 76 ? 7 : title.length < 24 ? 4 : 0
+  const metadataSupport = description.length >= 300 ? 5 : description.length >= 100 ? 2 : -4
+  const momentumLift = clamp(Math.log10(analysis.velocity + 1) * 2.2, 0, 12)
+
+  const hook = Math.round(clamp(
+    55 +
+    analysis.engagementRate * 4.8 +
+    analysis.likeRate * 2.2 +
+    momentumLift +
+    (hasOutcome ? 8 : 0) +
+    (hasCuriosity ? 5 : 0) -
+    titlePenalty,
+    34,
+    88
+  ))
+  const setup = Math.round(clamp(
+    hook -
+    (isShort ? 17 : isChallenge ? 13 : isTutorial ? 8 : 11) +
+    metadataSupport +
+    (hasSearchIntent ? 4 : 0),
+    24,
+    Math.max(25, hook - 3)
+  ))
+  const quarter = Math.round(clamp(
+    setup -
+    (isShort ? 13 : isTutorial ? 7 : 10) +
+    (analysis.commentRate >= 0.08 ? 4 : 0) +
+    (analysis.scores.overall >= 75 ? 3 : 0),
+    17,
+    Math.max(18, setup - 2)
+  ))
+  const midpoint = Math.round(clamp(
+    quarter -
+    (isTutorial ? 8 : isChallenge ? 11 : 10) +
+    (analysis.commentRate >= 0.12 ? 4 : 0),
+    12,
+    Math.max(13, quarter - 1)
+  ))
+  const late = Math.round(clamp(
+    midpoint -
+    (hasOutcome ? 6 : 9) +
+    (analysis.engagementRate >= 4 ? 3 : 0),
+    8,
+    Math.max(9, midpoint - 1)
+  ))
+  const final = Math.round(clamp(
+    late -
+    (analysis.commentRate >= 0.08 ? 4 : 7),
+    5,
+    Math.max(6, late)
+  ))
+
+  const points = [
+    {
+      key: 'hook',
+      time: '0:00-0:15',
+      stage: 'Hook',
+      retained: hook,
+      diagnosis: hasOutcome || hasCuriosity ? 'Clear promise or curiosity likely protects the first click.' : 'Broad promise creates early abandonment risk.',
+      fix: 'Open with payoff, conflict, or final result before setup.',
+    },
+    {
+      key: 'setup',
+      time: '0:15-0:45',
+      stage: 'Setup',
+      retained: setup,
+      diagnosis: metadataSupport > 0 ? 'Viewer job is easier to understand after the hook.' : 'Thin context can make viewers leave before the value is clear.',
+      fix: 'Cut intro friction and prove the title promise inside 45 seconds.',
+    },
+    {
+      key: 'quarter',
+      time: '25%',
+      stage: 'First proof',
+      retained: quarter,
+      diagnosis: isTutorial ? 'Step-based value can hold motivated viewers.' : 'Needs escalation before pacing feels flat.',
+      fix: 'Add a result, twist, example, or comparison beat before 25%.',
+    },
+    {
+      key: 'midpoint',
+      time: '50%',
+      stage: 'Midpoint',
+      retained: midpoint,
+      diagnosis: analysis.commentRate >= 0.08 ? 'Comments imply enough viewer investment to survive the middle.' : 'Low comment depth suggests weak emotional tension.',
+      fix: 'Add a pattern break and a direct viewer question.',
+    },
+    {
+      key: 'late',
+      time: '75%',
+      stage: 'Payoff build',
+      retained: late,
+      diagnosis: hasOutcome ? 'Outcome framing can pull viewers into the final act.' : 'Late retention may rely too much on personality.',
+      fix: 'Make the last third answer the title promise cleanly.',
+    },
+    {
+      key: 'final',
+      time: 'Final 10%',
+      stage: 'CTA',
+      retained: final,
+      diagnosis: analysis.engagementRate >= 4 ? 'CTA has a better chance to convert retained viewers.' : 'Ending likely reaches only a narrow core audience.',
+      fix: 'Use one CTA tied to comment, next video, or saved checklist.',
+    },
+  ]
+
+  return points.map((point, index) => {
+    const previousRetained = index === 0 ? 100 : points[index - 1].retained
+    const stageDrop = Math.max(0, previousRetained - point.retained)
+
+    return {
+      ...point,
+      stageDrop,
+      cumulativeDrop: 100 - point.retained,
+    }
+  })
+}
+
+function buildRetentionComparison(left: VideoAnalysis, right: VideoAnalysis, leftCurve: RetentionStage[], rightCurve: RetentionStage[]) {
+  const chartRows = leftCurve.map((stage, index) => ({
+    stage: stage.stage,
+    time: stage.time,
+    videoA: stage.retained,
+    videoB: rightCurve[index]?.retained || 0,
+  }))
+  const stageWinners = leftCurve.map((stage, index) => {
+    const rightStage = rightCurve[index]
+    const side = getWinner(stage.retained, rightStage.retained)
+
+    return {
+      stage: stage.stage,
+      time: stage.time,
+      side,
+      gap: Math.abs(stage.retained - rightStage.retained),
+      retainedA: stage.retained,
+      retainedB: rightStage.retained,
+    }
+  })
+  const leftFinal = leftCurve[leftCurve.length - 1].retained
+  const rightFinal = rightCurve[rightCurve.length - 1].retained
+  const retentionWinner = getWinner(
+    leftCurve.reduce((sum, stage) => sum + stage.retained, 0) / leftCurve.length,
+    rightCurve.reduce((sum, stage) => sum + stage.retained, 0) / rightCurve.length
+  )
+  const biggestGap = stageWinners.reduce((max, stage) => stage.gap > max.gap ? stage : max, stageWinners[0])
+  const winningAnalysis = retentionWinner === 'right' ? right : left
+  const losingCurve = retentionWinner === 'right' ? leftCurve : rightCurve
+  const winningCurve = retentionWinner === 'right' ? rightCurve : leftCurve
+  const winnerLossPoint = winningCurve.reduce((max, stage) => stage.stageDrop > max.stageDrop ? stage : max, winningCurve[0])
+  const loserLossPoint = losingCurve.reduce((max, stage) => stage.stageDrop > max.stageDrop ? stage : max, losingCurve[0])
+  const headline = retentionWinner === 'tie'
+    ? 'Both videos have similar inferred retention curves'
+    : `${winnerLabel(retentionWinner)} likely keeps more viewers through the timeline`
+
+  return {
+    chartRows,
+    stageWinners,
+    retentionWinner,
+    biggestGap,
+    finalGap: Math.abs(leftFinal - rightFinal),
+    headline,
+    action: retentionWinner === 'tie'
+      ? 'Both curves are close. Improve the largest shared drop-off before copying either surface topic.'
+      : `Use ${winnerLabel(retentionWinner)} as the retention benchmark: copy its ${winningAnalysis.format.toLowerCase()} pacing and fix ${loserLossPoint.stage.toLowerCase()} leakage first.`,
+    copyLesson: retentionWinner === 'tie'
+      ? `The largest visible gap is ${biggestGap.stage}, but the curves are close enough that structure matters more than picking a winner.`
+      : winnerLossPoint.stageDrop <= loserLossPoint.stageDrop
+        ? `${winnerLabel(retentionWinner)} leaks less at ${winnerLossPoint.stage}; study how the promise stays alive around ${winnerLossPoint.time}.`
+        : `Even the winner leaks at ${winnerLossPoint.stage}; copy the broad pacing, but strengthen that segment in your version.`,
+  }
+}
+
 function getConfidence(video: CompareVideo, analysis: VideoAnalysis) {
   let score = 45
   if (video.statistics?.viewCount) score += 12
@@ -528,6 +722,9 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
   const leftConfidence = getConfidence(leftVideo, left)
   const rightConfidence = getConfidence(rightVideo, right)
   const confidenceScore = Math.round((leftConfidence + rightConfidence) / 2)
+  const leftRetention = buildRetentionCurve(left, leftVideo)
+  const rightRetention = buildRetentionCurve(right, rightVideo)
+  const retention = buildRetentionComparison(left, right, leftRetention, rightRetention)
   const compareHref = `/compare-new?type=videos&left=${encodeURIComponent(leftVideo.id || '')}&right=${encodeURIComponent(rightVideo.id || '')}`
   const benchmarkId = brief.benchmarkSide === 'right' ? rightVideo.id : leftVideo.id
 
@@ -665,6 +862,93 @@ export default function VideoCompareMetrics({ leftVideo, rightVideo }: VideoComp
                   <p className="text-xs leading-5 text-gray-600">{item.detail}</p>
                 </div>
               ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-purple-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="mb-5 grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
+          <div>
+            <div className="mb-2 text-xs font-bold uppercase tracking-wider text-purple-700">Audience drop-off comparison</div>
+            <h3 className="text-xl font-bold text-gray-900">{retention.headline}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-gray-600">
+              Inferred from public views, likes, comments, velocity, title clarity, description depth, and format. This is not private YouTube Studio audience retention.
+            </p>
+            <div className="mt-4 rounded-xl border border-purple-100 bg-purple-50 p-3">
+              <div className="text-xs font-bold uppercase tracking-wider text-purple-700">What to do</div>
+              <p className="mt-1 text-sm font-semibold leading-6 text-gray-900">{retention.action}</p>
+              <p className="mt-2 text-xs leading-5 text-gray-600">{retention.copyLesson}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-blue-700">Video A final retention</div>
+              <div className="mt-2 text-3xl font-black text-gray-900">{leftRetention[leftRetention.length - 1].retained}%</div>
+              <div className="mt-1 text-xs text-gray-600">Total drop {leftRetention[leftRetention.length - 1].cumulativeDrop}%</div>
+            </div>
+            <div className="rounded-xl border border-red-100 bg-red-50 p-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-red-700">Video B final retention</div>
+              <div className="mt-2 text-3xl font-black text-gray-900">{rightRetention[rightRetention.length - 1].retained}%</div>
+              <div className="mt-1 text-xs text-gray-600">Total drop {rightRetention[rightRetention.length - 1].cumulativeDrop}%</div>
+            </div>
+            <div className="col-span-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Largest retention gap</div>
+              <p className="mt-1 text-sm font-semibold text-gray-900">
+                {retention.biggestGap.stage} ({retention.biggestGap.time}) · {winnerLabel(retention.biggestGap.side)} by {retention.biggestGap.gap} pts
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="h-72 min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={retention.chartRows} margin={{ left: 0, right: 16, top: 8, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="stage" tick={{ fontSize: 11 }} />
+                <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(value) => `${Number(value).toFixed(0)}% retained`} labelFormatter={(label, rows) => {
+                  const row = rows?.[0]?.payload as { time?: string } | undefined
+                  return row?.time ? `${label} · ${row.time}` : String(label)
+                }} />
+                <Legend />
+                <Line type="monotone" dataKey="videoA" name="Video A" stroke="#2563eb" strokeWidth={3} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="videoB" name="Video B" stroke="#dc2626" strokeWidth={3} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            {retention.stageWinners.map((stage) => (
+              <div key={`${stage.time}-${stage.stage}`} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-bold text-gray-900">{stage.stage}</div>
+                    <div className="text-xs text-gray-500">{stage.time}</div>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${
+                    stage.side === 'left'
+                      ? 'bg-blue-50 text-blue-700'
+                      : stage.side === 'right'
+                        ? 'bg-red-50 text-red-700'
+                        : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {winnerLabel(stage.side)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-lg bg-white p-2">
+                    <div className="font-medium text-blue-700">A retained</div>
+                    <div className="mt-1 text-base font-black text-gray-900">{stage.retainedA}%</div>
+                  </div>
+                  <div className="rounded-lg bg-white p-2">
+                    <div className="font-medium text-red-700">B retained</div>
+                    <div className="mt-1 text-base font-black text-gray-900">{stage.retainedB}%</div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

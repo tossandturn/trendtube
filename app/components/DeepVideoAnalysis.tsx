@@ -27,6 +27,17 @@ interface DeepVideoAnalysisProps {
 
 type SaveState = 'idle' | 'saved'
 
+interface AudienceDropOffStage {
+  time: string
+  stage: string
+  retained: number
+  stageDrop: number
+  cumulativeDrop: number
+  risk: 'Low' | 'Medium' | 'High'
+  diagnosis: string
+  fix: string
+}
+
 function clamp(value: number, min = 0, max = 100) {
   return Math.min(max, Math.max(min, value))
 }
@@ -399,6 +410,179 @@ function buildCreatorBrief(velocity: number, engagementRate: number, trafficPrim
   return { verdict, why, suggestedAngle, risk, nextAction }
 }
 
+function getDropRisk(stageDrop: number): AudienceDropOffStage['risk'] {
+  if (stageDrop >= 18) return 'High'
+  if (stageDrop >= 10) return 'Medium'
+  return 'Low'
+}
+
+function buildAudienceDropOffAnalysis(
+  video: DeepVideoAnalysisProps['video'],
+  topic: string,
+  contentFormat: string,
+  velocity: number,
+  engagementRate: number,
+  effectScore: number
+) {
+  const title = video.snippet?.title || ''
+  const description = video.snippet?.description || ''
+  const views = Number(video.statistics?.viewCount || 0)
+  const likes = Number(video.statistics?.likeCount || 0)
+  const comments = Number(video.statistics?.commentCount || 0)
+  const likeRate = views ? (likes / views) * 100 : 0
+  const commentRate = views ? (comments / views) * 100 : 0
+  const text = getText(video)
+  const hasOutcome = /how to|why|what happens|i tried|tested|before|after|without|vs|best|worst/i.test(title)
+  const hasCuriosity = /\?|secret|hidden|finally|never|truth|mistake|shocking|insane/i.test(title)
+  const hasSearchIntent = /how to|tutorial|guide|explained|review|best|vs|tips|learn/.test(text)
+  const isShort = /shorts|#shorts|tiktok|reels/i.test(text) || contentFormat === 'Short-form discovery'
+  const isTutorial = /tutorial|education|evergreen|how to|guide/i.test(`${topic} ${contentFormat} ${text}`)
+  const isChallenge = /challenge|experiment|i tried|24 hours|last to/i.test(`${contentFormat} ${text}`)
+  const titlePenalty = title.length > 76 ? 7 : title.length < 24 ? 4 : 0
+  const metadataSupport = description.length >= 300 ? 5 : description.length >= 100 ? 2 : -4
+  const momentumLift = clamp(Math.log10(velocity + 1) * 2.2, 0, 12)
+
+  const hookRetained = Math.round(clamp(
+    55 +
+    engagementRate * 4.8 +
+    likeRate * 2.2 +
+    momentumLift +
+    (hasOutcome ? 8 : 0) +
+    (hasCuriosity ? 5 : 0) -
+    titlePenalty,
+    34,
+    88
+  ))
+  const setupRetained = Math.round(clamp(
+    hookRetained -
+    (isShort ? 17 : isChallenge ? 13 : isTutorial ? 8 : 11) +
+    metadataSupport +
+    (hasSearchIntent ? 4 : 0),
+    24,
+    Math.max(25, hookRetained - 3)
+  ))
+  const quarterRetained = Math.round(clamp(
+    setupRetained -
+    (isShort ? 13 : isTutorial ? 7 : 10) +
+    (commentRate >= 0.08 ? 4 : 0) +
+    (effectScore >= 75 ? 3 : 0),
+    17,
+    Math.max(18, setupRetained - 2)
+  ))
+  const midpointRetained = Math.round(clamp(
+    quarterRetained -
+    (isTutorial ? 8 : isChallenge ? 11 : 10) +
+    (commentRate >= 0.12 ? 4 : 0),
+    12,
+    Math.max(13, quarterRetained - 1)
+  ))
+  const lateRetained = Math.round(clamp(
+    midpointRetained -
+    (hasOutcome ? 6 : 9) +
+    (engagementRate >= 4 ? 3 : 0),
+    8,
+    Math.max(9, midpointRetained - 1)
+  ))
+  const finalRetained = Math.round(clamp(
+    lateRetained -
+    (commentRate >= 0.08 ? 4 : 7),
+    5,
+    Math.max(6, lateRetained)
+  ))
+
+  const retainedPoints = [
+    {
+      time: '0:00-0:15',
+      stage: 'Hook',
+      retained: hookRetained,
+      diagnosis: hasOutcome || hasCuriosity
+        ? 'The opening likely has enough promise or curiosity to earn the first watch test.'
+        : 'The title/opening promise may be too broad, so cold viewers can leave before context lands.',
+      fix: 'Show the payoff, conflict, or final result in the first shot before explaining background.',
+    },
+    {
+      time: '0:15-0:45',
+      stage: 'Setup',
+      retained: setupRetained,
+      diagnosis: metadataSupport > 0
+        ? 'Public metadata suggests the viewer job is reasonably clear after the hook.'
+        : 'Thin public context implies a setup risk: viewers may not quickly understand why to keep watching.',
+      fix: 'Compress intro, prove the promise, and remove sponsor/channel housekeeping from the first 45 seconds.',
+    },
+    {
+      time: '25%',
+      stage: 'First proof',
+      retained: quarterRetained,
+      diagnosis: isTutorial
+        ? 'Tutorial formats usually hold when the first concrete step appears early.'
+        : 'The first content beat needs escalation; flat pacing here usually creates the largest audience leak.',
+      fix: 'Add a visible result, twist, example, or comparison beat before the first quarter mark.',
+    },
+    {
+      time: '50%',
+      stage: 'Midpoint',
+      retained: midpointRetained,
+      diagnosis: commentRate >= 0.08
+        ? 'Comment intensity hints that enough viewers cared to react beyond passive watching.'
+        : 'Lower comment depth suggests weaker emotional or identity tension through the middle.',
+      fix: 'Insert a pattern break and a direct viewer question tied to the core decision or debate.',
+    },
+    {
+      time: '75%',
+      stage: 'Payoff build',
+      retained: lateRetained,
+      diagnosis: hasOutcome
+        ? 'The promised outcome can keep motivated viewers through the late section.'
+        : 'If the payoff is not explicit, late retention likely depends on personality rather than structure.',
+      fix: 'Tease the final reveal earlier and make the last third answer the title promise cleanly.',
+    },
+    {
+      time: 'Final 10%',
+      stage: 'CTA / next video',
+      retained: finalRetained,
+      diagnosis: engagementRate >= 4
+        ? 'Strong engagement suggests the final CTA can convert some viewers into comments or next-session clicks.'
+        : 'The ending may be watched by a small core; generic CTA will not recover earlier losses.',
+      fix: 'Use one specific next action: comment a choice, watch the related video, or save the checklist.',
+    },
+  ]
+
+  const stages: AudienceDropOffStage[] = retainedPoints.map((point, index) => {
+    const previousRetained = index === 0 ? 100 : retainedPoints[index - 1].retained
+    const stageDrop = Math.max(0, previousRetained - point.retained)
+
+    return {
+      ...point,
+      stageDrop,
+      cumulativeDrop: 100 - point.retained,
+      risk: getDropRisk(stageDrop),
+    }
+  })
+
+  const biggestLoss = stages.reduce((max, stage) => stage.stageDrop > max.stageDrop ? stage : max, stages[0])
+  const confidenceScore = clamp(
+    42 +
+    (views > 0 ? 12 : 0) +
+    (likes > 0 ? 8 : 0) +
+    (comments > 0 ? 8 : 0) +
+    (video.snippet?.publishedAt ? 8 : 0) +
+    (description.length >= 160 ? 8 : 0) +
+    (views >= 100000 ? 6 : 0),
+    0,
+    90
+  )
+  const confidence = confidenceScore >= 76 ? 'High' : confidenceScore >= 58 ? 'Medium' : 'Low'
+
+  return {
+    stages,
+    biggestLoss,
+    confidence,
+    confidenceScore: Math.round(confidenceScore),
+    summary: `${biggestLoss.stage} is the likely biggest leak: ${biggestLoss.stageDrop}% more viewers may leave around ${biggestLoss.time}.`,
+    nextFix: biggestLoss.fix,
+  }
+}
+
 function writeArrayItem<T extends { id: string }>(key: string, item: T) {
   if (typeof window === 'undefined') return
   try {
@@ -428,6 +612,7 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
   const seo = buildSeoAnalysis(video, keywords)
   const nextBrief = buildNextBrief(video, topic, traffic.primary, keywords, effect.score)
   const creatorBrief = buildCreatorBrief(velocity, engagementRate, traffic.primary, content.format, virality, nextBrief)
+  const dropOff = buildAudienceDropOffAnalysis(video, topic, content.format, velocity, engagementRate, effect.score)
   const videoId = video.id || video.snippet?.title || 'unknown-video'
   const videoHref = video.id ? `/video/${video.id}` : '/youtube-video-analyzer'
   const suggestedTitle = `${keywords[0] || topic}: ${nextBrief[0]?.value.replace(/^Make "/, '').slice(0, 82) || 'a sharper promise for the next upload'}`
@@ -695,6 +880,59 @@ export default function DeepVideoAnalysis({ video, velocity, engagementRate }: D
           </div>
         </div>
 
+        <div className="rounded-2xl border border-purple-200 bg-purple-50/50 p-5">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="text-sm font-bold text-gray-900">Audience Drop-off Over Time</div>
+              <p className="mt-1 text-xs leading-5 text-gray-600">
+                Public-data inference, not private YouTube Studio retention.
+              </p>
+            </div>
+            <div className="shrink-0 rounded-lg border border-purple-200 bg-white px-3 py-2 text-xs font-bold text-purple-700">
+              {dropOff.confidence} confidence
+            </div>
+          </div>
+
+          <div className="mb-4 rounded-xl border border-purple-100 bg-white p-3">
+            <div className="text-xs font-bold uppercase tracking-wider text-purple-700">Likely biggest leak</div>
+            <div className="mt-1 text-lg font-black text-gray-900">{dropOff.biggestLoss.stage}</div>
+            <p className="mt-1 text-sm leading-6 text-gray-700">{dropOff.summary}</p>
+            <p className="mt-2 text-sm font-semibold text-gray-900">{dropOff.nextFix}</p>
+          </div>
+
+          <div className="space-y-3">
+            {dropOff.stages.map((stage) => (
+              <div key={`${stage.time}-${stage.stage}`} className="rounded-xl border border-purple-100 bg-white p-3">
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-bold text-gray-900">{stage.time} · {stage.stage}</div>
+                    <div className="mt-0.5 text-xs text-gray-500">Stage loss {stage.stageDrop}% · cumulative loss {stage.cumulativeDrop}%</div>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-bold ${
+                    stage.risk === 'High'
+                      ? 'bg-red-50 text-red-700'
+                      : stage.risk === 'Medium'
+                        ? 'bg-amber-50 text-amber-700'
+                        : 'bg-emerald-50 text-emerald-700'
+                  }`}>
+                    {stage.risk}
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-purple-100">
+                  <div className="h-full rounded-full bg-purple-600" style={{ width: `${stage.retained}%` }} />
+                </div>
+                <div className="mt-2 flex justify-between text-xs">
+                  <span className="text-gray-500">Retained viewers</span>
+                  <span className="font-black text-gray-900">{stage.retained}%</span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-gray-600">{stage.diagnosis}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr]">
         <div className="rounded-2xl border border-gray-200 bg-white p-5">
           <div className="mb-4 text-sm font-bold text-gray-900">Keywords & Video Effect</div>
           <div className="mb-4 flex flex-wrap gap-2">
