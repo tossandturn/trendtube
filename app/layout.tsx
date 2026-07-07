@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://tubefission.com"),
   title: "YouTube AI Analytics & Trend Intelligence Platform | Tubefission",
   description:
-    "AI-powered YouTube analytics platform. Analyze channels, discover viral trends, track competitor performance, and get data-driven content insights. Free, no registration.",
+    "AI-powered YouTube analytics platform. Analyze channels, discover viral trends, track competitor performance, and get data-driven content insights. Free preview with optional account-based workspace.",
   keywords: [
     "YouTube analytics",
     "YouTube AI analysis",
@@ -32,9 +32,6 @@ export const metadata: Metadata = {
     "YouTube growth tool",
     "content strategy",
   ],
-  alternates: {
-    canonical: "https://tubefission.com",
-  },
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },

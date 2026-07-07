@@ -4,10 +4,11 @@ import { AnalyzeHeroForm } from '@/app/components/AnalyzeHeroForm'
 import { FAQPageSchema, BreadcrumbSchema, ArticleSchema } from '@/app/components/JsonLd'
 import { searchYouTubeMulti } from '@/lib/api-client'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
+import { PRODUCT_ACCESS_COPY } from '@/lib/product-positioning'
 
 export const metadata: Metadata = {
   title: 'YouTube Competitor Analysis — AI-Powered Channel Intelligence',
-  description: 'Analyze YouTube competitors with AI. Compare channel growth, engagement rates, content strategies, and discover winning tactics. Free, no registration.',
+  description: 'Analyze YouTube competitors with AI. Compare channel growth, engagement rates, content strategies, and discover winning tactics. Free preview with optional workspace account.',
   keywords: [
     'YouTube competitor analysis',
     'channel competitor research',
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
 const FAQ_ITEMS = [
   {
     question: 'How does YouTube competitor analysis work?',
-    answer: 'Paste any YouTube channel or video URL into our tool. Our AI engine fetches real-time data including subscriber growth, engagement rates, upload frequency, and top-performing content. We then generate actionable insights comparing the channel against industry benchmarks.',
+    answer: 'Paste any YouTube channel or video URL into our tool. Our engine uses YouTube API-backed data including engagement rates, upload frequency, and top-performing content. We then generate actionable insights comparing the channel against industry benchmarks.',
   },
   {
     question: 'What metrics can I compare?',
@@ -39,7 +40,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'Is competitor analysis free?',
-    answer: 'Yes. Basic competitor analysis is completely free with no account required. Advanced features like historical trend comparison and batch analysis may require registration in the future.',
+    answer: PRODUCT_ACCESS_COPY.short,
   },
   {
     question: 'Can I analyze private channels?',
@@ -126,9 +127,9 @@ export default async function CompetitorAnalysisPage() {
           </p>
           <AnalyzeHeroForm />
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-gray-500">
-            <span className="inline-flex items-center gap-1">• Real-time data</span>
+            <span className="inline-flex items-center gap-1">• YouTube API-backed data</span>
             <span className="inline-flex items-center gap-1">• AI insights</span>
-            <span className="inline-flex items-center gap-1">• No registration</span>
+            <span className="inline-flex items-center gap-1">• Optional workspace account</span>
           </div>
         </div>
       </section>

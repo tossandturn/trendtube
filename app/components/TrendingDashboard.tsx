@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import Link from 'next/link'
 import AdBanner from './AdBanner'
 import { getEngagementRate, getViewVelocity, getTagColor, getTagEmoji } from '@/lib/analytics'
+import { PRODUCT_ACCESS_COPY } from '@/lib/product-positioning'
 
 /* =========================================================
    TYPES
@@ -721,7 +722,7 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
         <section className="mb-16 sm:mb-24">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Simple Pricing</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">Start free, upgrade when you grow</p>
+            <p className="text-gray-600 max-w-2xl mx-auto">Start with the free preview. Paid plans are not publicly priced yet.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -731,7 +732,7 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
               <div className="text-4xl font-bold mb-6">$0</div>
               <div className="text-sm text-gray-500 mb-6">Forever free</div>
               <ul className="space-y-3 mb-8">
-                {['10 trends/day', 'Basic velocity scores', 'Weekly reports', 'Email support'].map((item) => (
+                {['10 anonymous analyses', 'Basic velocity scores', 'Workspace with free account', 'Email alert drafts'].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -745,16 +746,16 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
               </Link>
             </div>
 
-            {/* Pro */}
+            {/* Workspace */}
             <div className="bg-red-50 rounded-2xl p-8 border-2 border-red-500 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full">
-                MOST POPULAR
+                CORE WORKFLOW
               </div>
-              <div className="text-sm font-medium text-red-600 mb-2">Pro</div>
-              <div className="text-4xl font-bold mb-6">$29<span className="text-lg text-gray-500">/mo</span></div>
-              <div className="text-sm text-gray-500 mb-6">Billed monthly</div>
+              <div className="text-sm font-medium text-red-600 mb-2">Free account</div>
+              <div className="text-4xl font-bold mb-6">$0</div>
+              <div className="text-sm text-gray-500 mb-6">For saved research workflows</div>
               <ul className="space-y-3 mb-8">
-                {['Unlimited trends', 'AI opportunity scores', 'Daily alerts', 'Priority support', 'API access', 'Export data'].map((item) => (
+                {['Saved opportunity history', 'Watchlist', 'Custom alert rules', 'Compare basket continuity', PRODUCT_ACCESS_COPY.pricing].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -764,17 +765,17 @@ export default function TrendingDashboard({ initialVideos, initialRegion }: Tren
                 ))}
               </ul>
               <Link href="/trending" className="block w-full py-3 bg-red-600 text-white text-center rounded-xl font-medium hover:bg-red-700 transition">
-                Start Free Trial
+                Create Workspace
               </Link>
             </div>
 
-            {/* Team */}
+            {/* Future Teams */}
             <div className="bg-white rounded-2xl p-8 border border-gray-200">
-              <div className="text-sm font-medium text-gray-500 mb-2">Team</div>
-              <div className="text-4xl font-bold mb-6">$99<span className="text-lg text-gray-500">/mo</span></div>
-              <div className="text-sm text-gray-500 mb-6">For agencies & teams</div>
+              <div className="text-sm font-medium text-gray-500 mb-2">Teams</div>
+              <div className="text-4xl font-bold mb-6">TBD</div>
+              <div className="text-sm text-gray-500 mb-6">For agencies and teams later</div>
               <ul className="space-y-3 mb-8">
-                {['Everything in Pro', '5 team seats', 'White-label reports', 'Custom integrations', 'Dedicated manager', 'SLA guarantee'].map((item) => (
+                {['Shared workspaces', 'Team watchlists', 'Exportable reports', 'Role-based access', 'Not publicly priced yet'].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

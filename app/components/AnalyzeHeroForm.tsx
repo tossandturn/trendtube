@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { extractVideoId, extractChannelId, isValidYouTubeUrl } from '@/lib/youtube-parser'
 import { useAuth } from '@/app/hooks/useAuth'
+import { PRODUCT_ACCESS_COPY } from '@/lib/product-positioning'
 
 function LoginModal({ isOpen, onClose, onLogin }: { isOpen: boolean; onClose: () => void; onLogin: (email: string, password: string) => Promise<void> }) {
   const [email, setEmail] = useState('')
@@ -42,7 +43,7 @@ function LoginModal({ isOpen, onClose, onLogin }: { isOpen: boolean; onClose: ()
         </div>
 
         <p className="text-gray-600 mb-6">
-          You&apos;ve used your free analyzes. Sign in to continue analyzing videos and channels.
+          You&apos;ve used your anonymous analysis preview. Sign in to continue analyzing videos and channels with a connected workspace.
         </p>
 
         {error && (
@@ -186,11 +187,11 @@ export function AnalyzeHeroForm() {
         )}
         {!isLoggedIn && (
           <p className="mt-2 text-xs text-gray-500 text-center">
-            Free users get 10 analyzes.{' '}
+            {PRODUCT_ACCESS_COPY.limit}{' '}
             <a href="/signup" className="text-blue-600 hover:underline">
               Sign up free
             </a>{' '}
-            for unlimited access.
+            to save your research.
           </p>
         )}
       </form>

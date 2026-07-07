@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SoftwareApplicationSchema, FAQPageSchema, BreadcrumbSchema } from '@/app/components/JsonLd'
 import { AnalyzeHeroForm } from '@/app/components/AnalyzeHeroForm'
+import { PRODUCT_ACCESS_COPY } from '@/lib/product-positioning'
 
 export const metadata: Metadata = {
   title: 'YouTube AI Analytics & Trend Intelligence Platform | Tubefission',
@@ -18,7 +19,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'Is Tubefission free to use?',
-    answer: 'Yes, Tubefission is completely free. You can analyze YouTube videos and channels without paying anything or creating an account.',
+    answer: PRODUCT_ACCESS_COPY.short,
   },
   {
     question: 'Do I need to install any software?',
@@ -38,7 +39,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'Is Tubefission safe to use?',
-    answer: 'Absolutely. We do not store any personal data or require registration. All analysis happens through encrypted connections using official YouTube API data.',
+    answer: 'Yes. Anonymous analysis works without connecting a YouTube account. If you create a TubeFission account, it is used to keep workspace history, watchlists, alerts, and saved comparisons connected.',
   },
   {
     question: 'What countries are supported?',
@@ -54,7 +55,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'Is there an analysis limit?',
-    answer: 'There is no strict daily limit for personal use. We monitor for abuse to ensure fair access for all users. You can analyze multiple videos and channels per day.',
+    answer: PRODUCT_ACCESS_COPY.limit,
   },
   {
     question: 'Who is Tubefission for?',
@@ -208,10 +209,10 @@ export default function HomePage() {
           </summary>
           <div className="mt-6 border-t border-gray-200 pt-6">
         <p className="text-gray-700 leading-relaxed mb-6">
-          Tubefission is a free <strong>AI-powered YouTube analytics platform</strong> designed for creators, marketers, and researchers who want data-driven insights into YouTube performance and trends. Whether you need to analyze a competitor channel, study viral content patterns, or discover trending topics before they peak, Tubefission gives you the intelligence to make informed decisions.
+          Tubefission is a free-preview <strong>AI-powered YouTube analytics platform</strong> designed for creators, marketers, and researchers who want data-driven insights into YouTube performance and trends. Whether you need to analyze a competitor channel, study viral content patterns, or discover trending topics before they peak, Tubefission gives you the intelligence to make informed decisions.
         </p>
         <p className="text-gray-700 leading-relaxed mb-10">
-          Unlike many tools that require paid subscriptions or complex setups, Tubefission operates entirely online with no login required. Paste a YouTube URL, and within seconds you can unlock deep analytics about video performance, audience engagement, channel growth, and competitive positioning.
+          Unlike many tools that require paid subscriptions before research starts, Tubefission lets anonymous visitors try analysis first. A free account is useful when you want saved history, watchlists, alerts, compare queues, and workspace continuity.
         </p>
 
         <h2 className="text-3xl font-bold text-gray-900 mb-6">AI-Powered Video Analysis</h2>
@@ -278,8 +279,8 @@ export default function HomePage() {
           <div className="flex gap-4">
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">1</div>
             <div>
-              <h3 className="font-semibold text-gray-900">No Account Required</h3>
-              <p className="text-gray-600 text-sm">Start analyzing immediately without handing over your email or creating passwords.</p>
+              <h3 className="font-semibold text-gray-900">Free Preview First</h3>
+              <p className="text-gray-600 text-sm">{PRODUCT_ACCESS_COPY.limit}</p>
             </div>
           </div>
           <div className="flex gap-4">

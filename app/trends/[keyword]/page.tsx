@@ -1,15 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { fetchTrendingVideos, searchYouTube, type YouTubeVideo } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate, getTagColor, getTagEmoji } from '@/lib/analytics'
-import { generateDailyRecommendations, getTodayString, getTimeBasedGreeting, REGIONAL_PREFERENCES } from '@/lib/recommendations'
 import { REGION_META, type Region } from '@/lib/region'
 import { extractTrendsFromVideos } from '@/lib/trend-extractor'
 import TrendVideosGrid from '@/app/components/TrendVideosGrid'
 import { WordCloud } from '@/app/components/WordCloud'
 import PotentialVideoRanking from '@/app/components/PotentialVideoRanking'
+import { trendFreshnessCopy } from '@/lib/data-freshness'
 
 interface TrendPageProps {
   params: Promise<{
@@ -360,10 +359,19 @@ export async function generateMetadata({ params }: TrendPageProps): Promise<Meta
     title: `${trendData.title} ${today} ${regionLabel} | TubeFission`,
     description: `${trendData.description} Trending in ${regionLabel} on ${today}.`,
     keywords: `${keyword} trends, youtube ${keyword}, viral ${keyword} content, ${keyword} creators`,
+    alternates: {
+      canonical: `https://tubefission.com/trends/${keyword}`,
+    },
     openGraph: {
       title: `${trendData.title} - ${regionLabel} ${today}`,
       description: trendData.description,
+      url: `https://tubefission.com/trends/${keyword}`,
       type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${trendData.title} - ${regionLabel}`,
+      description: trendData.description,
     },
   }
 }
@@ -525,6 +533,39 @@ function selectTrendSpecificVideos(searchVideos: YouTubeVideo[], regionalVideos:
   return ranked.slice(0, 24)
 }
 
+function getVideoEvidenceAngles(videos: YouTubeVideo[], keyword: string) {
+  return videos.slice(0, 6).map((video) => {
+    const title = video.snippet?.title || 'Untitled video'
+    const views = Number(video.statistics?.viewCount || 0)
+    const velocity = getViewVelocity(video)
+    const engagement = getEngagementRate(video)
+    const titleLower = title.toLowerCase()
+    const hookPattern = /\b(how|why|what|secret|test|tried|vs|before|after|explained|guide|tutorial)\b/i.test(title)
+      ? 'clear curiosity or utility hook'
+      : title.includes('?')
+        ? 'question-led hook'
+        : 'topic-led hook'
+    const reason = engagement >= 4
+      ? 'high engagement suggests the audience is responding, not just clicking'
+      : velocity >= 100000
+        ? 'strong velocity suggests current demand even if engagement is still developing'
+        : 'useful as a supporting benchmark, but not a strong breakout signal yet'
+
+    return {
+      id: video.id,
+      title,
+      channel: video.snippet?.channelTitle || 'Unknown channel',
+      href: `/video/${video.id}`,
+      views,
+      velocity,
+      engagement,
+      hookPattern,
+      reason,
+      matchedKeyword: normalizeTrendKeyword(keyword).split(' ').some((term) => titleLower.includes(term.toLowerCase())),
+    }
+  })
+}
+
 export default async function TrendPage({ params }: TrendPageProps) {
   const { keyword } = await params
   const trendData = TREND_KNOWLEDGE[keyword] || generateTrendData(keyword)
@@ -546,9 +587,26 @@ export default async function TrendPage({ params }: TrendPageProps) {
     selectTrendSpecificVideos(searchVideos, videos, keyword, trendData.title),
   )
 
-  // Generate daily recommendations for this trend
-  const dailyRecommendations = generateDailyRecommendations(displayVideos, region, 3)
-  const regionalPrefs = REGIONAL_PREFERENCES[region] || REGIONAL_PREFERENCES.US
+  const evidenceAngles = getVideoEvidenceAngles(displayVideos, keyword)
+  const snapshotAt = new Date().toISOString()
+  const regionalPrefs = {
+    flag: '',
+    popularFormats: ['Matched video evidence', 'Hook pattern'],
+    trendingTopics: ['Velocity signal', 'Engagement signal'],
+    optimalLength: 'Use source video length',
+    bestPostTime: 'Check source channel timing',
+  }
+  const dailyRecommendations = evidenceAngles.map((angle, index) => ({
+    id: angle.id,
+    title: angle.hookPattern,
+    category: angle.matchedKeyword ? 'Keyword-matched evidence' : 'Related evidence',
+    confidence: Math.min(95, Math.max(35, Math.round(angle.engagement * 12 + Math.log10(angle.views + 1) * 8))),
+    potentialViews: angle.velocity >= 500000 ? 'viral' : angle.velocity >= 100000 ? 'high' : angle.engagement >= 4 ? 'medium' : 'low',
+    difficulty: angle.views >= 1000000 ? 'hard' : angle.views >= 100000 ? 'medium' : 'easy',
+    whyTrending: `${angle.reason}. Source: ${angle.title}`,
+    suggestedTags: [normalizeTrendKeyword(keyword), angle.hookPattern.replace(/\s+/g, '-'), `video-${index + 1}`],
+    similarVideos: [{ id: angle.id, title: `${angle.title} (${formatNumber(angle.views.toString())} views)`, views: angle.views }],
+  }))
 
   // Calculate analytics
   const totalViews = displayVideos.reduce((sum: number, v: any) => sum + Number(v.statistics?.viewCount || 0), 0)
@@ -651,7 +709,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1 h-6 rounded-full bg-gradient-to-b from-red-400 to-red-600" />
               <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-                <span className="text-red-600">🔥</span> Today's Top Video
+                <span className="text-red-600">🔥</span> Today&apos;s Top Video
                 <span className="text-sm font-normal text-gray-500">— Highest performing in this trend</span>
               </h2>
             </div>
@@ -941,27 +999,27 @@ export default async function TrendPage({ params }: TrendPageProps) {
           <PotentialVideoRanking videos={displayVideos} region={region} />
         </section>
 
-          {/* Daily Recommendations for This Trend */}
+          {/* Evidence-Based Angles */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-1 h-6 rounded-full bg-gradient-to-b from-purple-400 to-purple-600" />
               <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-gray-900">
-                <span className="text-purple-600">💡</span> {getTimeBasedGreeting()}, Creator
+                <span className="text-purple-600">Evidence</span> Creator angles from matched videos
               </h2>
             </div>
             <span className="text-xs text-gray-500 data-mono bg-gray-100 px-3 py-1 rounded-full">
-              {getTodayString()}
+              {trendFreshnessCopy(snapshotAt)}
             </span>
           </div>
 
-          {/* Trend-Specific Insight */}
+          {/* Trend-Specific Evidence */}
           <div className="glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent mb-6">
             <div className="flex items-center gap-3 mb-4">
               <span className="text-3xl">{regionalPrefs.flag || '🌍'}</span>
               <div>
-                <h3 className="font-bold text-gray-900">{trendData.title} — {regionalPrefs.flag} {region} Market Intelligence</h3>
-                <p className="text-sm text-gray-500">Based on {displayVideos.length} trending videos in this category</p>
+                <h3 className="font-bold text-gray-900">{trendData.title} evidence quality</h3>
+                <p className="text-sm text-gray-500">Based on {displayVideos.length} keyword-matched videos in {region}. Each angle below cites a source video and metric signal.</p>
               </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -984,7 +1042,7 @@ export default async function TrendPage({ params }: TrendPageProps) {
             </div>
           </div>
 
-          {/* Recommendations Grid */}
+          {/* Evidence Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {dailyRecommendations.map((rec, idx) => {
               // Generate trend URL from title

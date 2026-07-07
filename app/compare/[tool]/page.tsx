@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { PRODUCT_ACCESS_COPY, PRODUCT_DIFFERENTIATION } from '@/lib/product-positioning'
 
 interface ComparePageProps {
   params: Promise<{
@@ -41,12 +41,12 @@ const COMPARISON_DATA: Record<string, {
       { name: 'SEO Optimization', tubefission: 'Trend-based keywords', competitor: 'Full SEO suite', winner: 'competitor' },
       { name: 'Channel Audit', tubefission: 'Trend opportunity scan', competitor: 'Comprehensive audit', winner: 'competitor' },
       { name: 'Keyword Research', tubefission: 'Trending keywords', competitor: 'Extensive database', winner: 'competitor' },
-      { name: 'Pricing', tubefission: 'Free tier available', competitor: 'Starts at $7.50/mo', winner: 'tubefission' },
+      { name: 'Pricing', tubefission: 'Free preview; no public paid pricing yet', competitor: 'Starts at $7.50/mo', winner: 'tie' },
     ],
     pricing: [
-      { plan: 'Free', tubefission: '10 trends/day, basic scores', competitor: 'Limited features, 3 keyword lookups' },
-      { plan: 'Pro', tubefission: '$29/mo - Unlimited', competitor: '$7.50/mo - Boost' },
-      { plan: 'Team', tubefission: '$99/mo - 5 seats', competitor: '$39/mo - Pro' },
+      { plan: 'Preview', tubefission: PRODUCT_ACCESS_COPY.limit, competitor: 'Limited features, 3 keyword lookups' },
+      { plan: 'Paid plans', tubefission: 'Not publicly priced yet', competitor: '$7.50/mo - Boost' },
+      { plan: 'Teams', tubefission: 'Workspace/team pricing not announced', competitor: '$39/mo - Pro' },
     ],
     positioning: {
       bestFor: 'Creators focused on trend prediction and early opportunity detection',
@@ -66,12 +66,12 @@ const COMPARISON_DATA: Record<string, {
       { name: 'Bulk Processing', tubefission: 'Limited', competitor: 'Extensive bulk tools', winner: 'competitor' },
       { name: 'End Screen Tools', tubefission: 'None', competitor: 'Templates, analytics', winner: 'competitor' },
       { name: 'Competition Level', tubefission: 'AI-calculated', competitor: 'Manual research', winner: 'tubefission' },
-      { name: 'Integration', tubefission: 'API access', competitor: 'Browser extension', winner: 'tie' },
+      { name: 'Integration', tubefission: 'Web workspace and compare basket', competitor: 'Browser extension', winner: 'tie' },
     ],
     pricing: [
       { plan: 'Free', tubefission: 'Full feature access, limited volume', competitor: 'Limited features, 30 day trial' },
-      { plan: 'Pro', tubefission: '$29/mo', competitor: '$4.50/mo (annual)' },
-      { plan: 'Team', tubefission: '$99/mo', competitor: '$14/mo (annual)' },
+      { plan: 'Paid plans', tubefission: 'Not publicly priced yet', competitor: '$4.50/mo (annual)' },
+      { plan: 'Teams', tubefission: 'Workspace/team pricing not announced', competitor: '$14/mo (annual)' },
     ],
     positioning: {
       bestFor: 'Data-focused creators who prioritize trend timing over workflow optimization',
@@ -87,16 +87,16 @@ const COMPARISON_DATA: Record<string, {
       { name: 'Data Source', tubefission: 'YouTube API + AI', competitor: 'Google Search only', winner: 'tubefission' },
       { name: 'Platform Focus', tubefission: 'YouTube-specific', competitor: 'General web search', winner: 'tubefission' },
       { name: 'Velocity Metrics', tubefission: 'Views/hour, acceleration', competitor: 'Search interest only', winner: 'tubefission' },
-      { name: 'Creator Alerts', tubefission: 'Email, Discord, Telegram', competitor: 'None', winner: 'tubefission' },
+      { name: 'Creator Alerts', tubefission: 'Custom email alert rules', competitor: 'None', winner: 'tubefission' },
       { name: 'Competition Analysis', tubefission: 'Video count, creator density', competitor: 'Search volume only', winner: 'tubefission' },
       { name: 'Actionable Insights', tubefission: 'Upload timing, title suggestions', competitor: 'Trend direction only', winner: 'tubefission' },
       { name: 'Geographic Data', tubefission: '6 regions, YouTube-specific', competitor: 'Global search', winner: 'tie' },
-      { name: 'Cost', tubefission: 'Free tier', competitor: '100% free', winner: 'competitor' },
+      { name: 'Cost', tubefission: 'Free preview with workspace account', competitor: '100% free', winner: 'competitor' },
     ],
     pricing: [
-      { plan: 'Basic', tubefission: 'Free - 10 trends/day', competitor: 'Free - unlimited searches' },
-      { plan: 'Pro', tubefission: '$29/mo - unlimited', competitor: 'N/A' },
-      { plan: 'Enterprise', tubefission: 'Custom', competitor: 'N/A' },
+      { plan: 'Preview', tubefission: PRODUCT_ACCESS_COPY.limit, competitor: 'Free - unlimited searches' },
+      { plan: 'Paid plans', tubefission: 'Not publicly priced yet', competitor: 'N/A' },
+      { plan: 'Enterprise', tubefission: 'Not publicly announced', competitor: 'N/A' },
     ],
     positioning: {
       bestFor: 'Serious creators who need YouTube-specific data and actionable recommendations',
@@ -115,11 +115,11 @@ function generateComparison(tool: string) {
     competitorName: normalized,
     features: [
       { name: 'Trend Prediction', tubefission: 'AI-powered', competitor: 'Basic tracking', winner: 'tubefission' as const },
-      { name: 'Pricing', tubefission: 'Free tier available', competitor: 'Paid only', winner: 'tubefission' as const },
+      { name: 'Pricing', tubefission: 'Free preview; paid pricing not public', competitor: 'Varies by product', winner: 'tie' as const },
     ],
     pricing: [
-      { plan: 'Free', tubefission: '10 trends/day', competitor: 'Limited' },
-      { plan: 'Pro', tubefission: '$29/mo', competitor: 'Contact' },
+      { plan: 'Preview', tubefission: PRODUCT_ACCESS_COPY.limit, competitor: 'Limited' },
+      { plan: 'Paid plans', tubefission: 'Not publicly priced yet', competitor: 'Contact' },
     ],
     positioning: {
       bestFor: 'YouTube creators seeking AI-powered trend prediction',
@@ -137,6 +137,15 @@ export async function generateMetadata({ params }: ComparePageProps): Promise<Me
     title: data.title,
     description: data.description,
     keywords: `tubefission vs ${tool}, ${tool} alternative, youtube trend tool comparison, ${tool} vs`,
+    alternates: {
+      canonical: `https://tubefission.com/compare/${tool}`,
+    },
+    openGraph: {
+      title: data.title,
+      description: data.description,
+      url: `https://tubefission.com/compare/${tool}`,
+      type: 'article',
+    },
   }
 }
 
@@ -170,6 +179,9 @@ export default async function ComparePage({ params }: ComparePageProps) {
           </p>
           <p className="text-red-700">
             <strong>Unique advantage:</strong> {data.positioning.uniqueAdvantage}
+          </p>
+          <p className="mt-3 text-sm text-red-700">
+            <strong>Product boundary:</strong> {PRODUCT_DIFFERENTIATION.boundary}
           </p>
         </div>
 
@@ -212,7 +224,8 @@ export default async function ComparePage({ params }: ComparePageProps) {
 
         {/* Pricing Comparison */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Pricing Comparison</h2>
+          <h2 className="text-2xl font-bold mb-2">Access & Pricing Comparison</h2>
+          <p className="mb-6 text-sm text-gray-500">{PRODUCT_ACCESS_COPY.pricing}</p>
           <div className="grid md:grid-cols-3 gap-6">
             {data.pricing.map((tier) => (
               <div key={tier.plan} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
@@ -265,16 +278,15 @@ export default async function ComparePage({ params }: ComparePageProps) {
           <p className="text-gray-600 mb-4">{data.positioning.whySwitch}</p>
           <p className="text-gray-600">
             While {data.competitorName} excels at {data.features.find(f => f.winner === 'competitor')?.name || 'workflow optimization'},
-            TubeFission's predictive capabilities give creators a competitive edge that's hard to replicate with historical data alone.
+            TubeFission&apos;s predictive capabilities give creators a competitive edge that&apos;s hard to replicate with historical data alone.
           </p>
         </section>
 
         {/* CTA */}
         <div className="bg-gray-900 rounded-2xl p-8 text-center text-white">
-          <h2 className="text-2xl font-bold mb-4">Try TubeFission Free</h2>
+          <h2 className="text-2xl font-bold mb-4">Try the Free Preview</h2>
           <p className="text-gray-400 mb-6 max-w-xl mx-auto">
-            Get AI-powered trend predictions and see the difference for yourself.
-            No credit card required.
+            {PRODUCT_ACCESS_COPY.short}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
