@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { fetchTrendingVideos, searchYouTubeMulti, type YouTubeVideo } from '@/lib/api-client'
+import { searchYouTubeMulti, type YouTubeVideo } from '@/lib/api-client'
 import { getRegion } from '@/lib/region-server'
 import { getViewVelocity, getEngagementRate } from '@/lib/analytics'
 import { REGION_META, type Region } from '@/lib/region'
 import { extractTrendsFromVideos } from '@/lib/trend-extractor'
+import { getCachedTrendBoard } from '@/lib/trend-board'
 import TrendVideosGrid from '@/app/components/TrendVideosGrid'
 import { WordCloud } from '@/app/components/WordCloud'
 import PotentialVideoRanking from '@/app/components/PotentialVideoRanking'
@@ -696,10 +697,11 @@ export default async function TrendPage({ params }: TrendPageProps) {
 
   const region = getTrendAnalysisRegion(await getRegion())
   const searchQueries = buildTrendSearchQueries(keyword, trendData.title)
-  const [videos, searchVideos] = await Promise.all([
-    fetchTrendingVideos(region, 50, { cache: 'no-store', timeoutMs: 3500 }),
+  const [board, searchVideos] = await Promise.all([
+    getCachedTrendBoard(region),
     searchYouTubeMulti(searchQueries, 10, 'relevance'),
   ])
+  const videos = board.sections.flatMap((section) => section.videos.map((item) => item.video))
 
   const extractedTrends = extractTrendsFromVideos(videos, region, 50)
   const currentTrend = extractedTrends.find((trend) => trend.slug === keyword)

@@ -117,6 +117,40 @@ function isUsefulTrendKeyword(keyword: string) {
   return true
 }
 
+function getSemanticTrendTerms(video: YouTubeVideo) {
+  const text = [
+    video.snippet?.title || '',
+    video.snippet?.description || '',
+    video.snippet?.channelTitle || '',
+    ...(video.snippet?.tags || []),
+  ].join(' ').toLowerCase()
+  const terms: string[] = []
+
+  const hasAny = (patterns: RegExp[]) => patterns.some((pattern) => pattern.test(text))
+
+  if (hasAny([/\btrailer\b/, /\bteaser\b/, /\bmovie\b/, /\bfilm\b/, /\bcinema\b/, /\bseries\b/, /\banime\b/])) {
+    terms.push('film trailers')
+  }
+
+  if (hasAny([/\broblox\b/, /\bminecraft\b/, /\bfortnite\b/, /\bgaming\b/, /\bgameplay\b/, /\besports\b/, /\bnintendo\b/, /\bplaystation\b/, /\bxbox\b/])) {
+    terms.push('gaming formats')
+  }
+
+  if (hasAny([/\bofficial video\b/, /\blyrics?\b/, /\bvisuali[sz]er\b/, /\bremix\b/, /\bcover\b/, /\balbum\b/, /\bmusic\b/, /\bsong\b/])) {
+    terms.push('music releases')
+  }
+
+  if (hasAny([/\bchallenge\b/, /\bsurvive\b/, /\blast to\b/, /\bhide\b/, /\bseek\b/, /\bvs\b/, /\bexperiment\b/, /\btesting\b/])) {
+    terms.push('creator challenges')
+  }
+
+  if (hasAny([/\bchatgpt\b/, /\bopenai\b/, /\bgpt\b/, /\bclaude\b/, /\bmidjourney\b/, /\bai tools?\b/, /\bartificial intelligence\b/])) {
+    terms.push('ai tools')
+  }
+
+  return terms
+}
+
 function overlapRatio(a: string[], b: string[]) {
   if (a.length === 0 || b.length === 0) return 0
   const bSet = new Set(b)
@@ -181,7 +215,8 @@ export function extractTrendsFromVideos(videos: YouTubeVideo[], region: string, 
       bigrams.push(`${rawWords[i]} ${rawWords[i + 1]}`)
     }
 
-    const allTerms = [...words, ...bigrams]
+    const semanticTerms = getSemanticTrendTerms(video)
+    const allTerms = [...words, ...bigrams, ...semanticTerms]
 
     allTerms.forEach(term => {
       const existing = keywordMap.get(term)
@@ -238,7 +273,10 @@ export function extractTrendsFromVideos(videos: YouTubeVideo[], region: string, 
       creatorCount: data.creators.size,
       peakHours: Math.max(1, Math.round(48 - breakout * 0.4)),
       tags: Array.from(data.tags).slice(0, 5),
-      topVideoIds: data.videos.slice(0, 3).map(v => v.id),
+      topVideoIds: data.videos
+        .sort((a, b) => Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0))
+        .slice(0, 12)
+        .map(v => v.id),
       region,
     })
   })
