@@ -307,6 +307,53 @@ function buildTopCreatorDecision(actionPlan: ReturnType<typeof buildActionPlan>,
   return { shouldModel, why, bestAngle, nextAction, risk }
 }
 
+function buildWorkflowOutputs(video: any, topDecision: ReturnType<typeof buildTopCreatorDecision>, publishAnalysis: ReturnType<typeof analyzePublishTime>) {
+  const rawTitle = video.snippet?.title || 'this video idea'
+  const topic = rawTitle
+    .replace(/[^\w\s'-]/g, ' ')
+    .split(/\s+/)
+    .filter((word: string) => word.length > 2)
+    .slice(0, 6)
+    .join(' ') || 'this idea'
+  const channel = video.snippet?.channelTitle || 'the source channel'
+
+  return {
+    titles: [
+      `I tested ${topic} so you do not have to`,
+      `Why ${topic} is suddenly everywhere`,
+      `${topic}: what creators should copy and avoid`,
+      `The hidden hook behind ${topic}`,
+      `Can a small channel use ${topic}?`,
+      `I rebuilt ${channel}'s format with a new angle`,
+      `${topic} explained in one upload plan`,
+      `Before you copy ${topic}, watch this`,
+      `The fastest way to adapt ${topic}`,
+      `${topic} vs the safer content angle`,
+    ],
+    hooks: [
+      `This is not working because of the topic alone. The first promise is doing most of the work.`,
+      `I broke down the public signals so you can decide whether to copy the format or avoid it.`,
+      `The opportunity is not to repeat this video. It is to use the same viewer payoff in a cleaner angle.`,
+    ],
+    thumbnailDirections: [
+      'Show the before/after contrast in one frame, not a generic reaction face.',
+      'Use one large object or result as the visual proof, then keep text under four words.',
+      'If copying the format, change color, subject, and stakes so it is not a surface duplicate.',
+    ],
+    outline: [
+      '0:00-0:20 hook: state the result or tension immediately.',
+      '0:20-1:30 context: explain why this trend matters now.',
+      '1:30-5:00 proof: show the experiment, comparison, or breakdown.',
+      '5:00-8:30 payoff: reveal what worked and what failed.',
+      '8:30-end next step: tell viewers what to try or watch next.',
+    ],
+    publishWindow: publishAnalysis.timeScore >= 80
+      ? `Retest near the same window: ${publishAnalysis.dayName} around ${publishAnalysis.timeString}.`
+      : 'Retest in a stronger afternoon or evening slot before blaming the topic.',
+    decisionUse: topDecision.shouldModel,
+  }
+}
+
 
 export async function generateMetadata({ params }: VideoPageProps): Promise<Metadata> {
   const { id } = await params
@@ -364,6 +411,66 @@ export default async function VideoPage({ params }: VideoPageProps) {
   const engagementPercentile = avgRelatedEngagement > 0
     ? Math.min(99, Math.max(1, Math.round((engagementRate / avgRelatedEngagement) * 50) + 50))
     : 50
+  const views = Number(video.statistics?.viewCount || 0)
+  const likes = Number(video.statistics?.likeCount || 0)
+  const comments = Number(video.statistics?.commentCount || 0)
+  const relatedViews = related.map((v: any) => Number(v.statistics?.viewCount || 0)).filter((value: number) => value > 0)
+  const avgRelatedViews = relatedViews.length > 0
+    ? relatedViews.reduce((sum: number, value: number) => sum + value, 0) / relatedViews.length
+    : 0
+  const viewIndex = avgRelatedViews > 0 ? Math.round((views / avgRelatedViews) * 100) : 100
+  const workflowOutputs = buildWorkflowOutputs(video, topDecision, publishAnalysis)
+  const evidenceCards = [
+    {
+      label: 'Comparable sample',
+      value: `${related.length} videos`,
+      source: 'YouTube Data API',
+      type: 'Fact',
+      note: 'Related public videos used as the local benchmark set.',
+    },
+    {
+      label: 'Velocity proxy',
+      value: `${formatNumber(Math.round(velocity).toString())}/day`,
+      source: 'Derived estimate',
+      type: 'Inference',
+      note: 'Views divided by public publish age. Useful directionally, not private Studio data.',
+    },
+    {
+      label: 'Engagement rank',
+      value: `P${engagementPercentile}`,
+      source: 'Public metrics',
+      type: 'Derived',
+      note: `Likes and comments benchmarked against the related sample. Current engagement: ${engagementRate.toFixed(2)}%.`,
+    },
+    {
+      label: 'Channel size proxy',
+      value: `${viewIndex}%`,
+      source: 'Public views',
+      type: 'Derived',
+      note: 'This video views compared with the average related video. Subscribers are not required.',
+    },
+    {
+      label: 'Packaging score',
+      value: `${titleScore}/100`,
+      source: 'Title structure',
+      type: 'Inference',
+      note: 'Checks numbers, curiosity, power words, length, and mobile readability.',
+    },
+    {
+      label: 'Raw facts',
+      value: `${formatNumber(views.toString())} views`,
+      source: 'YouTube Data API',
+      type: 'Fact',
+      note: `${formatNumber(likes.toString())} likes and ${formatNumber(comments.toString())} comments at analysis time.`,
+    },
+  ]
+  const scoreBreakdown = [
+    { label: 'Velocity', score: Math.min(100, Math.round(Math.log10(velocity + 1) * 14)), source: 'Derived estimate' },
+    { label: 'Engagement', score: Math.min(100, Math.round(engagementRate * 18)), source: 'Public metrics' },
+    { label: 'Saturation', score: related.length < 12 ? 78 : related.length < 30 ? 58 : 38, source: 'Related sample size' },
+    { label: 'Format fit', score: titleAnalysis.hasHowTo || titleAnalysis.hasQuestion || titleAnalysis.hasPowerWord ? 82 : 62, source: 'AI interpretation' },
+    { label: 'Freshness', score: publishAnalysis.timeScore, source: 'Public publish time' },
+  ]
 
   return (
     <main className="min-h-screen bg-white text-gray-900 terminal-grid relative overflow-hidden">
@@ -458,6 +565,96 @@ export default async function VideoPage({ params }: VideoPageProps) {
                 <div className="mt-2 text-sm leading-relaxed text-gray-100">{value}</div>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="mb-6 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Evidence chain</div>
+                <h2 className="mt-1 text-xl font-black text-gray-950">Why this decision is credible</h2>
+              </div>
+              <Link href="/methodology" className="w-fit rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">
+                Methodology
+              </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {evidenceCards.map((item) => (
+                <div key={item.label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{item.label}</div>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      item.type === 'Fact' ? 'bg-green-100 text-green-700' : item.type === 'Derived' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {item.type}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-lg font-black text-gray-950">{item.value}</div>
+                  <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">{item.source}</div>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-600">{item.note}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 rounded-xl border border-gray-100 bg-white p-3">
+              <div className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">Score model</div>
+              <div className="grid gap-3">
+                {scoreBreakdown.map((item) => (
+                  <div key={item.label}>
+                    <div className="mb-1 flex items-center justify-between text-xs">
+                      <span className="font-bold text-gray-700">{item.label}</span>
+                      <span className="text-gray-500">{item.score}/100 - {item.source}</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                      <div className="h-full rounded-full bg-red-600" style={{ width: `${item.score}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-red-100 bg-red-50 p-5">
+            <div className="mb-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-red-700">Creator workflow output</div>
+              <h2 className="mt-1 text-xl font-black text-gray-950">{workflowOutputs.decisionUse}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-gray-700">
+                Use this as a production starter, then validate against your own channel fit before filming.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">10 title tests</div>
+                <div className="grid gap-2">
+                  {workflowOutputs.titles.map((title, index) => (
+                    <div key={title} className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-800">
+                      {index + 1}. {title}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl bg-white p-3">
+                  <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Opening hooks</div>
+                  <ul className="mt-2 space-y-2 text-xs leading-relaxed text-gray-700">
+                    {workflowOutputs.hooks.map((hook) => <li key={hook}>{hook}</li>)}
+                  </ul>
+                </div>
+                <div className="rounded-xl bg-white p-3">
+                  <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Thumbnail direction</div>
+                  <ul className="mt-2 space-y-2 text-xs leading-relaxed text-gray-700">
+                    {workflowOutputs.thumbnailDirections.map((direction) => <li key={direction}>{direction}</li>)}
+                  </ul>
+                </div>
+              </div>
+              <div className="rounded-xl bg-white p-3">
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Script outline</div>
+                <div className="mt-2 grid gap-2 text-xs leading-relaxed text-gray-700">
+                  {workflowOutputs.outline.map((line) => <div key={line}>{line}</div>)}
+                </div>
+                <div className="mt-3 rounded-lg bg-gray-50 p-2 text-xs font-bold text-gray-700">{workflowOutputs.publishWindow}</div>
+              </div>
+            </div>
           </div>
         </section>
 

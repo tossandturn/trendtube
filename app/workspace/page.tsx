@@ -223,6 +223,54 @@ export default function WorkspacePage() {
           })}
         </section>
 
+        <section className="mb-8 rounded-2xl border border-gray-200 bg-gray-50 p-5 sm:p-6">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">Daily command center</div>
+              <h2 className="mt-1 text-2xl font-black text-gray-900">Open, decide, schedule, review.</h2>
+            </div>
+            <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-bold text-gray-600">
+              7-day review loop
+            </span>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-4">
+            {[
+              {
+                title: 'Today opportunity',
+                copy: topOpportunity
+                  ? `Continue: ${topOpportunity.niche}`
+                  : 'Start from trend board and save one serious idea.',
+                href: topOpportunity ? getOpportunityResearchHref(topOpportunity) : '/trends',
+              },
+              {
+                title: 'Compare before filming',
+                copy: compareIds.length >= 2
+                  ? `${compareIds.length} videos in basket are ready to compare.`
+                  : 'Add 2-5 source videos to Analysis Basket.',
+                href: '/compare-new?type=videos',
+              },
+              {
+                title: 'Set alert threshold',
+                copy: activeAlerts > 0
+                  ? `${activeAlerts} active alert${activeAlerts === 1 ? '' : 's'} watching momentum.`
+                  : 'Choose metric, threshold, and email before leaving.',
+                href: '/alerts',
+              },
+              {
+                title: '7-day retro',
+                copy: 'Check whether saved trends grew, cooled, or became more competitive.',
+                href: '/watchlist',
+              },
+            ].map((item, index) => (
+              <Link key={item.title} href={item.href} className="rounded-xl border border-gray-200 bg-white p-4 hover:border-red-200 hover:bg-red-50">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-sm font-black text-red-700">{index + 1}</div>
+                <h3 className="mt-4 font-black text-gray-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-500">{item.copy}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div id="opportunities" className="rounded-2xl border border-gray-200 bg-white p-5">
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

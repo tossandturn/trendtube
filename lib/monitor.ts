@@ -345,11 +345,13 @@ export async function runHealthCheck(): Promise<HealthReport> {
   report.checks.errors.ok = report.checks.errors.count1h < 5
 
   // Overall status
-  const dataVeryStale = report.checks.dataFreshness.hoursSince === Infinity || report.checks.dataFreshness.hoursSince > 48
+  const dataAge = report.checks.dataFreshness.hoursSince
+  const dataVeryStale = dataAge === Infinity || dataAge > 48
+  const dataMateriallyDelayed = dataAge === Infinity || dataAge > 24
 
   if (!report.checks.errors.ok || (!report.checks.youtubeApi.ok && dataVeryStale)) {
     report.status = 'down'
-  } else if (!report.checks.youtubeApi.ok || !report.checks.quota.ok || !report.checks.dataFreshness.ok) {
+  } else if (!report.checks.youtubeApi.ok || !report.checks.quota.ok || dataMateriallyDelayed) {
     report.status = 'degraded'
   }
 

@@ -673,6 +673,101 @@ function getTrendDataGate(sourceVideos: number, totalViews: number, regionLabel:
   }
 }
 
+function buildTrendActionBrief({
+  title,
+  keyword,
+  sourceVideos,
+  totalViews,
+  avgVelocity,
+  avgEngagement,
+  confidence,
+  canShowRecommendations,
+}: {
+  title: string
+  keyword: string
+  sourceVideos: number
+  totalViews: number
+  avgVelocity: number
+  avgEngagement: number
+  confidence: number
+  canShowRecommendations: boolean
+}) {
+  const topic = trendTitleBase(title) || normalizeTrendKeyword(keyword)
+  const viewsPerVideo = sourceVideos > 0 ? totalViews / sourceVideos : 0
+  const action = !canShowRecommendations
+    ? sourceVideos < 3
+      ? 'Do not produce from this page yet'
+      : 'Study first, then compare source videos'
+    : avgVelocity >= 250000 && avgEngagement >= 3.5
+      ? 'Suitable for a long-form test'
+      : avgVelocity >= 150000
+        ? 'Adapt the packaging before filming'
+        : avgEngagement >= 4
+          ? 'Suitable for Shorts or a narrow angle'
+          : 'Track, but do not prioritize'
+  const why = !canShowRecommendations
+    ? 'The public sample is not thick enough for production guidance.'
+    : `${sourceVideos} source videos, ${formatNumber(Math.round(avgVelocity).toString())}/day velocity proxy, and ${avgEngagement.toFixed(2)}% average engagement.`
+  const risk = sourceVideos >= 20
+    ? 'Competition is visible. Copying the surface topic is likely too late.'
+    : sourceVideos >= 10
+      ? 'The trend is usable, but needs a differentiated format.'
+      : 'Sample size is still developing, so confidence is limited.'
+  const nextAction = !canShowRecommendations
+    ? 'Save it to watchlist, open stronger related trends, and recheck after the next hourly refresh.'
+    : 'Compare 3 source videos, pick one hook pattern, then draft one differentiated upload plan.'
+
+  return {
+    action,
+    why,
+    risk,
+    nextAction,
+    bestFormat: avgVelocity >= 250000 ? 'Long-form explainer or challenge' : avgEngagement >= 4 ? 'Shorts test or reaction cut' : 'Research only',
+    evidence: [
+      { label: 'Source videos', value: `${sourceVideos}`, source: 'YouTube Data API', type: 'Fact', note: 'Matched videos that passed the topic relevance filter.' },
+      { label: 'Evidence sample', value: formatNumber(totalViews.toString()), source: 'YouTube Data API', type: 'Fact', note: 'Total views across the matched source videos.' },
+      { label: '24h velocity proxy', value: `${formatNumber(Math.round(avgVelocity).toString())}/day`, source: 'Derived estimate', type: 'Derived', note: 'Views divided by publish age; useful for direction, not a private Studio metric.' },
+      { label: 'Engagement quality', value: `${avgEngagement.toFixed(2)}%`, source: 'Public metrics', type: 'Derived', note: 'Average likes plus comments relative to views.' },
+      { label: 'Views per video', value: formatNumber(Math.round(viewsPerVideo).toString()), source: 'Public sample', type: 'Derived', note: 'Demand divided by supply in the matched sample.' },
+      { label: 'Confidence', value: `${Math.round(confidence)}%`, source: 'Sample gate', type: 'Inference', note: 'Higher when there are enough matched source videos and real demand.' },
+    ],
+    workflow: {
+      titles: [
+        `Why ${topic} is taking off right now`,
+        `I studied ${topic} so you can decide faster`,
+        `${topic}: the safe angle vs the crowded angle`,
+        `Before you copy ${topic}, check this`,
+        `The creator playbook behind ${topic}`,
+        `Can a small channel still use ${topic}?`,
+        `${topic} in 2026: what actually works`,
+        `I compared the top ${topic} videos`,
+        `The hidden format in ${topic}`,
+        `${topic}: what to film this week`,
+      ],
+      hooks: [
+        `This trend is not just about ${topic}. The source videos share a packaging pattern.`,
+        `Before you copy the topic, look at the evidence: sample size, velocity, and engagement.`,
+        `Here is the angle I would test if I had one upload this week.`,
+      ],
+      thumbnailDirections: [
+        'Use one clear proof image from the format, not a generic topic collage.',
+        'Show the tension: winner vs loser, before vs after, or old way vs new way.',
+        'Keep text under four words and make the viewer payoff visible on mobile.',
+      ],
+      outline: [
+        'Open with the exact decision: worth following or not.',
+        'Show 2-3 source video patterns and what they have in common.',
+        'Explain the risk: saturation, creator personality, or timing.',
+        'Present your differentiated angle and why it is not a clone.',
+        'End with a clear next upload or series plan.',
+      ],
+      publishAdvice: avgVelocity >= 250000
+        ? 'Test within 24-48 hours while velocity is still visible.'
+        : 'Save to watchlist and wait for a stronger refresh before spending major production time.',
+    },
+  }
+}
+
 function RelatedTrendLinks({ keyword }: { keyword: string }) {
   return (
     <div className="space-y-2">
@@ -726,6 +821,16 @@ export default async function TrendPage({ params }: TrendPageProps) {
     : 0
   const regionLabel = REGION_META[region]?.label || region
   const dataGate = getTrendDataGate(displayVideos.length, totalViews, regionLabel)
+  const actionBrief = buildTrendActionBrief({
+    title: trendDisplayTitle,
+    keyword,
+    sourceVideos: displayVideos.length,
+    totalViews,
+    avgVelocity,
+    avgEngagement,
+    confidence: dataGate.confidence,
+    canShowRecommendations: dataGate.canShowRecommendations,
+  })
 
   const matchedTrendTerms = getTrendTerms(keyword, trendData.title).slice(0, 8)
   const noiseFilteredTerms = ['about', 'today', 'welcome', 'watch', 'full', 'official', 'latest', 'update']
@@ -881,6 +986,92 @@ export default async function TrendPage({ params }: TrendPageProps) {
               <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Confidence</div>
               <div className="mt-1 text-2xl font-black text-gray-950">{Math.round(dataGate.confidence)}%</div>
               <div className="mt-1 text-xs text-gray-500">{displayVideos.length} source videos</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-8 grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-red-600">Trend Action Brief</div>
+                <h2 className="mt-1 text-2xl font-black text-gray-950">{actionBrief.action}</h2>
+              </div>
+              <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${
+                dataGate.canShowRecommendations ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+              }`}>
+                {dataGate.canShowRecommendations ? 'Actionable' : 'Evidence-light'}
+              </span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ['Why', actionBrief.why],
+                ['Best format', actionBrief.bestFormat],
+                ['Risk', actionBrief.risk],
+                ['Next action', actionBrief.nextAction],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                  <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{label}</div>
+                  <div className="mt-2 text-sm leading-relaxed text-gray-800">{value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {actionBrief.evidence.map((item) => (
+                <div key={item.label} className="rounded-xl border border-gray-100 bg-white p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{item.label}</div>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      item.type === 'Fact' ? 'bg-green-100 text-green-700' : item.type === 'Derived' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {item.type}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-lg font-black text-gray-950">{item.value}</div>
+                  <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">{item.source}</div>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-600">{item.note}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-red-100 bg-red-50 p-5 sm:p-6">
+            <div className="mb-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-red-700">Creator workflow</div>
+              <h2 className="mt-1 text-xl font-black text-gray-950">Turn the trend into an upload plan</h2>
+              <p className="mt-2 text-sm leading-relaxed text-gray-700">{actionBrief.workflow.publishAdvice}</p>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">10 title tests</div>
+                <div className="grid max-h-72 gap-2 overflow-y-auto pr-1">
+                  {actionBrief.workflow.titles.map((title, index) => (
+                    <div key={title} className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-800">
+                      {index + 1}. {title}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl bg-white p-3">
+                  <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Opening hooks</div>
+                  <div className="mt-2 space-y-2 text-xs leading-relaxed text-gray-700">
+                    {actionBrief.workflow.hooks.map((hook) => <p key={hook}>{hook}</p>)}
+                  </div>
+                </div>
+                <div className="rounded-xl bg-white p-3">
+                  <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Thumbnail direction</div>
+                  <div className="mt-2 space-y-2 text-xs leading-relaxed text-gray-700">
+                    {actionBrief.workflow.thumbnailDirections.map((direction) => <p key={direction}>{direction}</p>)}
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-xl bg-white p-3">
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Script outline</div>
+                <div className="mt-2 grid gap-2 text-xs leading-relaxed text-gray-700">
+                  {actionBrief.workflow.outline.map((line) => <div key={line}>{line}</div>)}
+                </div>
+              </div>
             </div>
           </div>
         </section>
