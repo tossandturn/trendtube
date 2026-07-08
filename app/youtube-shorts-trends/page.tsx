@@ -127,7 +127,7 @@ export default async function ShortsTrendsPage() {
           <h2 className="text-lg font-bold mb-4 text-gray-900">Shorts FAQ</h2>
           <div className="space-y-3">
             {[
-              { q: 'What makes a Short go viral?', a: 'Strong hooks in the first 3 seconds, trending audio, and high retention rates are key factors.' },
+              { q: 'What makes a Short go viral?', a: 'Strong hooks in the first 3 seconds, trending audio, and strong public retention proxies such as engagement and replay-friendly structure are key factors.' },
               { q: 'How often should I post Shorts?', a: 'Consistency matters. Most successful Shorts creators post 3-5 times daily.' },
               { q: 'Can Shorts help grow my channel?', a: 'Yes! Shorts can drive massive traffic to your long-form content and boost subscriber growth.' },
             ].map((item, i) => (

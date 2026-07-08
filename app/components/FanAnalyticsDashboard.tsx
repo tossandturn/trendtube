@@ -486,8 +486,9 @@ export default function FanAnalyticsDashboard({ videos, channelData }: FanAnalyt
         <div className="bg-gray-50 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="text-sm font-bold text-gray-900">Traffic Sources</h3>
-            <span className="text-xs text-gray-500">Last 30 days</span>
+            <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">Modeled estimate</span>
           </div>
+          <p className="mb-3 text-xs leading-relaxed text-gray-500">Estimated from public video characteristics, not private YouTube Studio traffic-source data.</p>
 
           <div className="flex items-center gap-4">
             {/* Donut Chart */}
@@ -781,7 +782,11 @@ export default function FanAnalyticsDashboard({ videos, channelData }: FanAnalyt
 
       {/* Audience Demographics */}
       <div className="mb-6">
-        <h3 className="text-sm font-bold text-gray-900 mb-4">Audience Demographics (Last 30 Days)</h3>
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-bold text-gray-900">Audience Demographics</h3>
+          <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">Modeled estimate</span>
+        </div>
+        <p className="mb-3 text-xs leading-relaxed text-gray-500">Audience and demographic values are inferred from public content signals. Private YouTube Studio demographic data is not available here.</p>
 
         <div className="grid sm:grid-cols-3 gap-4">
           {/* Gender Distribution */}

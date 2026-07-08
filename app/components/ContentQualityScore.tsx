@@ -38,7 +38,7 @@ function calculateContentScore(video: any): ScoreData {
   // Industry average engagement is 2-3%, so score relative to that
   const engagementScore = Math.min(100, (engagementRate / 3) * 50 + 50)
 
-  // Like rate: average is 2-4%
+  // Like rate is a public proxy. Private retention is not available via public API.
   const retentionScore = Math.min(100, (likeRate / 4) * 50 + 50)
 
   // Velocity score based on views per day
@@ -149,7 +149,7 @@ export default function ContentQualityScore({ videoId, channelId, type }: Conten
             <span className="text-2xl">📊</span>
             Content Quality Score
           </h3>
-          <p className="text-indigo-200 text-sm">Based on actual engagement metrics</p>
+          <p className="text-indigo-200 text-sm">Public metrics with clearly labeled proxies</p>
         </div>
         <div className="text-right">
           <div className={`text-4xl font-bold ${getScoreColor(score.overall)}`}>
@@ -178,7 +178,7 @@ export default function ContentQualityScore({ videoId, channelId, type }: Conten
       {/* Dimension Scores */}
       <div className="grid grid-cols-3 gap-3">
         <ScoreItem label="Engagement" score={score.engagement} icon="💬" />
-        <ScoreItem label="Retention" score={score.retention} icon="👁️" />
+        <ScoreItem label="Retention proxy" score={score.retention} icon="R" />
         <ScoreItem label="Velocity" score={score.growth} icon="📈" />
       </div>
 
@@ -194,6 +194,7 @@ export default function ContentQualityScore({ videoId, channelId, type }: Conten
                 : score.overall >= 60
                 ? 'Good performance with room for improvement. Focus on increasing engagement rate through stronger CTAs.'
                 : 'Below average engagement. Analyze high-performing similar videos to identify improvement opportunities.'}
+              {' '}Retention proxy is estimated from public like/view behavior, not private YouTube Studio retention.
             </p>
           </div>
         </div>

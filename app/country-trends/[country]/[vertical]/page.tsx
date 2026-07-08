@@ -152,12 +152,12 @@ export default async function VerticalTrendPage({ params }: PageProps) {
       {/* Schema Markup */}
       <DatasetSchema
         name={`${verticalContent.name} Trends in ${countryContent.name}`}
-        description={`Comprehensive trend analysis for ${verticalContent.name} content on YouTube in ${countryContent.name}, including top videos, engagement metrics, and audience demographics.`}
+        description={`Comprehensive trend analysis for ${verticalContent.name} content on YouTube in ${countryContent.name}, including top videos, engagement metrics, and modeled audience-fit estimates.`}
         url={`https://tubefission.com/trends/${country.toLowerCase()}/${vertical.toLowerCase()}`}
         keywords={[verticalContent.name, countryContent.name, 'YouTube trends', 'content analytics']}
         temporalCoverage={today}
         spatialCoverage={countryContent.name}
-        variableMeasured={['View count', 'Engagement rate', 'Audience demographics', 'Content performance']}
+        variableMeasured={['View count', 'Engagement rate', 'Modeled audience fit', 'Content performance']}
       />
       <BreadcrumbSchema items={breadcrumbItems} />
 
@@ -294,8 +294,8 @@ export default async function VerticalTrendPage({ params }: PageProps) {
                   <p className="leading-relaxed">
                     Engagement rates in this category typically range between 5-12%, with top-performing content
                     achieving viral velocity through strategic thumbnail optimization and title crafting. The
-                    average view duration for successful {verticalContent.name.toLowerCase()} content in {countryContent.name}
-                    exceeds platform averages, indicating strong audience retention when content matches viewer expectations.
+                    average public engagement proxy for successful {verticalContent.name.toLowerCase()} content in {countryContent.name}
+                    exceeds platform averages, indicating stronger likely retention when content matches viewer expectations.
                   </p>
                 </div>
               </article>
@@ -325,7 +325,7 @@ export default async function VerticalTrendPage({ params }: PageProps) {
                     <h3 className="font-semibold text-gray-900 mb-2">For Established Creators</h3>
                     <p className="text-gray-600">
                       Leverage {verticalContent.trendingFormats[2].toLowerCase()} to expand into adjacent audiences
-                      and cross-pollinate your existing viewership with new demographics.
+                      and cross-pollinate your existing viewership with adjacent audience segments.
                     </p>
                   </div>
                 </div>
@@ -334,12 +334,15 @@ export default async function VerticalTrendPage({ params }: PageProps) {
 
             {/* Right Column - Sidebar */}
             <div className="space-y-6">
-              {/* Audience Demographics */}
+              {/* Modeled Audience Fit */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                 <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <PieChart className="w-5 h-5 text-red-600" />
-                  Audience Demographics
+                  Modeled Audience Fit
                 </h3>
+                <p className="mb-4 text-xs leading-relaxed text-gray-500">
+                  These age segments are directional estimates from public content/category patterns, not private YouTube Studio demographics.
+                </p>
                 <div className="space-y-4">
                   {verticalContent.audienceDemographics.map((demo, idx) => (
                     <div key={idx}>

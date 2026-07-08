@@ -29,18 +29,21 @@ function StatusBadge({ status }: { status: string }) {
 
 function CheckCard({
   title,
-  ok,
+  status = 'ok',
   children,
 }: {
   title: string
-  ok: boolean
+  status?: 'ok' | 'warning' | 'bad'
   children: React.ReactNode
 }) {
+  const border = status === 'ok' ? 'border-l-green-500' : status === 'warning' ? 'border-l-yellow-500' : 'border-l-red-500'
+  const dot = status === 'ok' ? 'bg-green-500 pulse-glow-green' : status === 'warning' ? 'bg-yellow-500' : 'bg-red-500 pulse-glow-red'
+
   return (
-    <div className={`glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent border-l-4 ${ok ? 'border-l-green-500' : 'border-l-red-500'}`}>
+    <div className={`glass-panel neon-border rounded-2xl p-5 sm:p-6 glow-hover corner-accent border-l-4 ${border}`}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-sm sm:text-base">{title}</h3>
-        <span className={`w-2.5 h-2.5 rounded-full ${ok ? 'bg-green-500 pulse-glow-green' : 'bg-red-500 pulse-glow-red'}`} />
+        <span className={`w-2.5 h-2.5 rounded-full ${dot}`} />
       </div>
       {children}
     </div>
@@ -57,6 +60,18 @@ export default async function StatusPage() {
       : dataAge <= 48
         ? 'Delayed but usable'
         : 'Stale'
+  const dataFreshnessState: 'ok' | 'warning' | 'bad' = dataAge === Infinity || dataAge > 48
+    ? 'bad'
+    : dataAge > 3
+      ? 'warning'
+      : 'ok'
+  const statusExplanation = report.status === 'healthy' && dataFreshnessState === 'warning'
+    ? 'Overall status can remain healthy while cached trend data is delayed but still usable.'
+    : report.status === 'degraded'
+      ? 'One or more checks materially affects current data collection.'
+      : report.status === 'down'
+        ? 'A critical collection or API condition needs attention.'
+        : 'All critical systems are operating normally.'
 
   return (
     <main className="min-h-screen bg-[#070707] text-white terminal-grid relative overflow-hidden">
@@ -82,6 +97,7 @@ export default async function StatusPage() {
             <div className="text-zinc-500 text-xs data-mono tracking-wider">OVERALL STATUS</div>
             <StatusBadge status={report.status} />
           </div>
+          <p className="mb-4 text-xs leading-relaxed text-zinc-500">{statusExplanation}</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="glass-panel rounded-xl p-3 text-center">
               <div className="text-zinc-500 text-[10px] data-mono tracking-wider mb-1">API LATENCY</div>
@@ -118,7 +134,7 @@ export default async function StatusPage() {
 
         {/* Detailed Checks */}
         <div className="grid sm:grid-cols-2 gap-4 sm:gap-5 mb-8">
-          <CheckCard title="YouTube API Connectivity" ok={report.checks.youtubeApi.ok}>
+          <CheckCard title="YouTube API Connectivity" status={report.checks.youtubeApi.ok ? 'ok' : 'bad'}>
             <div className="text-zinc-400 text-sm mb-2">
               {report.checks.youtubeApi.ok
                 ? `Responding in ${report.checks.youtubeApi.latencyMs}ms`
@@ -129,7 +145,7 @@ export default async function StatusPage() {
             </div>
           </CheckCard>
 
-          <CheckCard title="API Quota Usage" ok={report.checks.quota.ok}>
+          <CheckCard title="API Quota Usage" status={report.checks.quota.ok ? 'ok' : 'bad'}>
             <div className="text-zinc-400 text-sm mb-2">
               {report.checks.quota.used.toLocaleString()} / {report.checks.quota.limit.toLocaleString()} units
             </div>
@@ -141,7 +157,7 @@ export default async function StatusPage() {
             </div>
           </CheckCard>
 
-          <CheckCard title="Data Freshness" ok={report.checks.dataFreshness.ok}>
+          <CheckCard title="Data Freshness" status={dataFreshnessState}>
             <div className="text-zinc-400 text-sm mb-2">
               {report.checks.dataFreshness.lastUpdate
                 ? `Last update: ${new Date(report.checks.dataFreshness.lastUpdate).toLocaleString('en-US', { timeZone: 'UTC' })} UTC`
@@ -150,11 +166,13 @@ export default async function StatusPage() {
             <div className="text-zinc-500 text-xs data-mono">
               {report.checks.dataFreshness.hoursSince === Infinity
                 ? 'Run data collection to initialize history'
-                : `${report.checks.dataFreshness.hoursSince} hours since last collection`}
+                : dataFreshnessState === 'warning'
+                  ? `${report.checks.dataFreshness.hoursSince} hours since last collection. Cached data remains usable; recommendations show snapshot timestamps.`
+                  : `${report.checks.dataFreshness.hoursSince} hours since last collection`}
             </div>
           </CheckCard>
 
-          <CheckCard title="Error Rate (1h)" ok={report.checks.errors.ok}>
+          <CheckCard title="Error Rate (1h)" status={report.checks.errors.ok ? 'ok' : 'bad'}>
             <div className="text-zinc-400 text-sm mb-2">
               {report.checks.errors.count1h === 0
                 ? 'No errors in the last hour'

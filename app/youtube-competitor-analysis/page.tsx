@@ -53,7 +53,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'What is the Viral Score?',
-    answer: 'Viral Score is an AI-calculated metric (0-100) that predicts a videos potential to go viral based on engagement velocity, audience retention signals, and historical trend patterns from similar content.',
+    answer: 'Viral Score is an AI-calculated metric (0-100) that estimates a videos public-signal momentum from engagement velocity, retention proxies, and historical trend patterns from similar content. It does not use private YouTube Studio retention.',
   },
   {
     question: 'Can I compare more than two channels?',
@@ -222,7 +222,7 @@ export default async function CompetitorAnalysisPage() {
           </div>
           <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
             <h3 className="font-semibold text-gray-900 mb-2">Upload Consistency</h3>
-            <p className="text-sm text-gray-600">Analyze publishing schedules to understand the optimal frequency and timing for audience retention.</p>
+            <p className="text-sm text-gray-600">Analyze publishing schedules to understand optimal frequency and timing using public repeat-viewing and retention proxy signals.</p>
           </div>
         </div>
 

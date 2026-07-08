@@ -296,12 +296,12 @@ export default function HomePage() {
         </p>
         <ul className="list-disc list-inside space-y-3 text-gray-700 leading-relaxed mb-10">
           <li><strong>Engagement velocity</strong> - how quickly a video gains likes, comments, and shares relative to its age.</li>
-          <li><strong>Audience retention patterns</strong> - identifying which content types keep viewers watching longer.</li>
-          <li><strong>Thumbnail effectiveness</strong> - analyzing click-through rates based on visual composition and text overlays.</li>
+          <li><strong>Retention proxies</strong> - estimating which content structures are likely to keep viewers watching longer.</li>
+          <li><strong>Thumbnail packaging signals</strong> - evaluating visual composition and text overlays as public-data CTR proxies.</li>
           <li><strong>SEO optimization scores</strong> - evaluating title, description, and tag quality against top-performing videos.</li>
         </ul>
         <p className="text-gray-700 leading-relaxed mb-10">
-          These metrics are computed from YouTube API-backed data, refreshed through transparent cache windows, and filtered by country so you can see what works in your specific market. No guesswork, no outdated spreadsheets - just clear, visual intelligence powered by machine learning.
+          Public metrics come from YouTube API-backed data, while retention, CTR, geography, and audience fit are labeled estimates unless private Studio data is explicitly connected. Data is refreshed through transparent cache windows and filtered by country so you can see what works in your specific market.
         </p>
 
         <h2 className="text-3xl font-bold text-gray-900 mb-6">Channel Analytics & Competitor Research</h2>
@@ -312,7 +312,7 @@ export default function HomePage() {
           <li><strong>Subscriber velocity</strong> - how fast a channel is gaining subscribers relative to its upload frequency.</li>
           <li><strong>Engagement rate</strong> - the ratio of likes and comments to total views, revealing content quality.</li>
           <li><strong>Top-performing videos</strong> - identify which titles, thumbnails, and topics drive the most traffic.</li>
-          <li><strong>Upload consistency</strong> - track publishing schedules to understand audience retention patterns.</li>
+          <li><strong>Upload consistency</strong> - track publishing schedules to understand repeat-viewing and retention proxy patterns.</li>
         </ul>
         <p className="text-gray-700 leading-relaxed mb-10">
           Use these insights to reverse-engineer competitor strategies, identify content gaps in your niche, and optimize your publishing schedule for maximum growth.

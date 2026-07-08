@@ -363,7 +363,7 @@ export async function generateMetadata({ params }: VideoPageProps): Promise<Meta
   const image = video?.snippet?.thumbnails?.high?.url || video?.snippet?.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
   return {
     title: `Why "${title}" Went Viral on YouTube — TubeFission`,
-    description: `Analyze why "${title}" is trending, view retention stats, viral growth trajectory, and AI-powered creator insights. Discover actionable opportunity.`,
+    description: `Analyze why "${title}" is trending, view retention proxies, viral growth trajectory, and AI-powered creator insights. Discover actionable opportunity.`,
     alternates: {
       canonical: url,
     },

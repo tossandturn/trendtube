@@ -820,7 +820,13 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
 
             {/* Audience Insights */}
             <div className="bg-white rounded-xl p-6 border border-gray-200 mb-6">
-              <h3 className="font-bold text-gray-900 mb-4">Audience Intelligence</h3>
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <h3 className="font-bold text-gray-900">Audience Intelligence</h3>
+                <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">Public-data estimates</span>
+              </div>
+              <p className="mb-4 text-xs leading-relaxed text-gray-500">
+                Loyalty, growth velocity, and retention estimates are modeled from public channel/video signals. Private YouTube Studio retention and demographic data are not available here.
+              </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <div className="text-2xl font-bold text-gray-900">{aiIntelligence.audienceInsights.loyaltyScore}</div>
@@ -836,7 +842,7 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
                 </div>
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">{aiIntelligence.audienceInsights.retentionEstimate}%</div>
-                  <div className="text-xs text-gray-600 mt-1">Retention Est.</div>
+                  <div className="text-xs text-gray-600 mt-1">Retention proxy</div>
                 </div>
               </div>
             </div>
@@ -888,11 +894,12 @@ export default async function ChannelPage({ params }: ChannelPageProps) {
           <EnhancedChannelAnalytics channel={channel} videos={videos} />
         </div>
 
-        {/* Audience Demographics */}
+        {/* Modeled Audience Fit */}
         <div className="mb-10">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <span>👥</span> Audience Demographics
-          </h2>
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Modeled Audience Fit</h2>
+            <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">Estimated</span>
+          </div>
           <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
             <AudienceAnalytics channel={channel} />
           </div>

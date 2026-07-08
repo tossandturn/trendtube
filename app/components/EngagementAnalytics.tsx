@@ -30,7 +30,7 @@ function calculateEngagementMetrics(video: any): EngagementMetrics {
   const likeRate = views > 0 ? (likes / views) * 100 : 0
   const commentRate = views > 0 ? (comments / views) * 1000 : 0
 
-  // Estimate watch time based on engagement (industry heuristic)
+  // Estimate watch time based on engagement (public-data heuristic).
   const estimatedWatchTime = engagementRate > 5 ? 240 : engagementRate > 3 ? 180 : 120
 
   // Performance tier based on real benchmarks
@@ -107,9 +107,12 @@ export default function EngagementAnalytics({ videoId, channelId }: EngagementAn
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-        <span className="text-2xl">📊</span>
+        <span className="text-2xl">E</span>
         Engagement Analytics
       </h3>
+      <p className="text-xs leading-relaxed text-gray-500">
+        Views, likes, and comments come from public YouTube data. Watch time is an estimate, not private YouTube Studio retention.
+      </p>
 
       {/* Performance Tier */}
       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
@@ -150,9 +153,9 @@ export default function EngagementAnalytics({ videoId, channelId }: EngagementAn
           <div className="text-xs text-gray-400 mt-1">{metrics.commentRate.toFixed(1)} per 1K views</div>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="text-sm text-gray-500 mb-1">Est. Watch Time</div>
+          <div className="text-sm text-gray-500 mb-1">Estimated Watch Time</div>
           <div className="text-2xl font-bold text-green-600">~{metrics.estimatedWatchTime}s</div>
-          <div className="text-xs text-gray-400 mt-1">Based on engagement</div>
+          <div className="text-xs text-gray-400 mt-1">Public engagement proxy</div>
         </div>
       </div>
 
@@ -205,7 +208,7 @@ export default function EngagementAnalytics({ videoId, channelId }: EngagementAn
       {/* Benchmark Comparison */}
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
         <h4 className="font-semibold text-amber-900 mb-2 flex items-center gap-2">
-          <span>📈</span> Benchmark Analysis
+          <span>B</span> Benchmark Analysis
         </h4>
         <p className="text-sm text-amber-800">
           {metrics.engagementRate > 5

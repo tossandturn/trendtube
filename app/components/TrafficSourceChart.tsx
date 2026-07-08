@@ -137,13 +137,16 @@ export default function TrafficSourceChart({ video }: TrafficSourceChartProps) {
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="w-1 h-5 sm:h-6 rounded-full bg-gradient-to-b from-blue-400 to-blue-600" />
           <h2 className="text-base sm:text-lg font-bold text-gray-900">Traffic Sources</h2>
-          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded-full hidden sm:inline">Views</span>
+          <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full hidden sm:inline">Estimated mix</span>
         </div>
+      </div>
+      <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+        Source mix is modeled from public video characteristics. YouTube Studio traffic-source data is private and is not available here.
       </div>
 
       {/* Total Views */}
       <div className="text-center mb-5 sm:mb-6">
-        <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Views</div>
+        <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Public Views</div>
         <div className="text-2xl sm:text-3xl font-black text-gray-900">{formatNumber(data.totalViews)}</div>
       </div>
 
@@ -245,7 +248,7 @@ export default function TrafficSourceChart({ video }: TrafficSourceChartProps) {
             <span className="text-xs font-semibold text-blue-600">Mobile First</span>
           </div>
           <p className="text-xs text-blue-800">
-            {mobileShare}% of views come from mobile devices. Optimize for vertical viewing and mobile thumbnails.
+            Estimated {mobileShare}% mobile-weighted viewing. Optimize for vertical readability and mobile thumbnails.
           </p>
         </div>
 
@@ -257,7 +260,7 @@ export default function TrafficSourceChart({ video }: TrafficSourceChartProps) {
             <span className="text-xs font-semibold text-purple-600">Desktop + TV</span>
           </div>
           <p className="text-xs text-purple-800">
-            Desktop and TV combined account for {Math.round((desktopTvShare + (data.sources.find(s => s.name === 'TV')?.percentage || 0)) * 10) / 10}% — longer content performs well here.
+            Desktop and TV combined are modeled at {Math.round((desktopTvShare + (data.sources.find(s => s.name === 'TV')?.percentage || 0)) * 10) / 10}%. Longer content may perform well here.
           </p>
         </div>
 
@@ -269,7 +272,7 @@ export default function TrafficSourceChart({ video }: TrafficSourceChartProps) {
             <span className="text-xs font-semibold text-green-600">Top Channel</span>
           </div>
           <p className="text-xs text-green-800">
-            {topSource?.name} is your top traffic source at {topSource?.percentage}%. Consider platform-specific CTAs.
+            {topSource?.name} is the top modeled source at {topSource?.percentage}%. Treat this as a planning proxy.
           </p>
         </div>
       </div>

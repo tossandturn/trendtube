@@ -5,6 +5,19 @@ interface AIOutput {
   type: 'title' | 'hook' | 'thumbnail' | 'script'
   content: string
   source: string
+  evidence?: Array<{
+    label: string
+    value: string
+    type: 'Fact' | 'Derived' | 'Inference'
+    source: string
+    note: string
+  }>
+  sourceVideos?: Array<{
+    id: string
+    title: string
+    channelTitle: string
+    views: number
+  }>
 }
 
 export async function POST(request: Request) {
@@ -34,6 +47,13 @@ export async function POST(request: Request) {
     // Analyze patterns from top videos
     const titles = topVideos.map((v: any) => v.snippet?.title || '')
     const patterns = analyzeTitlePatterns(titles)
+    const evidence = buildEvidence(topic, topVideos, patterns)
+    const sourceVideos = topVideos.slice(0, 5).map((video: any) => ({
+      id: video.id,
+      title: video.snippet?.title || 'Untitled video',
+      channelTitle: video.snippet?.channelTitle || 'Unknown channel',
+      views: Number(video.statistics?.viewCount || 0),
+    }))
 
     // Generate content based on type and analyzed patterns
     let result: AIOutput
@@ -46,20 +66,76 @@ export async function POST(request: Request) {
         result = generateHook(topic, patterns, topVideos)
         break
       case 'thumbnail':
-        result = generateThumbnail(topic, patterns)
+        result = generateThumbnailEvidence(topic, patterns)
         break
       case 'script':
-        result = generateScript(topic, patterns)
+        result = generateScriptEvidence(topic, patterns)
         break
       default:
         return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
     }
 
-    return NextResponse.json(result)
+    return NextResponse.json({ ...result, evidence, sourceVideos })
   } catch (error) {
     console.error('AI Assistant error:', error)
     return NextResponse.json({ error: 'Failed to generate content' }, { status: 500 })
   }
+}
+
+function formatCompact(num: number): string {
+  if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`
+  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`
+  return Math.round(num).toLocaleString()
+}
+
+function buildEvidence(topic: string, topVideos: any[], patterns: ReturnType<typeof analyzeTitlePatterns>): AIOutput['evidence'] {
+  const totalViews = topVideos.reduce((sum, video) => sum + Number(video.statistics?.viewCount || 0), 0)
+  const avgViews = topVideos.length > 0 ? totalViews / topVideos.length : 0
+  const patternSignals = [
+    patterns.hasNumbers > 0 ? `${patterns.hasNumbers} use numbers` : '',
+    patterns.hasHowTo > 0 ? `${patterns.hasHowTo} use how-to framing` : '',
+    patterns.hasSecret > 0 ? `${patterns.hasSecret} use curiosity/secret framing` : '',
+    patterns.hasResult > 0 ? `${patterns.hasResult} show results or transformation` : '',
+  ].filter(Boolean).join(', ') || 'No dominant title pattern found'
+
+  return [
+    {
+      label: 'Source sample',
+      value: `${topVideos.length} videos`,
+      type: 'Fact',
+      source: 'YouTube Data API',
+      note: `Top public videos found for "${topic}" and related searches.`,
+    },
+    {
+      label: 'Public demand',
+      value: formatCompact(totalViews),
+      type: 'Fact',
+      source: 'YouTube Data API',
+      note: `Total public views across the analyzed sample. Average: ${formatCompact(avgViews)} views/video.`,
+    },
+    {
+      label: 'Title pattern',
+      value: patternSignals,
+      type: 'Derived',
+      source: 'Title metadata',
+      note: 'Pattern counts are extracted from public titles, not private CTR data.',
+    },
+    {
+      label: 'Keywords',
+      value: patterns.topKeywords.slice(0, 5).join(', ') || 'No strong keyword cluster',
+      type: 'Derived',
+      source: 'Public titles',
+      note: 'Generic stop words are removed before counting repeated terms.',
+    },
+    {
+      label: 'AI boundary',
+      value: 'Creative draft',
+      type: 'Inference',
+      source: 'TubeFission interpretation',
+      note: 'Suggestions adapt public patterns. They do not use private retention, CTR, revenue, or audience demographics.',
+    },
+  ]
 }
 
 function analyzeTitlePatterns(titles: string[]) {
@@ -146,7 +222,7 @@ function generateTitle(topic: string, patterns: any): AIOutput {
   return {
     type: 'title',
     content: selectedTemplate,
-    source: `Analyzed ${patterns.avgLength > 0 ? patterns.avgLength : 50}+ character avg from top performers`
+    source: `Public-title pattern inference. Average title length in sample: ${patterns.avgLength || 0} characters.`
   }
 }
 
@@ -177,7 +253,7 @@ function generateHook(topic: string, patterns: any, topVideos: any[]): AIOutput 
   return {
     type: 'hook',
     content: hooks[hash % hooks.length],
-    source: `Based on top videos averaging ${viewStr} views`
+    source: `Based on public source videos averaging ${viewStr} views. Hook is an inferred creative draft.`
   }
 }
 
@@ -211,7 +287,7 @@ function generateThumbnail(topic: string, patterns: any): AIOutput {
   return {
     type: 'thumbnail',
     content: thumbnails[hash % thumbnails.length],
-    source: `Analyzed ${patterns.topKeywords?.slice(0, 3).join(', ')} patterns from top performers`
+    source: `Inferred from repeated public title/topic patterns: ${patterns.topKeywords?.slice(0, 3).join(', ') || 'no strong keyword cluster'}.`
   }
 }
 
@@ -259,5 +335,86 @@ function generateScript(topic: string, patterns: any): AIOutput {
     type: 'script',
     content: structure,
     source: `Analyzed ${patterns.avgLength} char avg titles, top keywords: ${patterns.topKeywords?.slice(0, 5).join(', ')}`
+  }
+}
+
+function generateThumbnailEvidence(topic: string, patterns: any): AIOutput {
+  const thumbnails: string[] = []
+
+  if (patterns.hasResult > 3) {
+    thumbnails.push(
+      'Split screen: before/after result, one clear transformation, minimal text',
+      'One bold arrow pointing to the proof/result, with a short outcome label'
+    )
+  }
+
+  if (patterns.hasSecret > 2) {
+    thumbnails.push(
+      'Close reaction plus one blurred mystery element; text: "THE TRUTH"',
+      'Simple face/object contrast with one hidden detail highlighted'
+    )
+  }
+
+  thumbnails.push(
+    'Creator reaction plus topic visual side by side',
+    'Large number or result displayed on a high-contrast background',
+    'Question mark plus one recognizable topic object',
+    'Close-up of the problem and solution with one arrow annotation',
+    'Split comparison showing wrong way vs your way'
+  )
+
+  const hash = topic.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
+
+  return {
+    type: 'thumbnail',
+    content: thumbnails[hash % thumbnails.length],
+    source: `Inferred from repeated public title/topic patterns: ${patterns.topKeywords?.slice(0, 3).join(', ') || 'no strong keyword cluster'}.`,
+  }
+}
+
+function generateScriptEvidence(topic: string, patterns: any): AIOutput {
+  const structure = `SCRIPT STRUCTURE (public-pattern draft)
+
+[0:00-0:05] HOOK
+"${patterns.hasSecret > 2 ? `I'm about to show you the ${topic} secret that changed everything...` : `In the next 10 minutes, I'm going to show you exactly how I mastered ${topic}...`}"
+
+[0:05-0:30] PROBLEM SETUP
+- Most people struggle with ${topic} because...
+- Common mistakes that hold creators back
+- The #1 reason why ${patterns.topKeywords?.[0] || 'beginners'} fail
+
+[0:30-2:00] SOLUTION INTRO
+- What I discovered after ${patterns.hasTimeFrame > 2 ? '30 days of testing' : 'extensive research'}
+- The ${patterns.hasSecret > 2 ? 'hidden' : 'simple'} approach nobody talks about
+- Why this works differently than you think
+
+[2:00-7:00] MAIN CONTENT
+- Step 1: [Actionable first step]
+- Step 2: [Implementation detail]
+- Step 3: [Optimization tip]
+- Include ${patterns.topKeywords?.slice(0, 3).join('/')} reference
+
+[7:00-8:30] PROOF/RESULTS
+- Show actual results/data
+- Before/after comparison
+- Testimonial or example
+
+[8:30-9:30] COMMON QUESTIONS
+- Address top comment questions
+- Overcome objections
+- Set expectations
+
+[9:30-10:00] CTA
+"If you found this helpful, subscribe for more ${topic} content. Comment 'READY' below if you're implementing this today!"
+
+---
+Target length: 8-12 minutes
+Focus keywords: ${patterns.topKeywords?.slice(0, 5).join(', ') || topic}
+Based on: ${patterns.hasResult > 3 ? 'results-driven' : 'educational'} public-title pattern`
+
+  return {
+    type: 'script',
+    content: structure,
+    source: `Public sample inference. Average title length: ${patterns.avgLength || 0} chars. Top keywords: ${patterns.topKeywords?.slice(0, 5).join(', ') || 'none'}.`,
   }
 }

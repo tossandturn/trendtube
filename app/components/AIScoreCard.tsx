@@ -73,7 +73,7 @@ export default function AIScoreCard({ videoId, channelId, type, videoData, chann
           const title = videoData.snippet?.title || ''
           const qualityScore = Math.min(100, 50 + (title.length > 30 ? 20 : 0) + (views > 10000 ? 30 : 0))
 
-          // Calculate retention estimate based on engagement
+          // Public-data proxy based on engagement; private retention is not available.
           const retentionScore = Math.min(100, Math.round(engagementRate * 10))
 
           // Overall score weighted combination
@@ -133,7 +133,7 @@ export default function AIScoreCard({ videoId, channelId, type, videoData, chann
           // Quality score based on consistency
           const qualityScore = Math.min(100, 40 + (avgEngagement > 3 ? 30 : 0) + (videos.length >= 10 ? 30 : 0))
 
-          // Retention based on views per subscriber
+          // Loyalty proxy based on views per subscriber; private retention is not available.
           const viewsPerSubscriber = subscriberCount > 0 ? totalViews / subscriberCount : 0
           const retentionScore = Math.min(100, Math.round(viewsPerSubscriber * 10))
 
@@ -217,10 +217,10 @@ export default function AIScoreCard({ videoId, channelId, type, videoData, chann
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
-            <span className="text-2xl">🤖</span>
+            <span className="text-2xl">AI</span>
             AI Content Quality Score
           </h3>
-          <p className="text-indigo-200 text-sm">Deep analysis of similar {type === 'video' ? 'videos' : 'channels'}</p>
+          <p className="text-indigo-200 text-sm">Public metrics with clearly labeled proxy signals</p>
         </div>
         <div className="text-right">
           <div className={`text-4xl font-bold ${getScoreColor(score.overall)}`}>
@@ -260,16 +260,16 @@ export default function AIScoreCard({ videoId, channelId, type, videoData, chann
 
       {/* Dimension Scores */}
       <div className="grid grid-cols-2 gap-3">
-        <ScoreItem label="Content Quality" score={score.quality} icon="✨" />
-        <ScoreItem label="Engagement" score={score.engagement} icon="💬" />
-        <ScoreItem label="Retention" score={score.retention} icon="👁️" />
-        <ScoreItem label="Growth Potential" score={score.growth} icon="📈" />
+        <ScoreItem label="Content Quality" score={score.quality} icon="Q" />
+        <ScoreItem label="Engagement" score={score.engagement} icon="E" />
+        <ScoreItem label="Retention proxy" score={score.retention} icon="R" />
+        <ScoreItem label="Growth Potential" score={score.growth} icon="G" />
       </div>
 
       {/* AI Recommendation */}
       <div className="mt-4 bg-white/10 rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <span className="text-2xl">💡</span>
+          <span className="text-2xl">Tip</span>
           <div>
             <div className="font-semibold mb-1">AI Recommendations</div>
             <p className="text-sm text-indigo-100">
@@ -278,6 +278,9 @@ export default function AIScoreCard({ videoId, channelId, type, videoData, chann
                 : score.overall >= 70
                 ? 'Good overall performance. Optimizing titles and thumbnails can further improve CTR.'
                 : 'Content has potential. Analyze top-performing similar videos to learn their success factors.'}
+            </p>
+            <p className="mt-2 text-xs text-indigo-100">
+              Retention proxy is inferred from public engagement and channel/video behavior, not private YouTube Studio retention.
             </p>
           </div>
         </div>

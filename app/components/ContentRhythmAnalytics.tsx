@@ -172,20 +172,23 @@ export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalytics
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="w-1 h-5 sm:h-6 rounded-full bg-gradient-to-b from-pink-400 to-pink-600" />
           <h2 className="text-base sm:text-lg font-bold text-gray-900">Content Rhythm</h2>
-          <span className="text-xs px-2 py-1 bg-pink-100 text-pink-600 rounded-full hidden sm:inline">Retention</span>
+          <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full hidden sm:inline">Retention proxy</span>
         </div>
+      </div>
+      <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+        Retention and dropoff are modeled from public engagement, duration, and content structure. Private YouTube Studio retention curves are not available here.
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <div className="p-3 sm:p-4 bg-pink-50/50 rounded-xl border border-pink-100">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Avg. Watch Time</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Modeled Avg. Watch Time</div>
           <div className="text-xl sm:text-2xl font-black text-pink-600">{data.averageProgress}</div>
           <div className="text-xs text-gray-500 mt-1">Duration: {data.totalDuration}</div>
         </div>
 
         <div className="p-3 sm:p-4 bg-pink-50/50 rounded-xl border border-pink-100">
-          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Completion Rate</div>
+          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Modeled Completion Rate</div>
           <div className="text-xl sm:text-2xl font-black text-pink-600">{data.completionRate.toFixed(1)}%</div>
           <div className="text-xs text-gray-500 mt-1">
             {data.completionRate > 42.8 ? '+' : ''}{(data.completionRate - 42.8).toFixed(1)}% vs category
@@ -206,7 +209,7 @@ export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalytics
           <div className="flex items-center gap-3 sm:gap-4 text-xs">
             <div className="flex items-center gap-1">
               <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-pink-500" />
-              <span className="text-gray-600">This Video</span>
+              <span className="text-gray-600">This Video Proxy</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-gray-400" />
@@ -344,7 +347,7 @@ export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalytics
 
       {/* Comparison with similar videos */}
       <div>
-        <h3 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4">Comparison</h3>
+        <h3 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 sm:mb-4">Modeled Comparison</h3>
         <div className="space-y-3 sm:space-y-4">
           {data.comparisonVideos.map((video, index) => (
             <div key={index} className="flex items-center gap-3 sm:gap-4">
@@ -388,7 +391,7 @@ export default function ContentRhythmAnalytics({ video }: ContentRhythmAnalytics
             <span className="text-xs font-semibold text-rose-600">Optimization Tips</span>
           </div>
           <p className="text-xs text-rose-800">
-            Completion rate of {data.completionRate.toFixed(1)}% is performing well.
+            Modeled completion rate of {data.completionRate.toFixed(1)}% is performing well.
             To improve further, consider adding end-screen CTAs or suspense in the final 20%.
           </p>
         </div>

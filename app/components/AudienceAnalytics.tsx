@@ -218,8 +218,11 @@ export default function AudienceAnalytics({ video, channel }: AudienceAnalyticsP
       <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
         <span className="text-2xl">👥</span>
         Audience Demographics
-        <span className="text-xs text-gray-400 font-normal ml-2">(AI-estimated)</span>
+        <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">Public-data estimate</span>
       </h3>
+      <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+        Audience geography, gender, age, and interest data are inferred from public category, title, description, tags, and channel context. Private YouTube Studio audience data is not available here.
+      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Geographic Distribution */}

@@ -380,8 +380,11 @@ export default function AudienceDemographics({ video }: AudienceDemographicsProp
         <div className="flex items-center gap-2">
           <div className="w-1 h-5 rounded-full bg-gradient-to-b from-cyan-400 to-cyan-600" />
           <h2 className="text-base sm:text-lg font-bold text-gray-900">Audience Demographics</h2>
-          <span className="text-xs px-2 py-1 bg-cyan-100 text-cyan-600 rounded-full hidden sm:inline">Last 30 Days</span>
+          <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full hidden sm:inline">Modeled estimate</span>
         </div>
+      </div>
+      <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+        Audience, geography, and active-hour data are public-data estimates based on title, topic, and visible metadata. They are not private YouTube Studio demographics.
       </div>
 
       {/* Summary Cards */}
@@ -414,13 +417,13 @@ export default function AudienceDemographics({ video }: AudienceDemographicsProp
 
         {/* Active Hours */}
         <div className="bg-gray-50/50 rounded-xl p-4">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Active Hours (Last 30 Days)</h3>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Estimated Active Hours</h3>
           <ActiveHoursChart data={data.activeHours} />
         </div>
 
         {/* Geographic Distribution */}
         <div className="bg-gray-50/50 rounded-xl p-4">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Geographic Distribution</h3>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Estimated Geographic Distribution</h3>
           <GeoChart regions={data.topRegions} />
         </div>
       </div>
@@ -430,7 +433,7 @@ export default function AudienceDemographics({ video }: AudienceDemographicsProp
         <div className="flex items-start gap-2">
           <span className="text-cyan-500 text-lg">🎯</span>
           <div className="text-sm text-cyan-800">
-            <span className="font-semibold">Audience Insight: </span>
+            <span className="font-semibold">Modeled audience insight: </span>
             Your content resonates most with {data.gender.male > data.gender.female ? 'male' : 'female'} viewers aged {primaryAge.range}.
             Peak engagement occurs during {peakHour.hour} hours. {topInterest.name} is your strongest interest category.
           </div>

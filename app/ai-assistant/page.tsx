@@ -8,6 +8,19 @@ interface AIOutput {
   type: 'title' | 'hook' | 'thumbnail' | 'script'
   content: string
   source: string
+  evidence?: Array<{
+    label: string
+    value: string
+    type: 'Fact' | 'Derived' | 'Inference'
+    source: string
+    note: string
+  }>
+  sourceVideos?: Array<{
+    id: string
+    title: string
+    channelTitle: string
+    views: number
+  }>
 }
 
 function AIAssistantContent() {
@@ -45,7 +58,7 @@ function AIAssistantContent() {
 
       setOutputs(prev => [
         ...prev.slice(0, -1),
-        { type: data.type, content: data.content, source: data.source }
+        { type: data.type, content: data.content, source: data.source, evidence: data.evidence, sourceVideos: data.sourceVideos }
       ])
     } catch {
       setError('Failed to generate content. Please try again.')
@@ -62,6 +75,12 @@ function AIAssistantContent() {
     { id: 'script' as const, name: 'Script Outlines', icon: '📝', desc: 'Video structure templates from proven content' },
   ]
   const hasBriefContext = Boolean(source || niche || angle)
+  const displayTools = [
+    { id: 'title' as const, name: 'Title Generator', icon: 'T', desc: 'Draft titles from public source-video patterns' },
+    { id: 'hook' as const, name: 'Hook Generator', icon: 'H', desc: 'Create hooks with evidence and inference labels' },
+    { id: 'thumbnail' as const, name: 'Thumbnail Ideas', icon: 'I', desc: 'Thumbnail directions from repeated packaging signals' },
+    { id: 'script' as const, name: 'Script Outlines', icon: 'S', desc: 'Draft structure with source sample context' },
+  ]
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
@@ -69,7 +88,7 @@ function AIAssistantContent() {
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold mb-2">AI Creator Assistant</h1>
-          <p className="text-gray-600">Generate titles, hooks, thumbnails, and scripts powered by real YouTube trend data</p>
+          <p className="text-gray-600">Generate titles, hooks, thumbnails, and scripts with public evidence and clearly labeled inference.</p>
         </div>
 
         {hasBriefContext && (
@@ -82,7 +101,7 @@ function AIAssistantContent() {
 
         {/* Tool Selection */}
         <div className="grid sm:grid-cols-4 gap-4 mb-8">
-          {tools.map((tool) => (
+          {displayTools.map((tool) => (
             <button
               key={tool.id}
               onClick={() => setActiveTool(tool.id)}
@@ -124,14 +143,14 @@ function AIAssistantContent() {
             <p className="text-sm text-red-600 mt-2">{error}</p>
           )}
           <p className="text-sm text-gray-500 mt-2">
-            💡 Powered by real YouTube data: We analyze top-performing videos in your niche to generate proven suggestions
+            Public YouTube sample + TubeFission interpretation. Drafts do not use private CTR, retention, revenue, or audience demographics.
           </p>
         </div>
 
         {/* Generated Outputs */}
         {outputs.length > 0 && (
           <div className="space-y-4">
-            <h2 className="font-bold text-lg">Generated {tools.find(t => t.id === activeTool)?.name}s</h2>
+            <h2 className="font-bold text-lg">Generated {displayTools.find(t => t.id === activeTool)?.name}s</h2>
             {outputs.map((output, i) => (
               <div key={i} className="bg-white rounded-xl p-4 border border-gray-200">
                 {output.content === '' ? (
@@ -143,12 +162,47 @@ function AIAssistantContent() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="text-xs text-red-600 font-medium mb-1 uppercase">
-                        {tools.find(t => t.id === output.type)?.name}
+                        {displayTools.find(t => t.id === output.type)?.name}
                       </div>
                       <div className="text-gray-900 whitespace-pre-line">{output.content}</div>
                       {output.source && (
                         <div className="text-xs text-gray-500 mt-2 bg-gray-100 px-2 py-1 rounded">
                           📊 {output.source}
+                        </div>
+                      )}
+                      {output.evidence && output.evidence.length > 0 && (
+                        <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                          <div className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">Evidence chain</div>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {output.evidence.map((item) => (
+                              <div key={item.label} className="rounded-lg bg-white p-3">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{item.label}</div>
+                                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                    item.type === 'Fact' ? 'bg-green-100 text-green-700' : item.type === 'Derived' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
+                                  }`}>
+                                    {item.type}
+                                  </span>
+                                </div>
+                                <div className="mt-1 text-sm font-black text-gray-900">{item.value}</div>
+                                <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">{item.source}</div>
+                                <p className="mt-1 text-xs leading-relaxed text-gray-600">{item.note}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {output.sourceVideos && output.sourceVideos.length > 0 && (
+                        <div className="mt-3 rounded-xl border border-gray-100 bg-white p-3">
+                          <div className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-500">Source videos</div>
+                          <div className="grid gap-2">
+                            {output.sourceVideos.map((video) => (
+                              <Link key={video.id} href={`/video/${video.id}`} className="rounded-lg bg-gray-50 p-3 text-sm hover:bg-red-50">
+                                <div className="font-semibold text-gray-900 line-clamp-1">{video.title}</div>
+                                <div className="mt-1 text-xs text-gray-500">{video.channelTitle} - {video.views.toLocaleString()} views</div>
+                              </Link>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -177,12 +231,12 @@ function AIAssistantContent() {
             <div className="text-center">
               <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-2 font-bold">2</div>
               <div className="font-medium text-sm">Analyze</div>
-              <div className="text-xs text-gray-500">Our AI analyzes patterns, keywords, and structures</div>
+              <div className="text-xs text-gray-500">We extract public title, keyword, and view patterns</div>
             </div>
             <div className="text-center">
               <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-2 font-bold">3</div>
               <div className="font-medium text-sm">Generate</div>
-              <div className="text-xs text-gray-500">Proven suggestions based on real performance data</div>
+              <div className="text-xs text-gray-500">Drafts are labeled as fact, derived signal, or inference</div>
             </div>
             <div className="text-center">
               <div className="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-2 font-bold">4</div>
@@ -216,7 +270,7 @@ function AIAssistantContent() {
 
         {/* CTA */}
         <div className="mt-12 text-center">
-          <p className="text-gray-600 mb-4">Get unlimited AI generations with Pro</p>
+          <p className="text-gray-600 mb-4">Use AI drafts after validating the source evidence.</p>
           <Link
             href="/trending"
             className="inline-block px-8 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition"
