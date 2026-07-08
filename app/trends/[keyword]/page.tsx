@@ -1016,7 +1016,8 @@ export default async function TrendPage({ params }: TrendPageProps) {
                 </div>
               ))}
             </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-4 mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">Evidence chain</div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {actionBrief.evidence.map((item) => (
                 <div key={item.label} className="rounded-xl border border-gray-100 bg-white p-3">
                   <div className="flex items-center justify-between gap-2">
