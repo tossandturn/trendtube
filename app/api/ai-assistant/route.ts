@@ -246,7 +246,7 @@ const STOP_WORDS = new Set([
   'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does',
   'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that',
   'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her',
-  'its', 'our', 'their', 'about', 'today', 'welcome', 'official', 'video', 'videos', 'youtube',
+  'its', 'our', 'their', 'about', 'today', 'welcome', 'official', 'video', 'videos',
 ])
 
 function tokenizeTopic(text: string) {
@@ -263,27 +263,37 @@ function filterRelevantVideos(topic: string, videos: any[]) {
   const topicTokens = tokenizeTopic(topic)
   if (topicTokens.length === 0) return []
   const exactPhrase = topic.toLowerCase().replace(/\s+/g, ' ').trim()
-  const minMatches = topicTokens.length >= 3 ? 2 : 1
+  const minMatches = topicTokens.length >= 2 ? 2 : 1
+  const minTitleMatches = topicTokens.length >= 2 ? Math.min(2, topicTokens.length) : 1
+  const platformTokens = topicTokens.filter((token) => ['youtube', 'tiktok', 'instagram', 'shorts'].includes(token))
 
   return videos
     .map((video: any) => {
       const snippet = video.snippet || {}
       const tags = Array.isArray(snippet.tags) ? snippet.tags.join(' ') : ''
+      const title = String(snippet.title || '').toLowerCase()
       const text = [
-        snippet.title,
+        title,
         snippet.description,
         snippet.channelTitle,
         tags,
       ].filter(Boolean).join(' ').toLowerCase()
+      const titleTokens = new Set(title.split(/[^a-z0-9]+/).filter(Boolean))
       const textTokens = new Set(text.split(/[^a-z0-9]+/).filter(Boolean))
       const matched = topicTokens.filter((token) => textTokens.has(token))
+      const titleMatched = topicTokens.filter((token) => titleTokens.has(token))
       const hasExactPhrase = exactPhrase.length > 2 && text.includes(exactPhrase)
+      const hasRequiredPlatform = platformTokens.every((token) => textTokens.has(token))
       return {
         video,
+        titleMatches: titleMatched.length,
+        hasRequiredPlatform,
         score: matched.length + (hasExactPhrase ? 2 : 0),
       }
     })
-    .filter(({ score }: { score: number }) => score >= minMatches)
+    .filter(({ score, titleMatches, hasRequiredPlatform }: { score: number; titleMatches: number; hasRequiredPlatform: boolean }) =>
+      score >= minMatches && titleMatches >= minTitleMatches && hasRequiredPlatform
+    )
     .sort((a: any, b: any) => b.score - a.score)
     .map(({ video }: { video: any }) => video)
 }
