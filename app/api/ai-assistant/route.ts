@@ -35,8 +35,10 @@ export async function POST(request: Request) {
       'viewCount'
     )
 
-    // Sort by view count and get top performers
-    const topVideos = videos
+    const relevantVideos = filterRelevantVideos(topic, videos)
+
+    // Sort by view count and get top semantically relevant performers
+    const topVideos = relevantVideos
       .sort((a: any, b: any) => {
         const viewsA = Number(a.statistics?.viewCount || 0)
         const viewsB = Number(b.statistics?.viewCount || 0)
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
     // Analyze patterns from top videos
     const titles = topVideos.map((v: any) => v.snippet?.title || '')
     const patterns = analyzeTitlePatterns(titles)
-    const evidence = buildEvidence(topic, topVideos, patterns)
+    const evidence = buildEvidence(topic, topVideos, patterns, videos.length)
     const sourceVideos = topVideos.slice(0, 5).map((video: any) => ({
       id: video.id,
       title: video.snippet?.title || 'Untitled video',
@@ -89,9 +91,10 @@ function formatCompact(num: number): string {
   return Math.round(num).toLocaleString()
 }
 
-function buildEvidence(topic: string, topVideos: any[], patterns: ReturnType<typeof analyzeTitlePatterns>): AIOutput['evidence'] {
+function buildEvidence(topic: string, topVideos: any[], patterns: ReturnType<typeof analyzeTitlePatterns>, rawSampleCount = topVideos.length): AIOutput['evidence'] {
   const totalViews = topVideos.reduce((sum, video) => sum + Number(video.statistics?.viewCount || 0), 0)
   const avgViews = topVideos.length > 0 ? totalViews / topVideos.length : 0
+  const confidence = topVideos.length >= 5 ? 'High' : topVideos.length >= 3 ? 'Medium' : topVideos.length >= 1 ? 'Low' : 'Insufficient'
   const patternSignals = [
     patterns.hasNumbers > 0 ? `${patterns.hasNumbers} use numbers` : '',
     patterns.hasHowTo > 0 ? `${patterns.hasHowTo} use how-to framing` : '',
@@ -105,14 +108,25 @@ function buildEvidence(topic: string, topVideos: any[], patterns: ReturnType<typ
       value: `${topVideos.length} videos`,
       type: 'Fact',
       source: 'YouTube Data API',
-      note: `Top public videos found for "${topic}" and related searches.`,
+      note: `${rawSampleCount} raw videos were checked; ${topVideos.length} matched the topic strongly enough to use as evidence.`,
+    },
+    {
+      label: 'Evidence fit',
+      value: `${confidence} confidence`,
+      type: 'Derived',
+      source: 'Topic relevance filter',
+      note: topVideos.length >= 3
+        ? `Recommendations are based on semantically matched public videos for "${topic}".`
+        : 'Sample is too small for a strong recommendation. Treat the draft as a creative starting point, not a data-backed decision.',
     },
     {
       label: 'Public demand',
-      value: formatCompact(totalViews),
+      value: topVideos.length > 0 ? formatCompact(totalViews) : 'Insufficient data',
       type: 'Fact',
       source: 'YouTube Data API',
-      note: `Total public views across the analyzed sample. Average: ${formatCompact(avgViews)} views/video.`,
+      note: topVideos.length > 0
+        ? `Total public views across the matched sample. Average: ${formatCompact(avgViews)} views/video.`
+        : 'No semantically matched source videos were available for demand analysis.',
     },
     {
       label: 'Title pattern',
@@ -123,7 +137,7 @@ function buildEvidence(topic: string, topVideos: any[], patterns: ReturnType<typ
     },
     {
       label: 'Keywords',
-      value: patterns.topKeywords.slice(0, 5).join(', ') || 'No strong keyword cluster',
+      value: topVideos.length >= 3 ? patterns.topKeywords.slice(0, 5).join(', ') || 'No strong keyword cluster' : 'Insufficient matched sample',
       type: 'Derived',
       source: 'Public titles',
       note: 'Generic stop words are removed before counting repeated terms.',
@@ -140,6 +154,7 @@ function buildEvidence(topic: string, topVideos: any[], patterns: ReturnType<typ
 
 function analyzeTitlePatterns(titles: string[]) {
   const patterns = {
+    sampleCount: titles.length,
     hasNumbers: titles.filter(t => /\d/.test(t)).length,
     hasHowTo: titles.filter(t => /how to/i.test(t)).length,
     hasSecret: titles.filter(t => /secret|hidden|hacks?/i.test(t)).length,
@@ -147,20 +162,18 @@ function analyzeTitlePatterns(titles: string[]) {
     hasTimeFrame: titles.filter(t => /days?|hours?|minutes?|weeks?/i.test(t)).length,
     hasStopNever: titles.filter(t => /stop|never|don't/i.test(t)).length,
     hasWhy: titles.filter(t => /why|what|how/i.test(t)).length,
-    avgLength: Math.round(titles.reduce((acc, t) => acc + t.length, 0) / titles.length) || 0,
+    avgLength: titles.length ? Math.round(titles.reduce((acc, t) => acc + t.length, 0) / titles.length) : 0,
     topKeywords: extractTopKeywords(titles),
   }
   return patterns
 }
 
 function extractTopKeywords(titles: string[]) {
-  const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their'])
-
   const wordCounts: Record<string, number> = {}
   titles.forEach(title => {
     title.toLowerCase().split(/\s+/).forEach(word => {
       word = word.replace(/[^\w]/g, '')
-      if (word.length > 2 && !stopWords.has(word)) {
+      if (word.length > 2 && !STOP_WORDS.has(word)) {
         wordCounts[word] = (wordCounts[word] || 0) + 1
       }
     })
@@ -222,8 +235,57 @@ function generateTitle(topic: string, patterns: any): AIOutput {
   return {
     type: 'title',
     content: selectedTemplate,
-    source: `Public-title pattern inference. Average title length in sample: ${patterns.avgLength || 0} characters.`
+    source: patterns.sampleCount >= 3
+      ? `Public-title pattern inference. Average title length in matched sample: ${patterns.avgLength || 0} characters.`
+      : 'Low-confidence creative draft: fewer than 3 semantically matched source videos were available.'
   }
+}
+
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+  'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does',
+  'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that',
+  'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her',
+  'its', 'our', 'their', 'about', 'today', 'welcome', 'official', 'video', 'videos', 'youtube',
+])
+
+function tokenizeTopic(text: string) {
+  return Array.from(new Set(
+    text
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .map((word) => word.trim())
+      .filter((word) => word.length > 1 && !STOP_WORDS.has(word))
+  ))
+}
+
+function filterRelevantVideos(topic: string, videos: any[]) {
+  const topicTokens = tokenizeTopic(topic)
+  if (topicTokens.length === 0) return []
+  const exactPhrase = topic.toLowerCase().replace(/\s+/g, ' ').trim()
+  const minMatches = topicTokens.length >= 3 ? 2 : 1
+
+  return videos
+    .map((video: any) => {
+      const snippet = video.snippet || {}
+      const tags = Array.isArray(snippet.tags) ? snippet.tags.join(' ') : ''
+      const text = [
+        snippet.title,
+        snippet.description,
+        snippet.channelTitle,
+        tags,
+      ].filter(Boolean).join(' ').toLowerCase()
+      const textTokens = new Set(text.split(/[^a-z0-9]+/).filter(Boolean))
+      const matched = topicTokens.filter((token) => textTokens.has(token))
+      const hasExactPhrase = exactPhrase.length > 2 && text.includes(exactPhrase)
+      return {
+        video,
+        score: matched.length + (hasExactPhrase ? 2 : 0),
+      }
+    })
+    .filter(({ score }: { score: number }) => score >= minMatches)
+    .sort((a: any, b: any) => b.score - a.score)
+    .map(({ video }: { video: any }) => video)
 }
 
 function generateHook(topic: string, patterns: any, topVideos: any[]): AIOutput {
@@ -253,7 +315,9 @@ function generateHook(topic: string, patterns: any, topVideos: any[]): AIOutput 
   return {
     type: 'hook',
     content: hooks[hash % hooks.length],
-    source: `Based on public source videos averaging ${viewStr} views. Hook is an inferred creative draft.`
+    source: topVideos.length >= 3
+      ? `Based on matched public source videos averaging ${viewStr} views. Hook is an inferred creative draft.`
+      : 'Low-confidence creative draft: fewer than 3 semantically matched source videos were available.'
   }
 }
 
@@ -368,7 +432,9 @@ function generateThumbnailEvidence(topic: string, patterns: any): AIOutput {
   return {
     type: 'thumbnail',
     content: thumbnails[hash % thumbnails.length],
-    source: `Inferred from repeated public title/topic patterns: ${patterns.topKeywords?.slice(0, 3).join(', ') || 'no strong keyword cluster'}.`,
+    source: patterns.sampleCount >= 3
+      ? `Inferred from repeated public title/topic patterns: ${patterns.topKeywords?.slice(0, 3).join(', ') || 'no strong keyword cluster'}.`
+      : 'Low-confidence creative draft: fewer than 3 semantically matched source videos were available.',
   }
 }
 
@@ -415,6 +481,8 @@ Based on: ${patterns.hasResult > 3 ? 'results-driven' : 'educational'} public-ti
   return {
     type: 'script',
     content: structure,
-    source: `Public sample inference. Average title length: ${patterns.avgLength || 0} chars. Top keywords: ${patterns.topKeywords?.slice(0, 5).join(', ') || 'none'}.`,
+    source: patterns.sampleCount >= 3
+      ? `Public sample inference. Average title length: ${patterns.avgLength || 0} chars. Top keywords: ${patterns.topKeywords?.slice(0, 5).join(', ') || 'none'}.`
+      : 'Low-confidence creative draft: fewer than 3 semantically matched source videos were available.',
   }
 }
