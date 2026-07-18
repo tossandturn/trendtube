@@ -1,15 +1,21 @@
-import { PrismaClient } from '@prisma/client'
+import type { PrismaClient as PrismaClientType } from '@prisma/client'
 
 // Initialize Prisma client for shared auth with TikTok Intelligence
-let prisma: PrismaClient | null = null
+let prisma: PrismaClientType | null = null
 
-export function getPrisma(): PrismaClient {
+function loadPrismaClient(): new (...args: ConstructorParameters<typeof import('@prisma/client').PrismaClient>) => PrismaClientType {
+  const runtimeRequire = eval('require') as NodeRequire
+  return runtimeRequire('@prisma/client').PrismaClient
+}
+
+export function getPrisma(): PrismaClientType {
   if (!prisma) {
     // Use TikTok's database URL for shared auth
     const databaseUrl = process.env.TIKTOK_DATABASE_URL || process.env.DATABASE_URL
     if (!databaseUrl) {
       throw new Error('DATABASE_URL not configured')
     }
+    const PrismaClient = loadPrismaClient()
     prisma = new PrismaClient({
       datasources: {
         db: {

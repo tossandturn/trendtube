@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
+import { realpathSync } from "fs";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['@prisma/client', 'better-sqlite3'],
   turbopack: {
-    root: '.',
+    root: realpathSync(process.cwd()),
   },
   images: {
     formats: ['image/webp', 'image/avif'],

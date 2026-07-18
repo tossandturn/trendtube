@@ -1,15 +1,15 @@
 import { sql } from '@vercel/postgres'
-import Database from 'better-sqlite3'
 import { existsSync, mkdirSync } from 'fs'
 import { dirname, join } from 'path'
 
 const IS_VERCEL = !!process.env.VERCEL
 
 // For local scripts - SQLite fallback
-let sqliteDb: Database.Database | null = null
+let sqliteDb: any = null
 
-export function getDb(): Database.Database {
+export function getDb(): any {
   if (sqliteDb) return sqliteDb
+  const Database = (eval('require') as NodeRequire)('better-sqlite3')
   const DB_PATH = process.env.DATABASE_URL || join(process.cwd(), 'data', 'tubefission.db')
   const dbDir = dirname(DB_PATH)
   if (!existsSync(dbDir)) {

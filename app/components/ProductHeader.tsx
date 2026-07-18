@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Menu, Search, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { extractChannelId, extractVideoId, isValidYouTubeUrl } from '@/lib/youtube-parser'
 import { REGIONS, REGION_META, type Region } from '@/lib/region'
 
@@ -232,7 +232,6 @@ export default function ProductHeader() {
   const [region, setRegion] = useState<Region>('US')
   const [mounted, setMounted] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -287,10 +286,6 @@ export default function ProductHeader() {
           ))}
         </nav>
 
-        <div className="hidden min-w-[260px] flex-1 xl:block">
-          <AnalyzeForm />
-        </div>
-
         <div className="ml-auto hidden items-center gap-2 lg:flex">
           {mounted && <RegionSelect region={region} onSwitch={switchRegion} />}
           <UserNav />
@@ -298,14 +293,6 @@ export default function ProductHeader() {
 
         <div className="ml-auto flex items-center gap-2 lg:hidden">
           {mounted && <RegionSelect region={region} onSwitch={switchRegion} />}
-          <button
-            type="button"
-            onClick={() => setSearchOpen((open) => !open)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-700"
-            aria-label="Analyze a URL"
-          >
-            {searchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-          </button>
           <button
             type="button"
             onClick={() => setMenuOpen((open) => !open)}
@@ -318,11 +305,11 @@ export default function ProductHeader() {
         </div>
       </div>
 
-      {searchOpen && (
-        <div className="border-t border-gray-100 bg-red-50/70 px-3 py-3 lg:hidden">
-          <AnalyzeForm compact onDone={() => setSearchOpen(false)} />
+      <div className="border-t border-gray-100 bg-white/95 px-3 py-2 sm:px-6">
+        <div className="mx-auto max-w-4xl">
+          <AnalyzeForm />
         </div>
-      )}
+      </div>
 
       {menuOpen && (
         <div className="border-t border-gray-100 bg-white px-3 py-3 lg:hidden">
